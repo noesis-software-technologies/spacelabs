@@ -1,0 +1,34 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        # faster-whisper est optionnel (import paresseux, Sprint 7) et lourd :
+        # on l'exclut de la CI, comme dans l'env de test de référence.
+        run: |
+          python -m pip install --upgrade pip
+          grep -v "faster-whisper" requirements.txt > /tmp/req.txt
+          pip install -r /tmp/req.txt
+          pip install pytest-django pytest-asyncio factory-boy django-debug-toolbar
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Tests
+        # dev = SQLite + InMemoryChannelLayer : aucun daemon Redis requis.
+        run: python -m pytest -q

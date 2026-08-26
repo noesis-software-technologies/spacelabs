@@ -330,3 +330,14 @@ bout en bout (16 onglets réels) reste à faire.
 - **Cloisonnement des `cwd`** : un pane peut encore être lancé dans n'importe
   quel répertoire existant de la machine. C'est cohérent avec un produit
   local-first, mais à revoir si l'exposition LAN devient un usage courant.
+
+## Audit PR1+PR2 (2026-08-26, tête 3c42553)
+Constat vérifié par exécution : main rouge (523/524) sur l'import de
+`OBSERVER_MAX_TILES` supprimé par le commit full-matrix ; aucune CI.
+Décision : c'est le TEST qui s'aligne (le plafond est désormais un réglage,
+choix produit du full-matrix) — réintroduire la constante aurait figé la config.
+Vérifié offline : `manage.py check` 0 issue ; suite complète 524/524 en 121 s
+(env de référence : Django 5.2, sans faster-whisper ni pywinpty, SQLite +
+InMemoryChannelLayer). La CI reproduit exactement cet env.
+Prochaine étape du backlog : passe docs (ROADMAP périmée) puis Browser dock ∥
+ASR streaming ; MODEL_ROUTING (ADR-5) déblocable dès que cette PR est mergée.
