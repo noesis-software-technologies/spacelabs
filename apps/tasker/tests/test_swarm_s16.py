@@ -171,7 +171,10 @@ def test_swarm_view_is_scoped_to_its_owner(client, mission):
 def test_observer_caps_tiles_and_says_how_many_are_hidden(client, mission):
     """Un mur de 16 agents n'est pas lisible à trois mètres."""
     from apps.observer.models import ObserverSettings
-    from apps.observer.views import OBSERVER_MAX_TILES, _public_grid_context
+    # Le plafond est configurable depuis le commit full-matrix
+    # (COCKPIT_OBSERVER_MAX_TILES) : on lit le réglage effectif au lieu
+    # d'une constante figée, volontairement supprimée.
+    from apps.observer.views import _observer_max_tiles, _public_grid_context
 
     owner = mission.workspace.owner
     s = ObserverSettings.for_owner(owner)
@@ -180,9 +183,10 @@ def test_observer_caps_tiles_and_says_how_many_are_hidden(client, mission):
     for _ in range(14):
         HeadlessPane.objects.create(workspace=mission.workspace, is_public=True)
 
+    cap = _observer_max_tiles()
     context = _public_grid_context()
-    assert len(context["items"]) == OBSERVER_MAX_TILES
-    assert context["hidden_count"] == 14 - OBSERVER_MAX_TILES
+    assert len(context["items"]) == cap
+    assert context["hidden_count"] == 14 - cap
 
     html = client.get(reverse("observer:grid")).content.decode()
     assert "non affiché" in html

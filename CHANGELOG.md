@@ -322,3 +322,12 @@ Première version publiable : cockpit web local-first pour Claude Code.
   persister l'identifiant de session — évolution prévue).
 - Sémantique du coût d'usage : suppose `total_cost_usd` cumulatif par session.
 - Détection MCP : heuristique par motifs configurables.
+
+## [Non versionné] — 2026-08-26 · PR1+PR2 du backlog (fix main + CI)
+- fix(tests): `test_observer_caps_tiles_and_says_how_many_are_hidden` lit le
+  plafond effectif via `_observer_max_tiles()` au lieu de la constante
+  `OBSERVER_MAX_TILES`, volontairement supprimée par le commit full-matrix
+  (plafond configurable `COCKPIT_OBSERVER_MAX_TILES`). Main : 524/524 vert.
+- ci: workflow GitHub Actions (`.github/workflows/ci.yml`) — check Django +
+  pytest sur push/PR, Python 3.12, sans faster-whisper (optionnel, lourd),
+  sans Redis (dev = SQLite + InMemoryChannelLayer).
