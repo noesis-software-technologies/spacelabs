@@ -65,6 +65,13 @@
     --ds-accent-2: 26 100% 60%;      /* #ff8c33 — hover / dégradés */
     --ds-ring: 26 93% 53%;
 
+    /* CTA principal — indigo, distinct de l'accent de sélection.
+       Le bouton d'action primaire ne porte plus l'orange (réservé à la
+       sélection/au swarm) : il a sa propre identité chromatique. */
+    --ds-cta: 258 80% 62%;           /* indigo */
+    --ds-cta-hover: 258 80% 70%;
+    --ds-cta-contrast: 0 0% 100%;
+
     /* Voix (Bridge) — le seul îlot froid de l'interface, volontairement.
        Bleu = « la machine écoute », jamais utilisé pour un état d'agent. */
     --ds-voice: 218 100% 65%;        /* #4d8dff */
@@ -170,11 +177,12 @@
 
   /* Thème clair — neutre FROID, aligné sur le noir bleuté du thème sombre.
      La crème chaude était la marque v1 ; elle jurait avec l'accent orange.
-     Les terminaux restent noirs : on n'inverse jamais une sortie d'agent. */
+     Les terminaux suivent le thème (fond clair) : les sorties ANSI restent
+     lisibles car le texte des panes passe par les variables du système. */
   [data-theme="light"] {
     --ds-bg: 240 20% 97%;
     --ds-bg-raised: 0 0% 100%;
-    --ds-bg-inset: 240 9% 2%;        /* terminaux inchangés */
+    --ds-bg-inset: 240 15% 99%;      /* terminaux alignés sur le thème clair */
     --ds-border: 240 12% 88%;
     --ds-border-strong: 240 10% 78%;
     --ds-text: 240 15% 12%;
@@ -345,12 +353,12 @@
   .ds-btn:active { transform: translateY(1px); }
   .ds-btn[disabled] { opacity: 0.55; cursor: not-allowed; }
   .ds-btn--primary {
-    background: hsl(var(--ds-accent));
-    border-color: hsl(var(--ds-accent));
-    color: hsl(var(--ds-accent-contrast));
+    background: hsl(var(--ds-cta));
+    border-color: hsl(var(--ds-cta));
+    color: hsl(var(--ds-cta-contrast));
     font-weight: 600;
   }
-  .ds-btn--primary:hover { background: hsl(var(--ds-accent-2)); border-color: hsl(var(--ds-accent-2)); }
+  .ds-btn--primary:hover { background: hsl(var(--ds-cta-hover)); border-color: hsl(var(--ds-cta-hover)); }
   .ds-btn--ghost { border-color: transparent; background: none; }
   .ds-btn--ghost:hover { background: hsl(var(--ds-border) / 0.5); }
   .ds-btn--destructive {
