@@ -16,6 +16,7 @@ import asyncio
 import json
 
 from channels.layers import get_channel_layer
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
@@ -41,7 +42,9 @@ def observer_page(request):
     return render(request, "observer/observer.html")
 
 
-OBSERVER_MAX_TILES = 9
+def _observer_max_tiles() -> int:
+    """Plafond de tuiles de la vue télé — configurable via COCKPIT_OBSERVER_MAX_TILES."""
+    return int(getattr(settings, "COCKPIT_OBSERVER_MAX_TILES", 9))
 
 
 def _public_grid_context():
@@ -54,11 +57,12 @@ def _public_grid_context():
         Pane.objects.filter(workspace__owner_id__in=live_owner_ids)
         .order_by("workspace_id", "order", "id")
     )
-    # Plafond de LISIBILITÉ, pas de performance : au-delà de 9 tuiles, la vue
+    # Plafond de LISIBILITÉ, pas de performance : au-delà du plafond, la vue
     # télé devient une mosaïque illisible à trois mètres. On montre d'abord ce
-    # qui travaille, et on annonce le reste.
+    # qui travaille, et on annonce le reste. Plafond réglable (mode « full matrix »).
+    max_tiles = _observer_max_tiles()
     ordered = sorted(panes, key=lambda p: (p.status != Pane.Status.RUNNING, p.workspace_id, p.order, p.pk))
-    shown, hidden = ordered[:OBSERVER_MAX_TILES], max(0, len(ordered) - OBSERVER_MAX_TILES)
+    shown, hidden = ordered[:max_tiles], max(0, len(ordered) - max_tiles)
 
     items = []
     for pane in shown:

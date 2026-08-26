@@ -3,6 +3,17 @@
 Toutes les évolutions notables. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ;
 versionnage [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié] — Full matrix observateur
+
+### Ajouté
+
+- **`COCKPIT_OBSERVER_MAX_TILES`** : plafond de tuiles de la vue télé `/observer` désormais configurable via l'environnement (défaut inchangé : 9). Le mode « full matrix » monte le plafond (ex. 16) pour suivre tous les agents en parallèle — pensé pour le live streaming (Twitch/Kick).
+- `.env.example` documente la nouvelle variable et ajoute `tmux` à la liste blanche d'exemple (`COCKPIT_ALLOWED_CMDS`) pour les panes miroir de sessions de travail.
+
+### Modifié
+
+- `apps/observer/views.py` : la constante codée en dur `OBSERVER_MAX_TILES = 9` devient un réglage lu au rendu (`_observer_max_tiles()`), sans changement du comportement par défaut ni du filtrage public/privé.
+
 ## [Non publié] — Sprint 3 (revamp) : presets d'agents configurables
 
 ### Ajouté

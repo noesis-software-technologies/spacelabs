@@ -12,6 +12,7 @@ env = environ.Env(
     COCKPIT_MAX_PANES=(int, 16),
     COCKPIT_OWNER_MAX_PANES=(int, 0),  # 0 = retombe sur COCKPIT_MAX_PANES
     COCKPIT_BUFFER_BYTES=(int, 200_000),
+    COCKPIT_OBSERVER_MAX_TILES=(int, 9),
     COCKPIT_DEFAULT_CMD=(str, "claude"),
     COCKPIT_ALLOWED_CMDS=(list, ["claude", "bash", "sh"]),
     COCKPIT_HEARTBEAT_STALE_SECONDS=(int, 90),
@@ -135,6 +136,8 @@ COCKPIT_MAX_PANES = env("COCKPIT_MAX_PANES")
 # Plafond par compte, tous workspaces confondus (0 = même valeur que ci-dessus).
 COCKPIT_OWNER_MAX_PANES = env("COCKPIT_OWNER_MAX_PANES")
 COCKPIT_BUFFER_BYTES = env("COCKPIT_BUFFER_BYTES")
+# Plafond de lisibilité de la vue télé (mosaïque illisible au-delà).
+COCKPIT_OBSERVER_MAX_TILES = env("COCKPIT_OBSERVER_MAX_TILES")
 COCKPIT_DEFAULT_CMD = env("COCKPIT_DEFAULT_CMD")
 # Liste blanche des exécutables spawnables — garde-fou : le WS ne lance jamais
 # une commande arbitraire, seulement un binaire approuvé ici.
