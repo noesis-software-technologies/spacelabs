@@ -342,3 +342,17 @@ Première version publiable : cockpit web local-first pour Claude Code.
 - fix(router): incréments de budget via F() — atomiques, pas de
   lire-modifier-écrire (deux runs simultanés ne s'écrasent plus).
 - deps: httpx ajouté aux requirements.
+
+## [Non versionné] — 2026-08-26 · S-R2 MODEL_ROUTING (exécution routée)
+- feat(tasker): champ Mission.task_class (D2) — la classe déclarée que lit le routeur.
+- feat(models_routing): ClaudeBinAdapter one-shot — même argv/protocole que
+  HeadlessManager, parsing réutilisé (apps.chat.events) ; les sessions longues
+  des panes restent au HeadlessManager.
+- feat(models_routing): RunLogger — un JSONL append-only par run (var/runs/),
+  deltas échantillonnés (compteur, pas de payloads — spec §8), RunLog finalisé
+  (statut, tokens, durée).
+- feat(models_routing): execute_routed_run — route() → adapter → JSONL →
+  diffusion chat.event sur pane_{id} : le CockpitConsumer et le front
+  existants affichent les runs routés sans modification.
+- budgets : consommation créditée sur l'usage RÉEL (pas l'estimation) ;
+  un run en erreur ne consomme pas.

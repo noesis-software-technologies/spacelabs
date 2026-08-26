@@ -34,6 +34,19 @@ class Mission(models.Model):
         AUTO = "auto", "automatique"
 
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="missions")
+    # ADR-5 : classe de tâche DÉCLARÉE — c'est elle que le routeur de modèles
+    # lit pour choisir le backend (spec MODEL_ROUTING.md §6 ; D2 : portée par
+    # la Mission, pas par le pane). Choix partagés avec RoutingRule.
+    task_class = models.CharField(
+        "classe de tâche", max_length=32, default="default",
+        choices=[
+            ("draft", "Draft / rédaction courte"), ("summarize", "Résumé"),
+            ("glue", "Glue code / scripts"), ("route", "Routage de messages"),
+            ("code_small", "Code borné"), ("code_heavy", "Code lourd / refacto"),
+            ("architecture", "Architecture / conception"),
+            ("long_context", "Très long contexte"), ("default", "Défaut"),
+        ],
+    )
     goal = models.TextField("objectif")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
     mode = models.CharField(max_length=10, choices=Mode.choices, default=Mode.MANUAL)
