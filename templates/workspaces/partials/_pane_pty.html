@@ -1,0 +1,49 @@
+<section class="pane" data-status="{{ pane.status }}" id="pane-{{ pane.pk }}"
+         aria-label="Pane {{ pane.title }}">
+  <header class="pane-head">
+    <span class="ds-status-dot" data-status="{{ pane.status }}" aria-hidden="true"></span>
+    <span class="pane-title">{{ pane.title }}</span>
+    <span class="pane-meta" title="{{ pane.cmd }} — {{ pane.effective_cwd }}">{{ pane.cmd }}</span>
+    <span class="pane-head-spacer"></span>
+    <span class="ds-badge ds-badge--accent" data-pane-public-badge {% if not pane.is_public %}hidden{% endif %}>PUBLIC</span>
+    <span class="ds-badge" data-pane-status-label>{{ pane.get_status_display }}</span>
+    <button type="button" class="pane-action" data-pane-visibility
+            data-public="{% if pane.is_public %}1{% else %}0{% endif %}"
+            aria-label="Basculer la visibilité live du pane"
+            title="{% if pane.is_public %}Visible en direct — cliquer pour masquer{% else %}Privé — cliquer pour diffuser{% endif %}">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+    <button type="button" class="pane-action voice-btn" data-voice="pty"
+            aria-pressed="false" aria-label="Dicter une commande (maintenir pour parler)"
+            title="Maintenir pour dicter en stdin (fr-FR)"><svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
+    <button type="button" class="pane-action" data-pane-respawn
+            aria-label="Relancer la session">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+    </button>
+    <button type="button" class="pane-action"
+            data-pane-zoom
+            aria-label="Zoomer / dézoomer le pane">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+    <button type="button" class="pane-action pane-action--close" data-pane-kill
+            aria-label="Terminer la session">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+    </button>
+    <button type="button" class="pane-action"
+            hx-post="{% url 'workspaces:pane_delete' slug=workspace.slug pane_id=pane.pk %}"
+            hx-target="#pane-{{ pane.pk }}" hx-swap="delete"
+            hx-confirm="Supprimer ce pane ? La session en cours sera terminée."
+            aria-label="Supprimer le pane">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    </button>
+  </header>
+  <div class="voice-bar" data-voice-bar hidden>
+    <input type="text" class="ds-input voice-input" data-voice-input
+           placeholder="Transcription… (éditer puis Entrée pour envoyer en stdin)" />
+    <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-voice-send>Envoyer</button>
+    <button type="button" class="ds-btn ds-btn--ghost ds-btn--icon ds-btn--sm" data-voice-close aria-label="Fermer"><svg class="ds-icon ds-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  </div>
+  <div class="pane-body">
+    <div data-pane-host data-pane-id="{{ pane.pk }}" data-status="{{ pane.status }}" class="pane-host"></div>
+  </div>
+</section>

@@ -1,0 +1,82 @@
+<aside class="dock" data-open="true" id="bridge-dock">
+  <div class="dock-tabs">
+    <button type="button" class="dock-tab" data-tab="bridge" aria-selected="true" title="Bridge">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+    </button>
+    <button type="button" class="dock-tab" data-tab="skills" aria-selected="false" title="Skills"
+            hx-get="{% url 'skills:panel' slug=workspace.slug %}" hx-target="[data-dock-slot='skills']" hx-swap="innerHTML">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.09 6.26L20 11l-5.91 1.74L12 19l-2.09-6.26L4 11l5.91-1.74z"/></svg>
+    </button>
+    <button type="button" class="dock-tab" data-tab="editor" aria-selected="false" title="Éditeur"
+            hx-get="{% url 'workspaces:explorer' slug=workspace.slug %}" hx-target="[data-dock-slot='editor']" hx-swap="afterbegin">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
+    </button>
+    <span class="dock-title" data-dock-title>Bridge</span>
+  </div>
+
+  <div class="dock-body">
+    <div class="dock-panel" data-dock-slot="skills" hidden></div>
+    <div class="dock-panel" data-dock-slot="editor" hidden>
+      <div class="mdview" id="file-view"><p class="board-empty">Choisis un fichier dans l'arborescence.</p></div>
+    </div>
+    <div class="bridge" data-dock-slot="bridge" data-bridge data-command-url="{% url 'voice:command' %}"
+         data-workspace="{{ workspace.slug }}">
+      <div class="bridge-head">
+        <span class="bridge-id"><span class="ds-status-dot"></span>BRIDGE</span>
+        <span class="bridge-workspace">[ {{ workspace.name|upper }} ]</span>
+      </div>
+
+      <div class="bridge-stage">
+        <span class="bridge-bracket" data-corner="tl"></span>
+        <span class="bridge-bracket" data-corner="tr"></span>
+        <span class="bridge-bracket" data-corner="bl"></span>
+        <span class="bridge-bracket" data-corner="br"></span>
+        <button type="button" class="bridge-orb-wrap" data-state="standby" data-bridge-orb
+                aria-label="Activer la commande vocale">
+          <span class="bridge-orb-ring"></span>
+          <span class="bridge-orb-wave"></span>
+          <span class="bridge-orb">
+            <svg class="bridge-orb-mark" width="34" height="34" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+            </svg>
+          </span>
+        </button>
+        <div class="bridge-status">
+          <span class="bridge-status-key">STATUT</span>
+          <span class="bridge-status-value" data-bridge-state data-state="standby">VEILLE</span>
+          <span class="bridge-status-sep"></span>
+          <span class="bridge-status-hint" data-bridge-hint>Cliquer pour parler</span>
+        </div>
+      </div>
+
+      <div class="bridge-asr">
+        <span>ASR</span><b>{{ stt_backend|default:"webspeech" }}</b>
+        <span class="bridge-asr-latency" data-bridge-latency></span>
+      </div>
+
+      <div class="bridge-tasks">
+        <div class="bridge-tasks-head">
+          <svg class="ds-icon ds-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h.01M3 12h.01M3 19h.01M8 5h13M8 12h13M8 19h13"/></svg>
+          VOCABULAIRE
+        </div>
+        <p class="bridge-empty-hint">
+          « où en sont mes agents » · « lance deux agents » · « ajoute une tâche : relire les tests »
+          · « lance la mission » · « passe en dense » · « panique »
+        </p>
+      </div>
+
+      <p class="bridge-log-title">JOURNAL</p>
+      <div class="bridge-log" data-bridge-log></div>
+
+      <form class="bridge-composer" data-bridge-form>
+        <input type="text" data-bridge-input autocomplete="off"
+               placeholder="Parler ou écrire une commande…" />
+        <button type="submit" class="bridge-mic" aria-label="Envoyer">
+          <svg class="ds-icon ds-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</aside>

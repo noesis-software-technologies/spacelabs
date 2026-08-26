@@ -1,0 +1,31 @@
+<div class="dock-panel" data-dock-panel="skills">
+  <p class="skills-hint">Glisse une skill sur un agent démarré, ou clique pour l'envoyer à l'agent sélectionné.</p>
+  <div class="sk-list">
+    {% regroup skills by is_builtin as groups %}
+    {% for group in groups %}
+      <p class="skills-group">
+        <span>{% if group.grouper %}SPACELABS{% else %}MES SKILLS{% endif %}</span>
+        <span class="skills-group-kind">{{ group.list|length }}</span>
+      </p>
+      {% for skill in group.list %}
+        <article class="skill" draggable="true" data-skill="{{ skill.pk }}"
+                 data-apply-url="{% url 'skills:apply' pk=skill.pk %}"
+                 title="{{ skill.body|truncatechars:180 }}">
+          <span class="skill-grip" aria-hidden="true">
+            <svg class="ds-icon ds-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
+          </span>
+          <span class="skill-icon">
+            <svg class="ds-icon ds-icon--xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.09 6.26L20 11l-5.91 1.74L12 19l-2.09-6.26L4 11l5.91-1.74z"/></svg>
+          </span>
+          <div class="skill-meta">
+            <p class="skill-name">{{ skill.name }}</p>
+            <p class="skill-desc">{{ skill.description }}</p>
+            <span class="skill-tag" data-kind="{{ skill.tag }}">{{ skill.get_tag_display }}</span>
+          </div>
+        </article>
+      {% endfor %}
+    {% empty %}
+      <p class="board-empty">Aucune skill.</p>
+    {% endfor %}
+  </div>
+</div>

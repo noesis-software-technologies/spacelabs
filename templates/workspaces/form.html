@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — SpaceLabs{% endblock %}
+{% block topbar_title %}{{ title }}{% endblock %}
+{% block content %}
+  {% if workspace and kind %}
+    {% include "workspaces/partials/_pane_form.html" %}
+  {% else %}
+    {% include "workspaces/partials/_workspace_form.html" %}
+  {% endif %}
+{% endblock %}

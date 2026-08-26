@@ -1,0 +1,24 @@
+<div class="shell-modal-card ds-card" role="dialog" aria-modal="true" aria-label="{{ title }}">
+  <div class="shell-modal-head">
+    <h1 class="ds-auth-title">{{ title }}</h1>
+    <button type="button" class="chrome-toggle" data-modal-close aria-label="Fermer">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <p class="ds-auth-sub">Workspace « {{ workspace.name }} » — {{ workspace.cwd }}</p>
+  <form method="post"
+        hx-post="{% url 'workspaces:pane_create' slug=workspace.slug kind=kind %}"
+        hx-target="#pane-grid" hx-swap="beforeend"
+        action="{% url 'workspaces:pane_create' slug=workspace.slug kind=kind %}">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="ds-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="pane-meta">{{ field.help_text }}</small>{% endif %}
+        {% for error in field.errors %}<p class="ds-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="ds-btn ds-btn--primary">Créer le pane</button>
+  </form>
+</div>

@@ -1,0 +1,13 @@
+# Redis uniquement. Django tourne SUR L'HÔTE : il doit spawner `claude`
+# avec les credentials de ~/.claude et voir tes repos locaux — le
+# conteneuriser casserait le cœur du projet (CDC §9).
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

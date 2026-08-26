@@ -1,0 +1,28 @@
+{% load static %}<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SpaceLabs — direct</title>
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/xterm/xterm.css' %}">
+  <link rel="stylesheet" href="{% static 'css/observer.css' %}">
+  <script defer src="{% static 'vendor/xterm/xterm.js' %}"></script>
+  <script defer src="{% static 'vendor/xterm/addon-fit.js' %}"></script>
+  <script defer src="{% static 'js/observer.js' %}"></script>
+</head>
+<body class="observer-body" data-grid-url="{% url 'observer:grid' %}" data-stream-url="{% url 'observer:stream' %}">
+  <header class="observer-topbar">
+    <span class="ds-brand-mark" aria-hidden="true">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12.6 7.4 9 12.6h2.6l-.6 4.4 3.6-5.2h-2.6z" fill="currentColor" stroke="none"/></svg>
+    </span>
+    <span class="observer-title">SpaceLabs</span>
+    <span class="observer-topbar-spacer"></span>
+    <span class="observer-count" data-observer-count hidden><b>0</b> agents</span>
+    <span class="observer-live-badge" id="live-badge" data-live="off">
+      <span class="ds-status-dot"></span><span data-live-label>hors direct</span>
+    </span>
+  </header>
+  <main id="observer-grid" class="observer-grid" aria-live="off"></main>
+</body>
+</html>

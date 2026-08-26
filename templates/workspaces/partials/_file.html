@@ -1,0 +1,15 @@
+<div class="mdview" id="file-view">
+  {% if path %}
+    <div class="mdview-head">
+      <span class="mdview-file">{{ path }}</span>
+      {% if truncated %}<span class="ds-badge ds-badge--warn">tronqué</span>{% endif %}
+    </div>
+  {% endif %}
+  {% if error %}
+    <p class="ds-error">{{ error }}</p>
+  {% elif content %}
+    <pre class="file-content">{{ content }}</pre>
+  {% else %}
+    <p class="board-empty">Choisis un fichier dans l'arborescence.</p>
+  {% endif %}
+</div>

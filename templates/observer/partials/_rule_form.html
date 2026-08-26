@@ -1,0 +1,14 @@
+<form class="regie-form" hx-post="{% url 'observer:rule_create' %}" hx-target="#rules-zone" hx-swap="innerHTML">
+  {% csrf_token %}
+  <div class="ds-field">
+    <label for="{{ form.pattern.id_for_label }}">Motif</label>
+    {{ form.pattern }}
+    {% for error in form.pattern.errors %}<p class="ds-error">{{ error }}</p>{% endfor %}
+  </div>
+  <div class="ds-field">
+    <label for="{{ form.replacement.id_for_label }}">Remplacement</label>
+    {{ form.replacement }}
+  </div>
+  <label class="regie-check">{{ form.is_regex }} Expression régulière</label>
+  <button type="submit" class="ds-btn ds-btn--primary">Ajouter la règle</button>
+</form>

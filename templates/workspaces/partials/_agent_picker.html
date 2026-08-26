@@ -1,0 +1,46 @@
+{% comment %}
+  Sélecteur d'agents (Sprint 2 revamp). Chaque carte disponible POSTe vers
+  pane_create avec les valeurs du preset (hx-vals) et ajoute le pane à #pane-grid.
+  La validation liste-blanche s'applique côté serveur ; les presets dont le
+  binaire n'est pas autorisé sont affichés désactivés, avec le binaire à ajouter.
+{% endcomment %}
+<div class="shell-modal-card ds-card" role="dialog" aria-modal="true" aria-label="Nouvel agent">
+  <div class="shell-modal-head">
+    <h1 class="ds-auth-title">Nouvel agent</h1>
+    <button type="button" class="chrome-toggle" data-modal-close aria-label="Fermer">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <p class="ds-auth-sub">Workspace « {{ workspace.name }} » — les agents démarrent dans {{ workspace.cwd }}</p>
+
+  <div class="agent-grid">
+    {% for preset, available, reason in presets %}
+      {% if available %}
+        <button type="button" class="agent-card" style="--agent-color: {{ preset.color }}"
+                hx-post="{% url 'workspaces:pane_create' slug=workspace.slug kind=preset.kind %}"
+                hx-vals='{"cmd": "{{ preset.cmd }}", "title": "{{ preset.label }}"}'
+                hx-target="#pane-grid" hx-swap="beforeend">
+          <span class="agent-ic">
+            {% if preset.icon == "message" %}
+              <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {% else %}
+              <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+            {% endif %}
+          </span>
+          <span class="agent-name">{{ preset.label }}</span>
+          <span class="agent-desc">{{ preset.description }}</span>
+        </button>
+      {% else %}
+        <div class="agent-card is-disabled" style="--agent-color: {{ preset.color }}"
+             title="{% if reason == 'unlisted' %}Binaire « {{ preset.cmd }} » hors liste blanche — ajoutez-le à la liste des commandes autorisées{% else %}Binaire « {{ preset.cmd }} » introuvable sur l'hôte{% endif %}">
+          <span class="agent-ic">
+            <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>
+          </span>
+          <span class="agent-name">{{ preset.label }}</span>
+          <span class="agent-desc">{% if reason == 'unlisted' %}Hors liste blanche{% else %}Introuvable sur l'hôte{% endif %}</span>
+          <span class="agent-lock">verrouillé</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>

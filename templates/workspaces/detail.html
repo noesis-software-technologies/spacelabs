@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ workspace.name }} — SpaceLabs{% endblock %}
+{% block topbar_title %}{{ workspace.name }} / panes{% endblock %}
+{% block content %}
+  {% include "workspaces/partials/_workspace_view.html" %}
+{% endblock %}

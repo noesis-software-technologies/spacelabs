@@ -1,0 +1,104 @@
+<div class="mission-view" id="mission-board">
+  <div class="mission-toolbar">
+    <span class="mission-goal" title="{{ mission.goal }}">{{ mission.goal }}</span>
+    <span class="ds-badge{% if mission.status == 'running' %} ds-badge--ok{% elif mission.status == 'failed' %} ds-badge--warn{% endif %}">{{ mission.get_status_display }}</span>
+    <span class="ds-badge">{{ mission.get_mode_display }}</span>
+    <span class="mission-meta">{{ mission.max_parallel }} en parallèle{% if mission.budget_usd %} · ${{ mission.spent_usd }}/${{ mission.budget_usd }}{% endif %}</span>
+    <span class="ds-topbar-spacer"></span>
+    <button type="button" class="ds-btn" hx-post="{% url 'tasker:mission_plan' pk=mission.pk %}"
+            hx-target="#mission-board" hx-swap="outerHTML"
+            hx-indicator="#plan-busy"
+            title="Claude découpe l'objectif en tâches. Le plan est proposé, pas lancé.">
+      Faire planifier
+    </button>
+    {% if mission.status == 'running' %}
+      <button type="button" class="ds-btn" hx-post="{% url 'tasker:mission_state' pk=mission.pk %}"
+              hx-vals='{"status": "paused"}' hx-target="#mission-board" hx-swap="outerHTML">Mettre en pause</button>
+    {% else %}
+      <button type="button" class="ds-btn ds-btn--primary" hx-post="{% url 'tasker:mission_state' pk=mission.pk %}"
+              hx-vals='{"status": "running"}' hx-target="#mission-board" hx-swap="outerHTML">Lancer la mission</button>
+    {% endif %}
+    <a class="ds-btn" href="{% url 'tasker:swarm' pk=mission.pk %}"
+       hx-get="{% url 'tasker:swarm' pk=mission.pk %}" hx-target="#content"
+       hx-swap="innerHTML" hx-push-url="true">Swarm</a>
+    <a class="ds-btn ds-btn--ghost" href="{% url 'tasker:missions' slug=mission.workspace.slug %}"
+       hx-get="{% url 'tasker:missions' slug=mission.workspace.slug %}"
+       hx-target="#content" hx-swap="innerHTML" hx-push-url="true">Missions</a>
+  </div>
+
+  {% if plan_error %}
+    <p class="ds-error mission-plan-error">Plan refusé — {{ plan_error }}</p>
+  {% endif %}
+  <div class="mission-capacity" data-idle="{% if not eligible %}true{% else %}false{% endif %}">
+    {% if eligible %}
+      <span class="ds-status-dot" data-status="running"></span>
+      <span><b>{{ eligible|length }}</b> agent{{ eligible|length|pluralize }} disponible{{ eligible|length|pluralize }} · <b>{{ slots }}</b> place{{ slots|pluralize }} libre{{ slots|pluralize }}</span>
+    {% else %}
+      <span class="ds-status-dot"></span>
+      <span>Aucun agent capable d'être orchestré. Démarre un <b>chat Claude</b> dans ce workspace : seul un agent qui sait signaler la fin d'une tâche peut recevoir une consigne automatique.</span>
+    {% endif %}
+  </div>
+
+  <div class="board" data-columns="{{ columns|length }}">
+    {% for col in columns %}
+      <section class="board-col" data-status="{{ col.key }}" data-col-drop="{{ col.key }}"
+               hx-post="{% url 'tasker:task_move' pk=mission.pk task_id=0 %}"
+               hx-target="#mission-board" hx-swap="outerHTML" hx-trigger="none">
+        <header class="board-col-head">
+          <span class="board-col-dot"></span>
+          <span>{{ col.label }}</span>
+          <span class="board-col-count">{{ col.tasks|length }}</span>
+        </header>
+        <div class="board-col-body">
+          {% for task in col.tasks %}
+            <article class="task-card" draggable="true" data-task-id="{{ task.pk }}"
+                     {% if task.attempts > 1 %}data-attempts="retry"{% endif %}>
+              <span class="task-key">{{ task.key }}</span>
+              <p class="task-title">{{ task.title }}</p>
+              <div class="task-foot">
+                {% with a=task.assignments.first %}
+                  {% if a %}
+                    <span class="task-agent"><span class="ds-agent-dot"></span>{{ a.pane.title }}</span>
+                  {% endif %}
+                {% endwith %}
+                {% if task.attempts > 1 %}<span class="task-retry">essai {{ task.attempts }}/{{ task.max_attempts }}</span>{% endif %}
+                {% if task.cost_usd %}<span class="task-cost">${{ task.cost_usd }}</span>{% endif %}
+              </div>
+              {% if task.depends_on.all %}
+                <div class="task-deps">après {% for d in task.depends_on.all %}{{ d.key }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+              {% endif %}
+            </article>
+          {% empty %}
+            <p class="board-empty">—</p>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  {% if blocked or failed %}
+    <div class="mission-aside">
+      {% if blocked %}
+        <div class="mission-aside-group" data-kind="blocked">
+          <p class="mission-aside-title">Bloquées — une dépendance a échoué</p>
+          {% for t in blocked %}<div class="mission-aside-item">{{ t.key }} · {{ t.title }}</div>{% endfor %}
+        </div>
+      {% endif %}
+      {% if failed %}
+        <div class="mission-aside-group" data-kind="failed">
+          <p class="mission-aside-title">Échouées — essais épuisés</p>
+          {% for t in failed %}<div class="mission-aside-item">{{ t.key }} · {{ t.title }}</div>{% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form class="mission-form" hx-post="{% url 'tasker:task_create' pk=mission.pk %}"
+        hx-target="#mission-board" hx-swap="outerHTML">
+    {% csrf_token %}
+    <div class="chat-input-row">
+      {{ task_form.key }}{{ task_form.title }}
+      <button type="submit" class="ds-btn ds-btn--primary">Ajouter</button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,19 @@
+<ul class="regie-rules">
+  {% for rule in rules %}
+    <li class="regie-rule" id="rule-{{ rule.pk }}" data-effect="hide">
+      <code class="regie-pattern">{{ rule.pattern }}</code>
+      <span class="pane-meta">→ {{ rule.replacement }}{% if rule.is_regex %} · regex{% endif %}</span>
+      <span class="ds-topbar-spacer"></span>
+      <span class="regie-effect">masqué</span>
+      <button type="button" class="ds-btn ds-btn--destructive ds-btn--icon"
+              hx-post="{% url 'observer:rule_delete' rule_id=rule.pk %}"
+              hx-target="#rule-{{ rule.pk }}" hx-swap="delete"
+              aria-label="Supprimer la règle">
+        <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </li>
+  {% empty %}
+    <li class="pane-meta">Aucune règle — ajoute les chaînes à masquer (tokens, noms de clients…).</li>
+  {% endfor %}
+</ul>
+{% include "observer/partials/_rule_form.html" %}

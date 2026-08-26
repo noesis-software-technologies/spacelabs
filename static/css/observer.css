@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Vue télé — lisible à 3 mètres, zéro contrôle.
+   Règle de la surface : tout est 1.4× à 2× la taille de l'app, aucune
+   action possible, aucun élément qui ne serve pas la lecture à distance.
+   La densité NE s'applique pas ici : on plafonne à 9 panes et on garde
+   de gros corps de texte. Un mur de 16 agents n'est pas lisible de loin.
+   ═══════════════════════════════════════════════════════════════════════ */
+.observer-body {
+  display: flex; flex-direction: column;
+  grid-template-columns: none; grid-template-areas: none;
+  height: 100vh; overflow: hidden;
+  /* la vue télé force son propre palier, quoi qu'ait choisi l'app */
+  --ds-pane-fs: 17px;
+  --ds-pane-lh: 1.5;
+  --ds-pane-head-fs: 15px;
+  --ds-pane-meta-fs: 13px;
+}
+.observer-topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; flex: none;
+  border-bottom: 1px solid hsl(var(--ds-border));
+  background: hsl(var(--ds-bg-raised));
+}
+.observer-title { font-family: var(--ds-font-display); font-size: 20px; font-weight: 700; }
+.observer-brand-mark {
+  width: 28px; height: 28px; border-radius: 8px; flex: none;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, hsl(var(--ds-accent)), hsl(var(--ds-accent-2)));
+  color: hsl(var(--ds-accent-contrast));
+}
+.observer-topbar-spacer { flex: 1; }
+.observer-live-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--ds-font-mono); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 4px 12px; border-radius: 999px; border: 1px solid hsl(var(--ds-border-strong));
+  color: hsl(var(--ds-text-muted));
+}
+.observer-live-badge[data-live="on"] {
+  border-color: hsl(var(--ds-accent));
+  background: hsl(var(--ds-accent) / 0.14);
+  color: hsl(var(--ds-text));
+}
+.observer-live-badge[data-live="on"] .ds-status-dot {
+  background: hsl(var(--ds-accent));
+  box-shadow: 0 0 8px hsl(var(--ds-accent) / 0.8);
+}
+/* Compteur d'agents actifs — l'info la plus lue de la vue télé */
+.observer-count {
+  font-family: var(--ds-font-mono); font-size: 15px; font-weight: 600;
+  color: hsl(var(--ds-text-muted));
+}
+.observer-count b { color: hsl(var(--ds-text)); }
+
+.observer-grid { flex: 1; min-height: 0; padding: 16px; }
+.observer-standby {
+  height: 100%; display: grid; place-items: center; text-align: center;
+  color: hsl(var(--ds-text-muted));
+}
+.observer-standby-title {
+  font-family: var(--ds-font-display); font-size: 42px; font-weight: 700;
+  color: hsl(var(--ds-text)); margin: 0 0 8px;
+}
+.observer-standby-hint { font-size: 17px; margin: 0; }
+
+.observer-panes { display: grid; gap: 16px; height: 100%; min-height: 0; }
+.observer-panes[data-count="1"] { grid-template-columns: 1fr; }
+.observer-panes[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.observer-panes[data-count="3"], .observer-panes[data-count="4"] { grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); }
+.observer-panes:not([data-count="1"]):not([data-count="2"]):not([data-count="3"]):not([data-count="4"]) {
+  grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(0, 1fr);
+}
+/* Au-delà de 9, on ne rétrécit plus : on pagine côté serveur et on
+   affiche les 9 plus actifs (cf. observer view). Lisibilité > exhaustivité. */
+.observer-panes[data-overflow="true"] { grid-template-columns: repeat(3, 1fr); }
+.observer-overflow-note {
+  flex: none; padding: 6px 20px 10px;
+  font-family: var(--ds-font-mono); font-size: 13px;
+  color: hsl(var(--ds-text-muted)); text-align: center;
+}
+
+.observer-pane {
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+  border-radius: var(--ds-radius-lg);
+  border: 1px solid hsl(var(--ds-border));
+  background: hsl(var(--ds-bg-inset));
+}
+/* Même signature que l'app : l'anneau respire quand ça travaille.
+   C'est ce qui rend la vue lisible d'un coup d'œil depuis le canapé. */
+.observer-pane[data-status="running"] {
+  border-color: hsl(var(--ds-accent) / 0.5);
+  animation: pane-breathe var(--ds-motion-glow) ease-in-out infinite;
+}
+.observer-pane[data-status="dead"] { border-color: hsl(var(--ds-danger) / 0.5); }
+@media (prefers-reduced-motion: reduce) {
+  .observer-pane[data-status="running"] {
+    animation: none; box-shadow: 0 0 0 1px hsl(var(--ds-accent) / 0.35);
+  }
+}
+.observer-pane-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; flex: none;
+  background: hsl(var(--ds-bg-raised));
+  border-bottom: 1px solid hsl(var(--ds-border));
+}
+.observer-pane-title {
+  font-family: var(--ds-font-mono); font-size: var(--ds-pane-head-fs); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.observer-pane-meta {
+  font-family: var(--ds-font-mono); font-size: var(--ds-pane-meta-fs);
+  color: hsl(var(--ds-text-muted)); margin-left: auto; flex: none;
+}
+.observer-pane-body { flex: 1; min-height: 0; padding: 10px; font-size: var(--ds-pane-fs); line-height: var(--ds-pane-lh); }
+.observer-pane-body .xterm { height: 100%; }
+.observer-pane-body .xterm .xterm-rows { font-size: var(--ds-pane-fs); line-height: var(--ds-pane-lh); }
+
+.observer-pane--private { display: grid; place-items: center; background: hsl(var(--ds-bg-raised)); }
+.observer-private { text-align: center; color: hsl(var(--ds-text-muted)); }
+.observer-private-label {
+  font-family: var(--ds-font-mono); font-size: 15px; letter-spacing: 0.06em;
+  text-transform: uppercase; margin: 10px 0 0;
+}
+
+/* Bandeau vocal — ce que Bridge vient d'entendre, en grand.
+   Sur la vue télé, la voix est le seul « contrôle » visible : le public
+   doit comprendre que l'humain a parlé et ce qui a été compris. */
+.observer-voice {
+  flex: none; display: flex; align-items: center; gap: 14px;
+  padding: 12px 20px;
+  border-top: 1px solid hsl(var(--ds-voice-line));
+  background: hsl(var(--ds-voice-bg));
+}
+.observer-voice[hidden] { display: none; }
+.observer-voice-dot {
+  width: 12px; height: 12px; border-radius: 50%; flex: none;
+  background: hsl(var(--ds-voice)); box-shadow: 0 0 12px hsl(var(--ds-voice) / 0.8);
+}
+.observer-voice[data-state="listening"] .observer-voice-dot {
+  background: hsl(var(--ds-ok)); box-shadow: 0 0 12px hsl(var(--ds-ok) / 0.8);
+  animation: ds-pulse 1.3s ease-in-out infinite;
+}
+.observer-voice-label {
+  font-family: var(--ds-font-mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase; color: hsl(var(--ds-voice-2)); flex: none;
+}
+.observer-voice-text { font-size: 19px; color: hsl(var(--ds-text)); min-width: 0; }
+.observer-voice[data-state="listening"] .observer-voice-text { color: hsl(var(--ds-text-muted)); font-style: italic; }
+
+/* Régie */
+.regie { display: grid; gap: 16px; max-width: 720px; }
+.regie-card { padding: 24px; }
+.regie-title { font-family: var(--ds-font-display); font-size: 20px; font-weight: 700; margin: 0 0 6px; }
+.regie-sub { margin: 0 0 18px; font-size: 14px; color: hsl(var(--ds-text-muted)); }
+.regie-rules { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
+.regie-rule {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--ds-border));
+  border-radius: var(--ds-radius-sm);
+}
+/* Une règle qui MASQUE est une garantie de confidentialité :
+   elle se lit en rouge, pas en gris. */
+.regie-rule[data-effect="hide"] {
+  border-color: hsl(var(--ds-danger) / 0.45);
+  background: hsl(var(--ds-danger) / 0.07);
+}
+.regie-rule[data-effect="show"] {
+  border-color: hsl(var(--ds-ok) / 0.45);
+  background: hsl(var(--ds-ok) / 0.07);
+}
+.regie-pattern { font-family: var(--ds-font-mono); font-size: 13px; }
+.regie-effect {
+  margin-left: auto; font-family: var(--ds-font-mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.06em; color: hsl(var(--ds-text-muted));
+}
+.regie-form { display: grid; gap: 4px; }
+.regie-check { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }

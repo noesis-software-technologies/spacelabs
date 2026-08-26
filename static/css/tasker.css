@@ -1,0 +1,185 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Master Tasker — board de mission (chargé via {% block page_css %})
+   Zéro couleur en dur : tout descend des tokens --ds-* du design system.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.mission-view { display: flex; flex-direction: column; gap: 14px; height: 100%; min-height: 0; }
+.mission-toolbar { display: flex; align-items: center; gap: 8px; flex: none; flex-wrap: wrap; }
+.mission-goal {
+  font-family: var(--ds-font-display); font-size: 17px; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46ch;
+}
+.mission-meta { font-family: var(--ds-font-mono); font-size: 11px; color: hsl(var(--ds-text-muted)); }
+
+/* Le board : une colonne par statut, hauteur pleine, scroll interne. */
+.board { flex: 1; min-height: 0; display: grid; gap: 12px; overflow: auto; }
+.board[data-columns="5"] { grid-template-columns: repeat(5, minmax(190px, 1fr)); }
+@media (max-width: 1100px) { .board[data-columns="5"] { grid-template-columns: repeat(2, 1fr); } }
+
+.board-col {
+  display: flex; flex-direction: column; min-height: 0;
+  background: hsl(var(--ds-bg-raised));
+  border: 1px solid hsl(var(--ds-border));
+  border-radius: var(--ds-radius-lg);
+}
+/* Cible de dépôt — même vocabulaire visuel que .pane[data-drop] */
+.board-col[data-over="true"] {
+  border-color: hsl(var(--ds-accent));
+  box-shadow: 0 0 0 1px hsl(var(--ds-accent)) inset;
+}
+.board-col-head {
+  display: flex; align-items: center; gap: 8px; flex: none;
+  padding: 10px 12px; border-bottom: 1px solid hsl(var(--ds-border));
+  font-size: 12px; font-weight: 650;
+}
+.board-col-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: hsl(var(--ds-text-faint)); }
+.board-col[data-status="ready"]   .board-col-dot { background: hsl(var(--ds-accent)); }
+.board-col[data-status="running"] .board-col-dot { background: hsl(var(--ds-ok)); box-shadow: 0 0 7px hsl(var(--ds-ok) / 0.8); }
+.board-col[data-status="review"]  .board-col-dot { background: hsl(var(--ds-warn)); }
+.board-col[data-status="done"]    .board-col-dot { background: hsl(var(--ds-ok)); }
+.board-col-count {
+  margin-left: auto; font-family: var(--ds-font-mono); font-size: 10px;
+  color: hsl(var(--ds-text-muted));
+  background: hsl(var(--ds-bg-inset)); border-radius: 999px; padding: 1px 7px;
+}
+.board-col-body {
+  flex: 1; min-height: 60px; overflow-y: auto;
+  padding: 8px; display: flex; flex-direction: column; gap: 8px;
+}
+
+.task-card {
+  background: hsl(var(--ds-bg-inset));
+  border: 1px solid hsl(var(--ds-border));
+  border-radius: var(--ds-radius); padding: 10px 11px;
+  cursor: grab; transition: border-color var(--ds-motion-tap) var(--ds-ease-out);
+}
+.task-card:hover { border-color: hsl(var(--ds-border-strong)); }
+.task-card:active { cursor: grabbing; }
+.task-card[data-dragging="true"] { opacity: 0.4; }
+.task-key {
+  font-family: var(--ds-font-mono); font-size: 10px; font-weight: 700;
+  color: hsl(var(--ds-accent)); letter-spacing: 0.04em;
+}
+.task-title { font-size: 12.5px; line-height: 1.4; margin: 4px 0 8px; }
+.task-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.task-agent {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--ds-font-mono); font-size: 9.5px; color: hsl(var(--ds-text-muted));
+}
+.task-cost { margin-left: auto; font-family: var(--ds-font-mono); font-size: 9.5px; color: hsl(var(--ds-text-faint)); }
+.task-deps {
+  font-family: var(--ds-font-mono); font-size: 9.5px; color: hsl(var(--ds-text-faint));
+  margin-top: 4px;
+}
+/* Une tâche qui a déjà raté doit se voir avant d'être relancée. */
+.task-card[data-attempts="retry"] { border-color: hsl(var(--ds-warn) / 0.5); }
+.task-retry { font-family: var(--ds-font-mono); font-size: 9.5px; color: hsl(var(--ds-warn)); }
+
+.board-empty {
+  font-size: 11.5px; color: hsl(var(--ds-text-faint));
+  text-align: center; padding: 14px 8px;
+}
+
+/* Tâches hors board : bloquées (dépendance échouée) et échouées. */
+.mission-aside { flex: none; display: flex; gap: 12px; flex-wrap: wrap; }
+.mission-aside-group {
+  flex: 1; min-width: 240px;
+  border: 1px solid hsl(var(--ds-border)); border-radius: var(--ds-radius);
+  padding: 10px 12px; background: hsl(var(--ds-bg-raised));
+}
+.mission-aside-group[data-kind="failed"] { border-color: hsl(var(--ds-danger) / 0.45); }
+.mission-aside-group[data-kind="blocked"] { border-color: hsl(var(--ds-warn) / 0.45); }
+.mission-aside-title {
+  font-family: var(--ds-font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: hsl(var(--ds-text-muted));
+  margin-bottom: 6px;
+}
+.mission-aside-item { font-size: 12px; padding: 3px 0; color: hsl(var(--ds-text-muted)); }
+
+/* Bandeau de capacité : combien d'agents peuvent recevoir une tâche. */
+.mission-capacity {
+  display: flex; align-items: center; gap: 10px; flex: none;
+  padding: 8px 12px; border-radius: var(--ds-radius);
+  border: 1px solid hsl(var(--ds-border)); background: hsl(var(--ds-bg-raised));
+  font-size: 12px; color: hsl(var(--ds-text-muted));
+}
+.mission-capacity[data-idle="true"] { border-color: hsl(var(--ds-warn) / 0.45); }
+.mission-capacity b { color: hsl(var(--ds-text)); }
+
+.mission-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border: 1px solid hsl(var(--ds-border));
+  border-radius: var(--ds-radius); margin-bottom: 8px;
+  background: hsl(var(--ds-bg-raised)); text-decoration: none; color: inherit;
+}
+.mission-row:hover { border-color: hsl(var(--ds-border-strong)); }
+.mission-row-goal { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mission-form { display: grid; gap: 10px; max-width: 560px; }
+
+/* Refus de plan — on dit pourquoi plutôt que de créer des tâches à moitié fausses. */
+.mission-plan-error {
+  flex: none; padding: 8px 12px; border-radius: var(--ds-radius);
+  border: 1px solid hsl(var(--ds-danger) / 0.45);
+  background: hsl(var(--ds-danger) / 0.08);
+}
+
+/* ═══ Swarm — le DAG de la mission, en lecture seule ══════════════════════ */
+.swarm-view { display: flex; flex-direction: column; gap: 14px; height: 100%; min-height: 0; }
+.swarm-canvas {
+  position: relative; flex: 1; min-height: 340px; overflow: hidden;
+  border: 1px solid hsl(var(--ds-border)); border-radius: var(--ds-radius-lg);
+  background:
+    radial-gradient(600px 380px at 50% 50%, hsl(var(--ds-accent) / 0.05), transparent 70%),
+    hsl(var(--ds-bg-inset));
+  background-image: radial-gradient(circle, hsl(var(--ds-border)) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+.swarm-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.swarm-edge {
+  fill: none; stroke: hsl(var(--ds-border-strong));
+  stroke-width: 1.4px; vector-effect: non-scaling-stroke; opacity: 0.75;
+}
+/* L'arête prend la couleur de sa CIBLE : on lit le flux dans le sens du travail. */
+.swarm-edge[data-to="active"] { stroke: hsl(var(--ds-accent)); opacity: 1; }
+.swarm-edge[data-to="done"]   { stroke: hsl(var(--ds-ok) / 0.8); }
+.swarm-edge[data-to="failed"] { stroke: hsl(var(--ds-danger) / 0.8); }
+
+.swarm-node {
+  position: absolute; transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 11px; white-space: nowrap;
+  border: 1.5px solid hsl(var(--ds-border-strong));
+  border-radius: var(--ds-radius); background: hsl(var(--ds-bg-raised));
+  box-shadow: var(--ds-shadow);
+}
+.swarm-node-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: hsl(var(--ds-text-faint)); }
+.swarm-node-key { font-family: var(--ds-font-mono); font-size: 10px; font-weight: 700; color: hsl(var(--ds-text-muted)); }
+.swarm-node-title { font-size: 11.5px; color: hsl(var(--ds-text)); }
+
+.swarm-node[data-state="active"] {
+  border-color: hsl(var(--ds-accent)); 
+  animation: pane-breathe var(--ds-motion-glow) ease-in-out infinite;
+}
+.swarm-node[data-state="active"] .swarm-node-dot { background: hsl(var(--ds-accent)); box-shadow: 0 0 8px hsl(var(--ds-accent)); }
+.swarm-node[data-state="done"] { border-color: hsl(var(--ds-ok) / 0.55); }
+.swarm-node[data-state="done"] .swarm-node-dot { background: hsl(var(--ds-ok)); }
+.swarm-node[data-state="review"] { border-color: hsl(var(--ds-warn) / 0.6); }
+.swarm-node[data-state="review"] .swarm-node-dot { background: hsl(var(--ds-warn)); }
+.swarm-node[data-state="failed"] { border-color: hsl(var(--ds-danger) / 0.6); }
+.swarm-node[data-state="failed"] .swarm-node-dot { background: hsl(var(--ds-danger)); }
+@media (prefers-reduced-motion: reduce) {
+  .swarm-node[data-state="active"] { animation: none; box-shadow: 0 0 0 1px hsl(var(--ds-accent) / 0.45); }
+}
+
+.swarm-legend {
+  flex: none; display: flex; gap: 14px; flex-wrap: wrap; margin: 0;
+  font-family: var(--ds-font-mono); font-size: 10px; color: hsl(var(--ds-text-faint));
+}
+.swarm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swarm-legend span::before {
+  content: ""; width: 7px; height: 7px; border-radius: 50%; background: hsl(var(--ds-text-faint));
+}
+.swarm-legend span[data-state="active"]::before { background: hsl(var(--ds-accent)); }
+.swarm-legend span[data-state="done"]::before   { background: hsl(var(--ds-ok)); }
+.swarm-legend span[data-state="review"]::before { background: hsl(var(--ds-warn)); }
+.swarm-legend span[data-state="failed"]::before { background: hsl(var(--ds-danger)); }

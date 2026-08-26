@@ -1,0 +1,35 @@
+<div class="mission-view" id="mission-list">
+  <div class="mission-toolbar">
+    <span class="mission-goal">Missions — {{ workspace.name }}</span>
+    <span class="ds-topbar-spacer"></span>
+    <a class="ds-btn ds-btn--ghost" href="{% url 'workspaces:detail' slug=workspace.slug %}"
+       hx-get="{% url 'workspaces:detail' slug=workspace.slug %}"
+       hx-target="#content" hx-swap="innerHTML" hx-push-url="true">Retour aux agents</a>
+  </div>
+
+  <div>
+    {% for m in missions %}
+      <a class="mission-row" href="{% url 'tasker:mission' pk=m.pk %}"
+         hx-get="{% url 'tasker:mission' pk=m.pk %}" hx-target="#content" hx-swap="innerHTML" hx-push-url="true">
+        <span class="ds-status-dot" data-status="{% if m.status == 'running' %}running{% elif m.status == 'failed' %}dead{% endif %}"></span>
+        <span class="mission-row-goal">{{ m.goal }}</span>
+        <span class="ds-badge">{{ m.tasks.count }} tâche{{ m.tasks.count|pluralize }}</span>
+        <span class="ds-badge">{{ m.get_status_display }}</span>
+      </a>
+    {% empty %}
+      <p class="board-empty">Aucune mission. Décris un objectif : le Tasker le découpera en tâches distribuées aux agents.</p>
+    {% endfor %}
+  </div>
+
+  <form class="mission-form" method="post" action="{% url 'tasker:mission_create' slug=workspace.slug %}">
+    {% csrf_token %}
+    {% for field in form %}
+      <div class="ds-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}<p class="ds-error">{{ error }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="ds-btn ds-btn--primary">Créer la mission</button>
+  </form>
+</div>

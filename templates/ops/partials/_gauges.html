@@ -1,0 +1,41 @@
+<div class="ds-gauges">
+  <div class="ds-gauge">
+    <div class="ds-gauge-head">
+      <span class="ds-gauge-label">Agents en cours</span>
+      <span class="ds-gauge-value">{{ usage.active_panes }}<span class="ds-gauge-max">/{{ usage.max_panes }}</span></span>
+    </div>
+    <div class="ds-gauge-bar" role="progressbar" aria-valuenow="{{ panes_pct }}" aria-valuemin="0" aria-valuemax="100">
+      <span class="ds-gauge-fill" data-level="{{ panes_level }}" style="width: {{ panes_pct }}%"></span>
+    </div>
+  </div>
+
+  <div class="ds-gauge-row">
+    <div class="ds-metric">
+      <span class="ds-metric-value">${{ usage.cost_usd_today }}</span>
+      <span class="ds-metric-label">coût du jour</span>
+    </div>
+    <div class="ds-metric">
+      <span class="ds-metric-value">{{ usage.turns_today }}</span>
+      <span class="ds-metric-label">tours du jour</span>
+    </div>
+  </div>
+
+  {% if external %}
+    <div class="ds-gauge-ext">
+      {% for key, val in external.items %}
+        <div class="ds-metric ds-metric--sm"><span class="ds-metric-value">{{ val }}</span><span class="ds-metric-label">{{ key }}</span></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if mcp_alerts %}
+    <a class="ds-gauge-alert" href="#" title="Des serveurs MCP demandent une ré-authentification">
+      <span class="ds-status-dot" data-status="running"></span>
+      {{ mcp_alerts }} alerte{{ mcp_alerts|pluralize }} MCP · lance /mcp
+    </a>
+  {% endif %}
+
+  <div class="ds-gauge-foot">
+    {% if last_snapshot %}màj {{ last_snapshot.taken_at|time:"H:i" }}{% else %}en attente du 1er instantané{% endif %}
+  </div>
+</div>

@@ -1,0 +1,34 @@
+{% if not live or not items %}
+  <div class="observer-standby">
+    <p class="observer-standby-title">En attente du direct</p>
+    <p class="observer-standby-hint">La diffusion démarrera quand l'opérateur passera en mode live.</p>
+  </div>
+{% else %}
+  <div class="observer-panes" data-count="{{ items|length }}">
+    {% for item in items %}
+      {% if item.kind == "public" %}
+        <section class="observer-pane" data-pane-id="{{ item.id }}" data-status="{{ item.status }}">
+          <header class="observer-pane-head">
+            <span class="ds-status-dot" data-status="{{ item.status }}"></span>
+            <span class="observer-pane-title">{{ item.label }}</span>
+          </header>
+          {% if item.pane_kind == "headless" %}
+            <div class="observer-chat" data-observer-chat data-pane-id="{{ item.id }}"></div>
+          {% else %}
+            <div class="observer-pane-body" data-observer-host data-pane-id="{{ item.id }}"></div>
+          {% endif %}
+        </section>
+      {% else %}
+        <section class="observer-pane observer-pane--private" data-pane-id="{{ item.id }}" data-status="{{ item.status }}">
+          <div class="observer-private">
+            <span class="ds-status-dot" data-status="{{ item.status }}"></span>
+            <p class="observer-private-label">Session privée</p>
+          </div>
+        </section>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+{% if hidden_count %}
+  <p class="observer-overflow-note">+ {{ hidden_count }} agent{{ hidden_count|pluralize }} non affiché{{ hidden_count|pluralize }} — la vue télé plafonne à 9 tuiles pour rester lisible.</p>
+{% endif %}

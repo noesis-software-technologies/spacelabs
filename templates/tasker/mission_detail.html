@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mission — SpaceLabs{% endblock %}
+{% block topbar_title %}mission / board{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/tasker.css' %}">{% endblock %}
+{% block page_js %}<script defer src="{% static 'js/board.js' %}"></script>{% endblock %}
+{% block content %}{% include "tasker/partials/_board.html" %}{% endblock %}

@@ -1,0 +1,43 @@
+<div class="swarm-view" id="swarm-view"
+     hx-get="{% url 'tasker:swarm' pk=mission.pk %}" hx-trigger="every 4s"
+     hx-target="#swarm-view" hx-swap="outerHTML">
+  <div class="mission-toolbar">
+    <span class="mission-goal" title="{{ mission.goal }}">{{ mission.goal }}</span>
+    <span class="ds-badge{% if mission.status == 'running' %} ds-badge--ok{% endif %}">{{ mission.get_status_display }}</span>
+    <span class="mission-meta">{{ done }}/{{ total }} tâches · {{ graph.levels }} niveau{{ graph.levels|pluralize:"x" }} de dépendance</span>
+    <span class="ds-topbar-spacer"></span>
+    <a class="ds-btn ds-btn--ghost" href="{% url 'tasker:mission' pk=mission.pk %}"
+       hx-get="{% url 'tasker:mission' pk=mission.pk %}" hx-target="#content"
+       hx-swap="innerHTML" hx-push-url="true">Board</a>
+  </div>
+
+  {% if graph.too_large %}
+    <p class="board-empty">Mission trop vaste pour un graphe lisible — utilise le board.</p>
+  {% elif not graph.nodes %}
+    <p class="board-empty">Aucune tâche. Fais planifier la mission depuis le board.</p>
+  {% else %}
+    <div class="swarm-canvas">
+      <svg class="swarm-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        {% for p in paths %}
+          <path class="swarm-edge" data-to="{{ p.to }}" d="{{ p.d }}" />
+        {% endfor %}
+      </svg>
+      {% for node in graph.nodes %}
+        <span class="swarm-node" data-state="{{ node.state }}"
+              style="{{ node.style }}"
+              title="{{ node.title }}">
+          <span class="swarm-node-dot"></span>
+          <span class="swarm-node-key">{{ node.key }}</span>
+          <span class="swarm-node-title">{{ node.title|truncatechars:28 }}</span>
+        </span>
+      {% endfor %}
+    </div>
+    <p class="swarm-legend">
+      <span data-state="idle">en attente</span>
+      <span data-state="active">en cours</span>
+      <span data-state="review">à relire</span>
+      <span data-state="done">terminée</span>
+      <span data-state="failed">échouée / bloquée</span>
+    </p>
+  {% endif %}
+</div>

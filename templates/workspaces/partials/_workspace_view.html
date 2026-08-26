@@ -1,0 +1,127 @@
+{% comment %}
+  Écran recomposé (Sprint 0, Option A) — frame persistant en colonne :
+  en-tête (.workspace-toolbar) / scène (#stage) / barre de statut. Le dock
+  (_bridge.html) est un side panel coulissant. AUCUNE action interne au workspace ne
+  cible #content : créer un pane l'ajoute à #pane-grid, jamais ne remplace tout.
+  La classe .workspace-toolbar est le contrat de la vue partielle (cf tests).
+{% endcomment %}
+<div class="workspace-view" data-density="cozy" data-max-panes="{{ workspace_limit }}">
+
+  <div class="workspace-toolbar">
+    <!-- Groupe gauche : toggles de panneaux + crumb + sélecteur de mode -->
+    <button type="button" class="chrome-toggle" data-rail-toggle aria-pressed="false"
+            aria-label="Afficher / masquer les workspaces" title="Workspaces (⌘B)">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+    </button>
+
+    <span class="ws-crumb"><b>{{ workspace.name }}</b><span class="sep">›</span><span data-crumb-mode>terminals</span></span>
+
+    <span class="mode-switch" role="group" aria-label="Mode d'affichage">
+      <button type="button" class="mode-b" data-mode="terminals" aria-pressed="true" title="Terminals">
+        <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg>Terminals
+      </button>
+      <a class="mode-b" data-mode="board" href="{% url 'tasker:missions' slug=workspace.slug %}"
+         hx-get="{% url 'tasker:missions' slug=workspace.slug %}" hx-target="#content" hx-swap="innerHTML" hx-push-url="true" title="Board">
+        <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 7v7"/><path d="M12 7v4"/><path d="M16 7v9"/></svg>Board
+      </a>
+      <a class="mode-b" data-mode="swarm" href="{% url 'tasker:missions' slug=workspace.slug %}"
+         hx-get="{% url 'tasker:missions' slug=workspace.slug %}" hx-target="#content" hx-swap="innerHTML" hx-push-url="true" title="Swarm">
+        <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4.5" r="2.5"/><path d="m10.2 6.3-3.9 3.9"/><circle cx="4.5" cy="12" r="2.5"/><path d="M7 12h10"/><circle cx="19.5" cy="12" r="2.5"/><path d="m13.8 17.7 3.9-3.9"/><circle cx="12" cy="19.5" r="2.5"/></svg>Swarm
+      </a>
+      <button type="button" class="mode-b" data-mode="memory" disabled
+              title="Mémoire — surface prévue au prochain sprint">
+        <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/></svg>Memory
+      </button>
+    </span>
+
+    <span class="ds-topbar-spacer"></span>
+
+    <!-- Groupe droit : jauges + densité + colonnes + actions -->
+    <span class="ds-badge ds-badge--accent" title="Agents configurés dans ce workspace">{{ panes|length }} agent{{ panes|length|pluralize }}</span>
+    <span class="ds-badge{% if running_count >= workspace_limit %} ds-badge--warn{% elif running_count %} ds-badge--ok{% endif %}"
+          data-running-badge title="Agents en cours / plafond de ce workspace">{{ running_count }}/{{ workspace_limit }} en cours</span>
+
+    <span class="ds-seg" role="group" aria-label="Densité d'affichage">
+      <span class="ds-seg-label" aria-hidden="true">densité</span>
+      {% for d in densities %}
+        <button type="button" data-density-set="{{ d.key }}" aria-pressed="{% if d.key == 'cozy' %}true{% else %}false{% endif %}"
+                title="{{ d.hint }}">{{ d.short }}</button>
+      {% endfor %}
+    </span>
+
+    <span class="ds-seg" role="group" aria-label="Colonnes de la grille">
+      <span class="ds-seg-label" aria-hidden="true">col.</span>
+      {% for c in column_choices %}
+        <button type="button" data-cols-set="{{ c }}" aria-pressed="{% if c == 'auto' %}true{% else %}false{% endif %}"
+                title="{% if c == 'auto' %}Colonnes automatiques selon le nombre d'agents{% else %}Forcer {{ c }} colonnes{% endif %}">{% if c == 'auto' %}A{% else %}{{ c }}{% endif %}</button>
+      {% endfor %}
+    </span>
+
+    <button type="button" class="ds-btn" data-live-toggle data-live="{% if observer_live %}1{% else %}0{% endif %}">
+      <span class="ds-status-dot" data-status="{% if observer_live %}running{% else %}idle{% endif %}"></span>
+      <span data-live-toggle-label>{% if observer_live %}En direct{% else %}Hors direct{% endif %}</span>
+    </button>
+    <button type="button" class="ds-btn ds-btn--destructive" data-panic
+            title="Coupe le direct et repasse TOUS les panes en privé, immédiatement.">Panique</button>
+    <a class="ds-btn ds-btn--ghost" href="{% url 'observer:regie' %}"
+       hx-get="{% url 'observer:regie' %}" hx-target="#content" hx-swap="innerHTML" hx-push-url="true">Régie</a>
+    <button type="button" class="ds-btn" data-spawn-all>
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Tout lancer
+    </button>
+    <button type="button" class="ds-btn ds-btn--primary" data-agent-new
+            hx-get="{% url 'workspaces:agent_picker' slug=workspace.slug %}"
+            hx-target="#modal" hx-swap="innerHTML">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nouvel agent
+    </button>
+    <a class="ds-btn ds-btn--ghost"
+       href="{% url 'workspaces:update' slug=workspace.slug %}"
+       hx-get="{% url 'workspaces:update' slug=workspace.slug %}"
+       hx-target="#modal" hx-swap="innerHTML" aria-label="Renommer le workspace">Renommer</a>
+    <a class="ds-btn ds-btn--destructive"
+       href="{% url 'workspaces:delete' slug=workspace.slug %}"
+       hx-get="{% url 'workspaces:delete' slug=workspace.slug %}"
+       hx-target="#modal" hx-swap="innerHTML">Supprimer</a>
+
+    <button type="button" class="chrome-toggle" data-palette-open
+            aria-label="Palette de commandes" title="Commandes (⌘K)">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+    <button type="button" class="chrome-toggle" data-dock-toggle aria-pressed="true"
+            aria-label="Afficher / masquer le panneau" title="Panneau">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg>
+    </button>
+  </div>
+
+  <div class="workspace-body">
+    <div class="workspace-stage" id="stage" data-mode="terminals">
+      <div class="pane-grid" id="pane-grid" data-count="{{ panes|length }}" data-cols="auto">
+        {% for pane, entry, mcp_alert_id in panes %}
+          {% include entry.partial with pane=pane workspace=workspace entry=entry mcp_alert_id=mcp_alert_id %}
+        {% empty %}
+          <div class="pane-empty" id="pane-grid-empty">
+            <div>
+              <p class="pane-empty-title">Aucune tâche en cours</p>
+              <p class="pane-empty-hint">Lance un agent (Claude, Codex, Cursor…) dans <span class="pane-empty-kbd">{{ workspace.cwd }}</span></p>
+              <div class="pane-empty-actions">
+                <button type="button" class="ds-btn ds-btn--primary" data-agent-new
+                        hx-get="{% url 'workspaces:agent_picker' slug=workspace.slug %}"
+                        hx-target="#modal" hx-swap="innerHTML">Nouvel agent</button>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% include "workspaces/partials/_bridge.html" %}
+  </div>
+
+  <div class="workspace-statusbar" aria-hidden="false">
+    <span class="sb sb--ok">{{ workspace.name }}</span>
+    <span class="sb" data-sb-panes>{{ panes|length }}/{{ workspace_limit }} panes · cozy</span>
+    <span class="sb-spacer"></span>
+    <span class="sb-kbds"><kbd>⌘B</kbd><kbd>⌘\</kbd></span>
+  </div>
+</div>

@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Swarm — SpaceLabs{% endblock %}
+{% block topbar_title %}mission / swarm{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/tasker.css' %}">{% endblock %}
+{% block content %}{% include "tasker/partials/_swarm.html" %}{% endblock %}

@@ -1,0 +1,341 @@
+/* ============================================================================
+   shell.css — Recomposition du cockpit mono-écran (Sprint 0, Option A).
+
+   Ce fichier NE redéfinit PAS les composants déjà stylés (pane, bridge, board,
+   swarm, boutons ds-*) : il pose la *composition* voulue par la maquette v2 —
+   le frame persistant, la région de scène (#stage), les panneaux qui slident,
+   la barre de statut, le sélecteur de mode, l'overlay modal — en s'appuyant sur
+   les mêmes tokens --ds-* (BRAND.md fait autorité). Chargé APRÈS design-system,
+   terminal et tasker : il compose, il n'écrase pas les couleurs.
+
+   La maquette lit une couche d'alias courts (--bg, --orange, --claude…) qui ne
+   portent aucune valeur propre : tout redescend des --ds-*. On la reprend ici
+   à l'identique pour que les idiomes portés de la démo résolvent sans divergence.
+   ========================================================================== */
+
+:root {
+  /* Alias hérités de la maquette → tokens --ds-* (aucune valeur propre). */
+  --bg: hsl(var(--ds-bg-inset));
+  --bg-1: hsl(var(--ds-bg));
+  --panel: hsl(var(--ds-bg-raised));
+  --surface: color-mix(in srgb, hsl(var(--ds-bg-raised)) 68%, hsl(var(--ds-border)));
+  --hover: color-mix(in srgb, hsl(var(--ds-bg-raised)) 20%, hsl(var(--ds-border)));
+  --border: hsl(var(--ds-border));
+  --border-2: hsl(var(--ds-border-strong));
+  --text: hsl(var(--ds-text));
+  --text-2: hsl(var(--ds-text-muted));
+  --text-3: hsl(var(--ds-text-faint));
+  --text-4: color-mix(in srgb, hsl(var(--ds-text-faint)) 72%, transparent);
+  --orange: hsl(var(--ds-accent));
+  --orange-2: hsl(var(--ds-accent-2));
+  --green: hsl(var(--ds-ok));
+  --gold: hsl(var(--ds-warn));
+  --red: hsl(var(--ds-danger));
+  --blue: hsl(var(--ds-voice));
+  --claude: hsl(var(--ds-agent-claude));
+  --mono: var(--ds-font-mono);
+  --sans: var(--ds-font-sans);
+}
+
+/* ── Le frame du cockpit : colonne toolbar / scène / statut ────────────────
+   Vit dans #content (base.html garde la sidebar + navbar globales). C'est LUI
+   le frame persistant relatif aux swaps de mode : seul #stage change. */
+.workspace-view {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* La toolbar devient l'EN-TÊTE du cockpit (crumb + modes + densité + actions). */
+.workspace-toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Fil d'Ariane workspace › mode. */
+.ws-crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.ws-crumb b { color: var(--text); font-weight: 600; }
+.ws-crumb .sep { color: var(--text-4); }
+
+/* Sélecteur de mode (terminals | board | swarm | memory). */
+.mode-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border-radius: var(--ds-radius);
+}
+.mode-switch .mode-b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: color var(--ds-motion-tap), background var(--ds-motion-tap);
+}
+.mode-switch .mode-b:hover { color: var(--text); background: var(--hover); }
+.mode-switch .mode-b[aria-pressed="true"] {
+  color: hsl(var(--ds-accent-contrast));
+  background: var(--orange);
+}
+.mode-switch .mode-b .ds-icon { width: 15px; height: 15px; }
+
+/* ── Corps : scène (gauche, extensible) + dock (droite, coulissant) ───────── */
+.workspace-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+/* La scène : région swappable. Le mode terminals y met #pane-grid. */
+.workspace-stage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Dock coulissant (side panel droit) ──────────────────────────────────── */
+.dock {
+  flex: 0 0 var(--ds-dock-w);
+  width: var(--ds-dock-w);
+  transition: margin-right var(--ds-motion-card) var(--ds-ease-out);
+}
+.dock[data-open="false"] { margin-right: calc(-1 * var(--ds-dock-w)); }
+
+/* ── Barre de statut (bas du cockpit) ────────────────────────────────────── */
+.workspace-statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text-4);
+}
+.workspace-statusbar .sb { display: inline-flex; align-items: center; gap: 5px; }
+.workspace-statusbar .sb--ok { color: var(--text-3); }
+.workspace-statusbar .sb-spacer { flex: 1; }
+.workspace-statusbar .sb-kbds { display: inline-flex; gap: 5px; }
+.workspace-statusbar .sb-kbds kbd {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+/* ── Panneaux coulissants globaux (sidebar gauche) ───────────────────────────
+   Le shell global est une grille (sidebar | topbar / content) à colonne fixe :
+   pour « slider » la sidebar et rendre l'espace au contenu, on collapse la
+   colonne, pas une marge (une marge laisserait un trou). */
+body { transition: grid-template-columns var(--ds-motion-card) var(--ds-ease-out); }
+body.rail-collapsed { grid-template-columns: 0 1fr; }
+body.rail-collapsed .ds-sidebar { overflow: hidden; pointer-events: none; }
+
+/* ── Overlay modal (formulaires de pane, etc.) — ne remplace JAMAIS #content ── */
+.shell-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: hsl(var(--ds-bg-inset) / .66);
+  backdrop-filter: blur(2px);
+}
+.shell-modal:empty { display: none; }
+.shell-modal > * {
+  animation: shell-pop var(--ds-motion-card) var(--ds-ease-out);
+}
+@keyframes shell-pop {
+  from { opacity: 0; transform: translateY(6px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-modal > * { animation: none; }
+  .dock, .ds-sidebar, body.rail-collapsed .ds-sidebar { transition: none; }
+}
+
+/* Bouton icône du chrome (toggles de panneaux) — repris de l'idiome maquette. */
+.chrome-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: color var(--ds-motion-tap), background var(--ds-motion-tap);
+}
+.chrome-toggle:hover { color: var(--text); background: var(--hover); }
+.chrome-toggle[aria-pressed="true"] { color: var(--orange); }
+
+/* ── Carte de la modale (formulaire dans l'overlay #modal) ────────────────── */
+.shell-modal-card { width: min(440px, 100%); max-height: 100%; overflow: auto; }
+.shell-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.shell-modal-head .ds-auth-title { margin: 0; }
+
+/* ── Command palette ⌘K (Sprint 1 revamp) — portée de la maquette v2 ────────
+   Overlay ancré en haut ; lit les alias → --ds-*. La liste est peuplée par
+   palette.js à partir des contrôles réellement présents (aucune logique
+   dupliquée : chaque commande déclenche un contrôle existant du cockpit). */
+.shell-palette {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: none;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh 24px 24px;
+  background: hsl(var(--ds-bg-inset) / .66);
+  backdrop-filter: blur(2px);
+}
+.shell-palette.is-open { display: flex; }
+.pal {
+  width: min(580px, 92%);
+  background: var(--panel);
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  box-shadow: var(--ds-shadow-lg);
+  overflow: hidden;
+  animation: shell-pop var(--ds-motion-card) var(--ds-ease-out);
+}
+.pal-in {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.pal-in .ds-icon { width: 18px; height: 18px; color: var(--text-3); flex-shrink: 0; }
+.pal-in input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+.pal-in input::placeholder { color: var(--text-4); }
+.pal-esc {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.pal-list { max-height: 330px; overflow-y: auto; padding: 6px; scrollbar-width: thin; }
+.pal-i {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.pal-i.on { background: var(--surface); color: var(--text); }
+.pal-i .ki {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-4);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+.pal-ic {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.pal-ic .ds-icon { width: 15px; height: 15px; }
+.pal-empty { padding: 22px; text-align: center; color: var(--text-4); font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .pal { animation: none; } }
+
+/* ── Sélecteur d'agents (Sprint 2 revamp) — cartes de presets ──────────────── */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+.agent-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--ds-radius);
+  cursor: pointer;
+  transition: border-color var(--ds-motion-tap), background var(--ds-motion-tap), transform var(--ds-motion-tap);
+}
+.agent-card:hover { border-color: var(--agent-color); background: var(--hover); transform: translateY(-1px); }
+.agent-ic {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 9px;
+  color: var(--agent-color);
+  background: color-mix(in srgb, var(--agent-color) 15%, transparent);
+}
+.agent-ic .ds-icon { width: 18px; height: 18px; }
+.agent-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.agent-desc { font-size: 11px; color: var(--text-3); line-height: 1.35; }
+.agent-card.is-disabled { cursor: not-allowed; opacity: .55; filter: grayscale(.4); }
+.agent-card.is-disabled:hover { border-color: var(--border); background: var(--surface); transform: none; }
+.agent-lock {
+  font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-4); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px;
+}
+@media (prefers-reduced-motion: reduce) { .agent-card:hover { transform: none; } }

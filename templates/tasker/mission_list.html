@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Missions — SpaceLabs{% endblock %}
+{% block topbar_title %}missions{% endblock %}
+{% block page_css %}<link rel="stylesheet" href="{% static 'css/tasker.css' %}">{% endblock %}
+{% block content %}{% include "tasker/partials/_mission_list.html" %}{% endblock %}

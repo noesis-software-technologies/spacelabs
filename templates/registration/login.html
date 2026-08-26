@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Connexion — SpaceLabs{% endblock %}
+{% block topbar_title %}connexion{% endblock %}
+{% block content %}
+<div class="ds-auth">
+  <div class="ds-card ds-auth-card">
+    <h1 class="ds-auth-title">Prendre les commandes</h1>
+    <p class="ds-auth-sub">SpaceLabs pilote des agents Claude Code sur cette machine — identifie-toi.</p>
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <p class="ds-error">{{ form.non_field_errors.0 }}</p>
+      {% endif %}
+      <div class="ds-field">
+        <label for="{{ form.username.id_for_label }}">Utilisateur</label>
+        <input class="ds-input" type="text" name="{{ form.username.html_name }}"
+               id="{{ form.username.id_for_label }}" autocomplete="username" autofocus required>
+      </div>
+      <div class="ds-field">
+        <label for="{{ form.password.id_for_label }}">Mot de passe</label>
+        <input class="ds-input" type="password" name="{{ form.password.html_name }}"
+               id="{{ form.password.id_for_label }}" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="ds-btn ds-btn--primary">Ouvrir SpaceLabs</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

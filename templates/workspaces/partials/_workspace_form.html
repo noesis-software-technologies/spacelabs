@@ -1,0 +1,20 @@
+<div class="ds-auth">
+  <div class="ds-card ds-auth-card">
+    <h1 class="ds-auth-title">{{ title }}</h1>
+    <form method="post"
+          hx-post="{{ post_url }}"
+          hx-target="#content" hx-swap="innerHTML"
+          action="{{ post_url }}">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="ds-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small class="pane-meta">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<p class="ds-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endfor %}
+      <button type="submit" class="ds-btn ds-btn--primary">Enregistrer</button>
+    </form>
+  </div>
+</div>

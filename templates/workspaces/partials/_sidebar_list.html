@@ -1,0 +1,30 @@
+<ul class="ds-sidebar-list" id="sidebar-workspaces"
+    hx-get="{% url 'workspaces:sidebar' %}" hx-trigger="workspacesChanged from:body"
+    hx-swap="outerHTML">
+  {% for ws in workspaces %}
+    <li>
+      <a class="ds-sidebar-item" {% if ws.slug == current_slug %}aria-current="true"{% endif %}
+         href="{% url 'workspaces:detail' slug=ws.slug %}"
+         hx-get="{% url 'workspaces:detail' slug=ws.slug %}"
+         hx-target="#content" hx-swap="innerHTML" hx-push-url="true">
+        <span class="ds-workspace-dot" aria-hidden="true"></span>
+        <span>{{ ws.name }}</span>
+        <span class="ds-topbar-spacer"></span>
+        {% if ws.running_count %}
+          <span class="ds-badge ds-badge--ok"
+                title="{{ ws.running_count }} agent{{ ws.running_count|pluralize }} en cours">{{ ws.running_count }}</span>
+        {% elif ws.pane_count %}
+          <span class="ds-badge" title="{{ ws.pane_count }} agent{{ ws.pane_count|pluralize }} au repos">{{ ws.pane_count }}</span>
+        {% endif %}
+      </a>
+    </li>
+  {% endfor %}
+  <li>
+    <a class="ds-sidebar-item" href="{% url 'workspaces:create' %}"
+       hx-get="{% url 'workspaces:create' %}"
+       hx-target="#content" hx-swap="innerHTML" hx-push-url="true">
+      <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Nouveau workspace</span>
+    </a>
+  </li>
+</ul>

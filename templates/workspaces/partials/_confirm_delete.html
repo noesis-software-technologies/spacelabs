@@ -1,0 +1,15 @@
+<div class="ds-auth">
+  <div class="ds-card ds-auth-card">
+    <h1 class="ds-auth-title">Supprimer « {{ workspace.name }} » ?</h1>
+    <p class="ds-auth-sub">Les {{ workspace.panes.count }} pane{{ workspace.panes.count|pluralize }} et leurs sessions seront terminés. Cette action est définitive.</p>
+    <form method="post"
+          hx-post="{% url 'workspaces:delete' slug=workspace.slug %}"
+          action="{% url 'workspaces:delete' slug=workspace.slug %}">
+      {% csrf_token %}
+      <button type="submit" class="ds-btn ds-btn--destructive">Supprimer définitivement</button>
+      <a class="ds-btn ds-btn--ghost" href="{% url 'workspaces:detail' slug=workspace.slug %}"
+         hx-get="{% url 'workspaces:detail' slug=workspace.slug %}"
+         hx-target="#content" hx-swap="innerHTML" hx-push-url="true">Annuler</a>
+    </form>
+  </div>
+</div>

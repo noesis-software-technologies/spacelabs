@@ -1,0 +1,93 @@
+{% load static workspaces_tags %}<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SpaceLabs{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <link rel="stylesheet" href="{% static 'css/terminal.css' %}">
+  <link rel="stylesheet" href="{% static 'css/shell.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/xterm/xterm.css' %}">
+  {% block page_css %}{% endblock %}
+  <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script defer src="{% static 'vendor/xterm/xterm.js' %}"></script>
+  <script defer src="{% static 'vendor/xterm/addon-fit.js' %}"></script>
+  <script defer src="{% static 'js/shell.js' %}"></script>
+  <script defer src="{% static 'js/shortcuts.js' %}"></script>
+  <script defer src="{% static 'js/voice.js' %}"></script>
+  <script defer src="{% static 'js/resume.js' %}"></script>
+  <script defer src="{% static 'js/panes.js' %}"></script>
+  <script defer src="{% static 'js/chat.js' %}"></script>
+  <script defer src="{% static 'js/grid.js' %}"></script>
+  <script defer src="{% static 'js/bridge.js' %}"></script>
+  <script defer src="{% static 'js/dock.js' %}"></script>
+  <script defer src="{% static 'js/cockpit-shell.js' %}"></script>
+  <script defer src="{% static 'js/palette.js' %}"></script>
+  {% block page_js %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      data-resume-on-boot="{% if resume_on_boot %}1{% else %}0{% endif %}"
+      data-stt-backend="{{ stt_backend }}"
+      data-transcribe-url="{% url 'voice:transcribe' %}">
+  <aside class="ds-sidebar">
+    <div class="ds-brand">
+      <span class="ds-brand-mark" aria-hidden="true">
+        <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M12.6 7.4 9 12.6h2.6l-.6 4.4 3.6-5.2h-2.6z" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="ds-brand-name">SpaceLabs</span>
+    </div>
+    <div class="ds-sidebar-section">
+      <span>Workspaces</span>
+    </div>
+    {% workspaces_sidebar %}
+    {% if user.is_authenticated %}
+      <div class="ds-sidebar-section"><span>Usage</span></div>
+      <div class="ds-sidebar-gauges"
+           hx-get="{% url 'ops:gauges' %}" hx-trigger="load, every 30s" hx-swap="innerHTML">
+      </div>
+    {% endif %}
+    <div class="ds-sidebar-foot">
+      <span id="ws-state" class="term-connection" data-state="closed">
+        <span class="ds-status-dot"></span>
+        <span data-ws-label>hors ligne</span>
+      </span>
+    </div>
+  </aside>
+
+  <header class="ds-topbar">
+    <span class="ds-topbar-title">{% block topbar_title %}SpaceLabs{% endblock %}</span>
+    <span class="ds-topbar-spacer"></span>
+    <button type="button" class="ds-btn ds-btn--ghost ds-btn--icon" data-theme-toggle
+            aria-label="Basculer le thème clair/sombre">
+      <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+    {% if user.is_authenticated %}
+      <span class="ds-badge">{{ user.username }}</span>
+      <form method="post" action="{% url 'comptes:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="ds-btn ds-btn--ghost">Se déconnecter</button>
+      </form>
+    {% endif %}
+  </header>
+
+  <main id="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div id="palette" class="shell-palette" role="dialog" aria-modal="true" aria-label="Palette de commandes">
+    <div class="pal">
+      <div class="pal-in">
+        <svg class="ds-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="palette-input" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Lancer une commande, changer de vue, ouvrir un agent…" aria-label="Rechercher une commande">
+        <span class="pal-esc">ESC</span>
+      </div>
+      <div class="pal-list scroll" id="palette-list" role="listbox"></div>
+    </div>
+  </div>
+
+  <div id="modal" class="shell-modal" aria-live="polite"></div>
+
+  <div id="toasts" class="ds-toasts" aria-live="polite"></div>
+</body>
+</html>

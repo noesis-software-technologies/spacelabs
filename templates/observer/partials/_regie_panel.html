@@ -1,0 +1,14 @@
+<div class="regie">
+  <div class="ds-card regie-card">
+    <h1 class="regie-title">Règles de masquage</h1>
+    <p class="regie-sub">Appliquées côté serveur avant toute diffusion publique. C'est un filet — la vraie règle : <strong>confidentiel ⇒ pane privé</strong>.</p>
+    <div id="rules-zone">
+      {% include "observer/partials/_rules_list.html" %}
+    </div>
+  </div>
+  <div class="ds-card regie-card">
+    <h2 class="regie-title">Vue spectateur</h2>
+    <p class="regie-sub">Statut du direct : <strong>{% if settings_obj.live %}EN DIRECT{% else %}hors direct{% endif %}</strong> — bascule depuis la barre d'outils d'un workspace.</p>
+    <a class="ds-btn" href="{% url 'observer:page' %}" target="_blank" rel="noopener">Ouvrir la vue télé ↗</a>
+  </div>
+</div>

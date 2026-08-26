@@ -1,0 +1,12 @@
+Django>=5.2,<5.3
+channels>=4.2
+channels-redis>=4.2
+daphne>=4.1
+django-htmx>=1.19
+django-environ>=0.11
+celery>=5.4
+redis>=5.0
+whitenoise>=6.7
+ptyprocess>=0.7 ; sys_platform != "win32"    # PTY POSIX (Linux/macOS)
+pywinpty>=2.0 ; sys_platform == "win32"       # PTY Windows (ConPTY)
+faster-whisper>=1.0  # STT serveur (CrisperWhisper) — Sprint 7, optionnel
