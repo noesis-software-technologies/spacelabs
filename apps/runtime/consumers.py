@@ -206,6 +206,15 @@ class CockpitConsumer(AsyncJsonWebsocketConsumer):
             else:
                 await self.send_json({"op": "error", "message": f"Opération inconnue : {op}"})
         except CapacityError as exc:
+            # Sans trace serveur, un refus de capacité rend le pane orphelin
+            # en « dead » sans aucune explication dans les logs.
+            logger.warning(
+                "capacité atteinte — %s refusé : pane=%s owner=%s : %s",
+                op,
+                content.get("pane_id"),
+                getattr(self.user, "pk", None),
+                exc,
+            )
             await self.send_json({
                 "op": "error", "pane_id": content.get("pane_id"),
                 "message": str(exc), "code": "capacity",

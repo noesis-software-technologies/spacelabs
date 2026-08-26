@@ -5,6 +5,7 @@ est appliquée sur le chemin réel (consumer → manager), et que l'utilisateur
 reçoit un message exploitable plutôt qu'une erreur muette.
 """
 from pathlib import Path
+import logging
 
 import pytest
 from channels.routing import URLRouter
@@ -92,6 +93,34 @@ async def test_pty_spawn_refused_over_capacity(settings):
         msg = await _wait_for(c, "error")
         assert msg["code"] == "capacity"
         assert str(pty.pk) not in PaneManager.get().panes
+    finally:
+        await c.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_capacity_refusal_is_logged(settings, caplog):
+    """Un refus de capacité laisse une trace serveur (WARNING avec contexte)."""
+    settings.COCKPIT_MAX_PANES = 1
+    settings.COCKPIT_OWNER_MAX_PANES = 0
+
+    user = await get_user_model().objects.acreate(username="pilote5")
+    ws = await Workspace.objects.acreate(owner=user, name="A", cwd="/tmp")
+    await HeadlessPane.objects.acreate(workspace=ws, status=Pane.Status.RUNNING)
+    pty = await PtyPane.objects.acreate(workspace=ws, cmd="sh", cwd="/tmp")
+
+    c = await _connect(user)
+    try:
+        with caplog.at_level(logging.WARNING, logger="spacelabs.runtime"):
+            await c.send_json_to({"op": "spawn", "pane_id": pty.pk})
+            msg = await _wait_for(c, "error")
+            assert msg["code"] == "capacity"
+        records = [r for r in caplog.records if r.name == "spacelabs.runtime"]
+        assert any(
+            r.levelno == logging.WARNING
+            and str(pty.pk) in r.getMessage()
+            and str(user.pk) in r.getMessage()
+            for r in records
+        )
     finally:
         await c.disconnect()
 
