@@ -121,6 +121,9 @@
   <div class="workspace-statusbar" aria-hidden="false">
     <span class="sb sb--ok">{{ workspace.name }}</span>
     <span class="sb" data-sb-panes>{{ panes|length }}/{{ workspace_limit }} panes · cozy</span>
+    <span class="sb" data-sb-router
+          hx-get="{% url 'models_routing:statusbar' slug=workspace.slug %}"
+          hx-trigger="load, every 4s" hx-swap="innerHTML">⚡ …</span>
     <span class="sb-spacer"></span>
     <span class="sb-kbds"><kbd>⌘B</kbd><kbd>⌘\</kbd></span>
   </div>

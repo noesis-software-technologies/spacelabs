@@ -368,3 +368,16 @@ Vérifié offline : check 0 issue ; 544/544 (539 + 5) en 123 s. Non vérifiable
 ici : le vrai binaire claude (abonnement) et un vrai llama-server.
 Reste S-R3 : statusbar/régie + calage des seuils — TOUJOURS en attente des
 stats prompt eval/eval time du llama-server du user.
+
+## Audit S-R3 (2026-08-26) — clôture du chantier ADR-5
+Les stats réelles du llama-server n'ayant jamais été fournies, le calage des
+seuils devient AUTO-MESURÉ : `manage.py calibrate_thresholds` (à lancer sur le
+poste, serveur démarré) remplace les seuils provisoires par des valeurs
+dérivées de mesures (règle : prompt/pp_tps + 400/gen_tps ≤ 90 s, borné par le
+budget prompt du backend). Math testée ; mesure réseau non exécutable ici.
+Comptage de suite vérifié : 524 (baseline) + 25 (models_routing) + 8 (tests de
+marque/hygiène paramétrés sur les 2 nouveaux templates) = 557/557.
+Chantier MODEL_ROUTING S-R1→S-R3 : COMPLET. Exploitation : 1) backends_health,
+2) calibrate_thresholds, 3) déclarer task_class sur les missions, 4) budgets
+en admin. Hors périmètre livré tel que spécifié : fallback en cours de
+génération, inférence auto de task_class, orchestrateur appris.

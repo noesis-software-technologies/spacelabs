@@ -1,0 +1,1 @@
+{% if last_run %}⚡ {{ last_run.backend.slug }}{% if budget %} · {{ budget.spent }}{% if budget.budget_tokens %}/{{ budget.budget_tokens }}{% endif %} tok{% endif %}{% else %}⚡ routeur prêt{% endif %}
