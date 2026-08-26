@@ -1,0 +1,23 @@
+[
+  {"model": "models_routing.modelbackend", "pk": 1,
+   "fields": {"slug": "local-gptoss", "kind": "openai_http",
+              "base_url": "http://127.0.0.1:8081/v1",
+              "model_id": "ggml-org/gpt-oss-20b-GGUF",
+              "context_window": 32768, "max_tokens": 4096,
+              "supports_tools": true, "enabled": true, "healthy": false,
+              "last_health_at": null}},
+  {"model": "models_routing.modelbackend", "pk": 2,
+   "fields": {"slug": "claude-bin", "kind": "claude_bin", "base_url": "",
+              "model_id": "", "context_window": 200000, "max_tokens": 8192,
+              "supports_tools": true, "enabled": true, "healthy": true,
+              "last_health_at": null}},
+  {"model": "models_routing.routingrule", "pk": 1, "fields": {"order": 10, "task_class": "draft", "max_est_tokens": null, "backend": 1, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 2, "fields": {"order": 20, "task_class": "summarize", "max_est_tokens": null, "backend": 1, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 3, "fields": {"order": 30, "task_class": "glue", "max_est_tokens": null, "backend": 1, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 4, "fields": {"order": 40, "task_class": "code_small", "max_est_tokens": 8000, "backend": 1, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 5, "fields": {"order": 50, "task_class": "code_heavy", "max_est_tokens": null, "backend": 2, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 6, "fields": {"order": 60, "task_class": "architecture", "max_est_tokens": null, "backend": 2, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 7, "fields": {"order": 70, "task_class": "long_context", "max_est_tokens": null, "backend": 2, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 8, "fields": {"order": 90, "task_class": "default", "max_est_tokens": 6000, "backend": 1, "enabled": true}},
+  {"model": "models_routing.routingrule", "pk": 9, "fields": {"order": 99, "task_class": "default", "max_est_tokens": null, "backend": 2, "enabled": true}}
+]
