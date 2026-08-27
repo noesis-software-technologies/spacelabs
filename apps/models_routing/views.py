@@ -8,6 +8,7 @@ import json
 import time
 
 from django.contrib.auth.decorators import login_required
+from django.db import models
 from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
@@ -50,6 +51,7 @@ def runs_panel(request):
 @login_required
 def openclaw_stats(request):
     """Stats budgétaires Telegram/OpenClaw — JSON ou HTML selon Accept."""
+    from django.db.models import Sum, Count
     budget = GlobalBudget.get()
     daily = OpenclawExchangeLog.daily_totals()
     weekly = OpenclawExchangeLog.weekly_totals()
@@ -60,8 +62,20 @@ def openclaw_stats(request):
 
     recent = list(
         OpenclawExchangeLog.objects.values(
-            "created_at", "model_id", "prompt_tokens", "completion_tokens"
-        )[:20]
+            "created_at", "model_id", "prompt_tokens", "completion_tokens", "session_id", "channel"
+        ).order_by("-created_at")[:30]
+    )
+
+    # Sessions regroupées par session_id avec cumul tokens
+    sessions = list(
+        OpenclawExchangeLog.objects.values("session_id", "channel")
+        .annotate(
+            exchanges=Count("id"),
+            total_prompt=Sum("prompt_tokens"),
+            total_completion=Sum("completion_tokens"),
+            last_at=models.Max("created_at"),
+        )
+        .order_by("-last_at")[:15]
     )
 
     data = {
@@ -75,10 +89,11 @@ def openclaw_stats(request):
         "week": {**weekly, "weekly_pct_used": weekly_pct},
         "remaining_today": max(0, daily_cap - daily["total"]),
         "recent": recent,
+        "sessions": sessions,
     }
 
     if "application/json" in request.headers.get("Accept", ""):
-        return JsonResponse(data)
+        return JsonResponse(data, default=str)
 
     return render(request, "models_routing/_openclaw_stats.html", {"stats": data})
 
