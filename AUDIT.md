@@ -357,3 +357,14 @@ Seuils 8000/6000 de la fixture : PROVISOIRES — [À CHIFFRER] avec les stats
 prompt eval / eval time du serveur local (spec §6).
 Reste pour S-R2 : ClaudeBinAdapter (enveloppe du runner headless existant),
 champ Mission.task_class, RunLog JSONL branché, événements CockpitConsumer.
+
+## Audit S-R2 (2026-08-26)
+Choix d'adaptation consigné : le HeadlessManager est session-long par design ;
+ClaudeBinAdapter est donc un ONE-SHOT (stdin fermé après le tour ⇒ exit après
+result) qui réutilise argv + events.py — pas de réécriture du manager, pas de
+second pipeline de diffusion (chat.event/pane_{id} réutilisés, handler
+consumer inchangé). Testé sur le faux binaire existant (protocole réel).
+Vérifié offline : check 0 issue ; 544/544 (539 + 5) en 123 s. Non vérifiable
+ici : le vrai binaire claude (abonnement) et un vrai llama-server.
+Reste S-R3 : statusbar/régie + calage des seuils — TOUJOURS en attente des
+stats prompt eval/eval time du llama-server du user.
