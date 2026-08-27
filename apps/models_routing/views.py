@@ -5,9 +5,10 @@ htmx 4 s, même rythme que le Board), le panneau runs est un fragment inclus
 dans la régie.
 """
 import json
+import time
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -80,6 +81,33 @@ def openclaw_stats(request):
         return JsonResponse(data)
 
     return render(request, "models_routing/_openclaw_stats.html", {"stats": data})
+
+
+@login_required
+def openclaw_stats_stream(request):
+    """SSE — pousse les stats budget toutes les 5 s au navigateur."""
+    def event_stream():
+        while True:
+            budget = GlobalBudget.get()
+            daily = OpenclawExchangeLog.daily_totals()
+            weekly = OpenclawExchangeLog.weekly_totals()
+            daily_cap = budget.daily_cap_tokens
+            payload = {
+                "daily_total": daily["total"],
+                "daily_pct": round(daily["total"] / daily_cap * 100, 2) if daily_cap else 0,
+                "daily_cap": daily_cap,
+                "weekly_total": weekly["total"],
+                "weekly_pct": round(weekly["total"] / budget.weekly_tokens * 100, 2) if budget.weekly_tokens else 0,
+                "weekly_cap": budget.weekly_tokens,
+                "remaining_today": max(0, daily_cap - daily["total"]),
+            }
+            yield f"data: {json.dumps(payload)}\n\n"
+            time.sleep(5)
+
+    response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+    response["Cache-Control"] = "no-cache"
+    response["X-Accel-Buffering"] = "no"
+    return response
 
 
 @csrf_exempt

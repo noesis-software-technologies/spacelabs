@@ -8,5 +8,6 @@ urlpatterns = [
     path("statusbar/<slug:slug>/", views.statusbar_fragment, name="statusbar"),
     path("runs/", views.runs_panel, name="runs"),
     path("openclaw-stats/", views.openclaw_stats, name="openclaw_stats"),
+    path("openclaw-stats/stream/", views.openclaw_stats_stream, name="openclaw_stats_stream"),
     path("openclaw-stats/log/", views.openclaw_log_exchange, name="openclaw_log"),
 ]

@@ -3,64 +3,142 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Stats OpenClaw — Budget tokens</title>
+  <title>Ledger OpenClaw — Budget tokens</title>
   <style>
-    body { font-family: monospace; background: #0d0d0d; color: #e0e0e0; padding: 2rem; }
-    h1 { color: #7eb8f7; font-size: 1.1rem; margin-bottom: 1.5rem; }
-    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 1rem; }
-    .label { color: #888; font-size: .85rem; }
-    .val { font-size: 1.2rem; font-weight: bold; }
-    .ok { color: #5dde7a; }
-    .warn { color: #f5c342; }
-    .over { color: #f56b42; }
-    table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-top: .5rem; }
-    th { text-align: left; color: #666; padding: .3rem .5rem; border-bottom: 1px solid #2a2a2a; }
-    td { padding: .3rem .5rem; }
-    tr:nth-child(even) { background: #151515; }
+    :root { --ok: #5dde7a; --warn: #f5c342; --over: #f56b42; --accent: #f77615; }
+    body { font-family: monospace; background: #0d0d0d; color: #e0e0e0; padding: 2rem; margin: 0; }
+    h1 { color: #7eb8f7; font-size: 1rem; margin-bottom: 1.5rem; letter-spacing: .02em; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 1rem 1.2rem; }
+    .label { color: #666; font-size: .8rem; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .05em; }
+    .val  { font-size: 1.4rem; font-weight: bold; }
+    .sub  { font-size: .78rem; color: #888; margin-top: .2rem; }
+    .ok   { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .over { color: var(--over); }
+    .bar-wrap { background: #111; border-radius: 3px; height: 6px; margin-top: .5rem; overflow: hidden; }
+    .bar { height: 100%; border-radius: 3px; transition: width .4s ease; }
+    .bar--ok   { background: var(--ok); }
+    .bar--warn { background: var(--warn); }
+    .bar--over { background: var(--over); }
+    .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+                background: #444; margin-right: 6px; transition: background .3s; }
+    .live-dot.active { background: var(--ok); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    table { width: 100%; border-collapse: collapse; font-size: .78rem; margin-top: .4rem; }
+    th { text-align: left; color: #555; padding: .25rem .5rem; border-bottom: 1px solid #222; }
+    td { padding: .25rem .5rem; border-bottom: 1px solid #181818; }
+    tr:hover td { background: #1e1e1e; }
+    .tier-sonnet { color: #f77615; } .tier-opus { color: #9a6cf7; }
+    .tier-haiku  { color: #3fc9c9; } .tier-oss   { color: #5dde7a; }
+    code { background: #222; padding: 1px 4px; border-radius: 3px; font-size: .85em; }
+    .full-card { grid-column: 1 / -1; }
+    a { color: #7eb8f7; text-decoration: none; } a:hover { text-decoration: underline; }
+    .status-line { font-size: .75rem; color: #555; margin-bottom: 1.5rem; display: flex; align-items: center; }
   </style>
 </head>
 <body>
-<h1>&#9888; Budget OpenClaw — Pro Max 20x · {{ stats.budget.note }}</h1>
+<h1>&#9632; Ledger OpenClaw — Pro Max 20x · {{ stats.budget.note }}</h1>
 
-<div class="card">
-  <div class="label">Aujourd'hui</div>
-  <div class="val {% if stats.today.cap_pct_used < 80 %}ok{% elif stats.today.cap_pct_used < 100 %}warn{% else %}over{% endif %}">
-    {{ stats.today.total|intcomma }} tok &nbsp;/&nbsp; {{ stats.budget.daily_cap_tokens|intcomma }} &nbsp;
-    ({{ stats.today.cap_pct_used }}% du plafond jour)
+<div class="status-line">
+  <span class="live-dot" id="live-dot"></span>
+  <span id="live-status">Connexion SSE…</span>
+  &nbsp;·&nbsp; <a href="{% url 'models_routing:openclaw_stats_stream' %}">flux brut</a>
+</div>
+
+<div class="grid">
+  <!-- Aujourd'hui -->
+  <div class="card">
+    <div class="label">Aujourd'hui</div>
+    <div class="val {% if stats.today.cap_pct_used < 80 %}ok{% elif stats.today.cap_pct_used < 100 %}warn{% else %}over{% endif %}"
+         id="daily-val">{{ stats.today.total|intcomma }}</div>
+    <div class="sub" id="daily-sub">
+      / {{ stats.budget.daily_cap_tokens|intcomma }} cap · <b id="daily-pct">{{ stats.today.cap_pct_used }}%</b>
+    </div>
+    <div class="bar-wrap"><div class="bar bar--{% if stats.today.cap_pct_used < 80 %}ok{% elif stats.today.cap_pct_used < 100 %}warn{% else %}over{% endif %}"
+         id="daily-bar" style="width:{{ stats.today.cap_pct_used }}%"></div></div>
+    <div class="sub" style="margin-top:.4rem">
+      in={{ stats.today.prompt|intcomma }} · out={{ stats.today.completion|intcomma }} · reste=<span id="daily-remain">{{ stats.remaining_today|intcomma }}</span>
+    </div>
   </div>
-  <div class="label" style="margin-top:.4rem">
-    in={{ stats.today.prompt|intcomma }} · out={{ stats.today.completion|intcomma }} · reste={{ stats.remaining_today|intcomma }}
+
+  <!-- Semaine -->
+  <div class="card">
+    <div class="label">Semaine (lun → auj.)</div>
+    <div class="val {% if stats.week.weekly_pct_used < 80 %}ok{% elif stats.week.weekly_pct_used < 100 %}warn{% else %}over{% endif %}"
+         id="weekly-val">{{ stats.week.total|intcomma }}</div>
+    <div class="sub" id="weekly-sub">
+      / {{ stats.budget.weekly_tokens|intcomma }} · <b id="weekly-pct">{{ stats.week.weekly_pct_used }}%</b>
+    </div>
+    <div class="bar-wrap"><div class="bar bar--{% if stats.week.weekly_pct_used < 80 %}ok{% elif stats.week.weekly_pct_used < 100 %}warn{% else %}over{% endif %}"
+         id="weekly-bar" style="width:{{ stats.week.weekly_pct_used }}%"></div></div>
+    <div class="sub" style="margin-top:.4rem">
+      in={{ stats.week.prompt|intcomma }} · out={{ stats.week.completion|intcomma }}
+    </div>
+  </div>
+
+  <!-- Tableau échanges -->
+  <div class="card full-card">
+    <div class="label">Derniers échanges enregistrés</div>
+    <table>
+      <tr><th>Date</th><th>Modèle</th><th>In</th><th>Out</th><th>Total</th></tr>
+      {% for e in stats.recent %}
+      <tr>
+        <td>{{ e.created_at|date:"d/m H:i:s" }}</td>
+        <td class="tier-{% if 'haiku' in e.model_id %}haiku{% elif 'sonnet' in e.model_id %}sonnet{% elif 'opus' in e.model_id %}opus{% else %}oss{% endif %}">
+          <code>{{ e.model_id }}</code></td>
+        <td>{{ e.prompt_tokens|intcomma }}</td>
+        <td>{{ e.completion_tokens|intcomma }}</td>
+        <td>{{ e.prompt_tokens|add:e.completion_tokens|intcomma }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="color:#444">Aucun échange.</td></tr>
+      {% endfor %}
+    </table>
   </div>
 </div>
 
-<div class="card">
-  <div class="label">Semaine (lundi → aujourd'hui)</div>
-  <div class="val {% if stats.week.weekly_pct_used < 80 %}ok{% elif stats.week.weekly_pct_used < 100 %}warn{% else %}over{% endif %}">
-    {{ stats.week.total|intcomma }} tok &nbsp;/&nbsp; {{ stats.budget.weekly_tokens|intcomma }} &nbsp;
-    ({{ stats.week.weekly_pct_used }}% alloué)
-  </div>
-  <div class="label" style="margin-top:.4rem">
-    in={{ stats.week.prompt|intcomma }} · out={{ stats.week.completion|intcomma }}
-  </div>
-</div>
+<script>
+(function () {
+  var dot = document.getElementById('live-dot');
+  var status = document.getElementById('live-status');
 
-<div class="card">
-  <div class="label">20 derniers échanges</div>
-  <table>
-    <tr><th>Date</th><th>Modèle</th><th>In</th><th>Out</th><th>Total</th></tr>
-    {% for e in stats.recent %}
-    <tr>
-      <td>{{ e.created_at|date:"d/m H:i" }}</td>
-      <td>{{ e.model_id }}</td>
-      <td>{{ e.prompt_tokens|intcomma }}</td>
-      <td>{{ e.completion_tokens|intcomma }}</td>
-      <td>{{ e.prompt_tokens|add:e.completion_tokens|intcomma }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5" style="color:#555">Aucun échange enregistré.</td></tr>
-    {% endfor %}
-  </table>
-</div>
+  function cls(pct) { return pct < 80 ? 'ok' : pct < 100 ? 'warn' : 'over'; }
+  function barCls(pct) { return 'bar bar--' + cls(pct); }
+  function fmt(n) { return n.toLocaleString('fr-FR'); }
 
+  var es = new EventSource("{% url 'models_routing:openclaw_stats_stream' %}");
+
+  es.onopen = function () {
+    dot.classList.add('active');
+    status.textContent = 'SSE connecté — mise à jour toutes les 5 s';
+  };
+
+  es.onmessage = function (ev) {
+    var d = JSON.parse(ev.data);
+    var dpct = d.daily_pct, wpct = d.weekly_pct;
+
+    document.getElementById('daily-val').textContent = fmt(d.daily_total);
+    document.getElementById('daily-val').className = 'val ' + cls(dpct);
+    document.getElementById('daily-pct').textContent = dpct + '%';
+    document.getElementById('daily-remain').textContent = fmt(d.remaining_today);
+    var db = document.getElementById('daily-bar');
+    db.className = barCls(dpct); db.style.width = Math.min(dpct, 100) + '%';
+
+    document.getElementById('weekly-val').textContent = fmt(d.weekly_total);
+    document.getElementById('weekly-val').className = 'val ' + cls(wpct);
+    document.getElementById('weekly-pct').textContent = wpct + '%';
+    var wb = document.getElementById('weekly-bar');
+    wb.className = barCls(wpct); wb.style.width = Math.min(wpct, 100) + '%';
+
+    status.textContent = 'Mis à jour ' + new Date().toLocaleTimeString('fr-FR');
+  };
+
+  es.onerror = function () {
+    dot.classList.remove('active');
+    status.textContent = 'SSE déconnecté — tentative de reconnexion…';
+  };
+})();
+</script>
 </body>
 </html>
