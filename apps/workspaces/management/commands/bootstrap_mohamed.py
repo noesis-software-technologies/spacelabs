@@ -8,12 +8,24 @@ from apps.workspaces.models import HeadlessPane, Workspace
 class Command(BaseCommand):
     help = "Crée le workspace Mohamed (Sonnet 4.6 + Opus 4.6) s'il n'existe pas."
 
+    def add_arguments(self, parser):
+        parser.add_argument("--user", default="noelabs", help="Username propriétaire du workspace (défaut: noelabs)")
+
     def handle(self, *args, **options):
         User = get_user_model()
-        user = User.objects.filter(is_superuser=True).first()
+        username = options["user"]
+        user = User.objects.filter(username=username).first() or User.objects.filter(is_superuser=True).order_by("id").last()
         if not user:
-            self.stderr.write("Aucun superutilisateur — lancez d'abord `make setup`.")
+            self.stderr.write("Aucun utilisateur trouvé — lancez d'abord `make setup`.")
             return
+        self.stdout.write(f"Propriétaire : {user.username}")
+
+        # Réassigner si le workspace existe mais appartient à un autre user
+        existing = Workspace.objects.filter(slug="mohamed").exclude(owner=user).first()
+        if existing:
+            existing.owner = user
+            existing.save()
+            self.stdout.write(self.style.WARNING(f"Workspace 'Mohamed' réassigné à {user.username}."))
 
         ws, created = Workspace.objects.get_or_create(
             owner=user,
