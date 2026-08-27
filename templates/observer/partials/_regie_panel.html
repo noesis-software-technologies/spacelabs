@@ -12,3 +12,5 @@
     <a class="ds-btn" href="{% url 'observer:page' %}" target="_blank" rel="noopener">Ouvrir la vue télé ↗</a>
   </div>
 </div>
+
+<div hx-get="{% url 'models_routing:runs' %}" hx-trigger="load, every 8s" hx-swap="innerHTML"></div>

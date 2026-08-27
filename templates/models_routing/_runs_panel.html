@@ -1,0 +1,21 @@
+<section class="regie-runs">
+  <h3>Runs routés</h3>
+  {% if runs %}
+  <table>
+    <thead><tr><th>Quand</th><th>Backend</th><th>Classe</th><th>Tokens</th><th>Durée</th><th>Statut</th><th>Journal</th></tr></thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td>{{ run.started_at|date:"H:i:s" }}</td>
+        <td>{{ run.backend.slug }}</td>
+        <td>{{ run.task_class }}</td>
+        <td>{{ run.prompt_tokens }}+{{ run.completion_tokens }}</td>
+        <td>{{ run.duration_ms }} ms</td>
+        <td class="run-{{ run.status }}">{{ run.status }}</td>
+        <td><code>{{ run.jsonl_path }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">Aucun run routé pour l'instant.</p>{% endif %}
+</section>

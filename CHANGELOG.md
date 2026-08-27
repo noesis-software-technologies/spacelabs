@@ -356,3 +356,14 @@ Première version publiable : cockpit web local-first pour Claude Code.
   existants affichent les runs routés sans modification.
 - budgets : consommation créditée sur l'usage RÉEL (pas l'estimation) ;
   un run en erreur ne consomme pas.
+
+## [Non versionné] — 2026-08-26 · S-R3 MODEL_ROUTING (UI + calibration)
+- feat(ui): segment routeur dans la statusbar du cockpit (backend du dernier
+  run + budget mission, poll htmx 4 s, auto-swap — aucune cible #content) ;
+  panneau « Runs routés » dans la régie (backend, classe, tokens, durée,
+  chemin JSONL, poll 8 s).
+- feat(models_routing): commande `calibrate_thresholds` — sonde le backend
+  local, mesure pp/gen tok/s (TTFT), applique la règle du budget temps de la
+  spec §6 et cale max_est_tokens sur les règles qui en portent. Les seuils
+  provisoires de la fixture deviennent des valeurs MESURÉES sur la machine.
+- chore: var/ ignoré (journaux de runs hors repo).
