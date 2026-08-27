@@ -4,12 +4,17 @@ Aucune cible #content ici : la statusbar se rafraîchit sur elle-même (poll
 htmx 4 s, même rythme que le Board), le panneau runs est un fragment inclus
 dans la régie.
 """
+import json
+
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from apps.workspaces.models import Workspace
 
-from .models import MissionTokenBudget, RunLog
+from .models import GlobalBudget, MissionTokenBudget, OpenclawExchangeLog, RunLog
 
 
 @login_required
@@ -39,3 +44,59 @@ def runs_panel(request):
         .select_related("backend", "mission")[:15]
     )
     return render(request, "models_routing/_runs_panel.html", {"runs": runs})
+
+
+@login_required
+def openclaw_stats(request):
+    """Stats budgétaires Telegram/OpenClaw — JSON ou HTML selon Accept."""
+    budget = GlobalBudget.get()
+    daily = OpenclawExchangeLog.daily_totals()
+    weekly = OpenclawExchangeLog.weekly_totals()
+
+    daily_cap = budget.daily_cap_tokens
+    daily_pct = round(daily["total"] / daily_cap * 100, 2) if daily_cap else 0
+    weekly_pct = round(weekly["total"] / budget.weekly_tokens * 100, 2) if budget.weekly_tokens else 0
+
+    recent = list(
+        OpenclawExchangeLog.objects.values(
+            "created_at", "model_id", "prompt_tokens", "completion_tokens"
+        )[:20]
+    )
+
+    data = {
+        "budget": {
+            "weekly_tokens": budget.weekly_tokens,
+            "daily_cap_tokens": daily_cap,
+            "daily_cap_pct": float(budget.daily_cap_pct),
+            "note": budget.note,
+        },
+        "today": {**daily, "cap_pct_used": daily_pct},
+        "week": {**weekly, "weekly_pct_used": weekly_pct},
+        "remaining_today": max(0, daily_cap - daily["total"]),
+        "recent": recent,
+    }
+
+    if "application/json" in request.headers.get("Accept", ""):
+        return JsonResponse(data)
+
+    return render(request, "models_routing/_openclaw_stats.html", {"stats": data})
+
+
+@csrf_exempt
+@require_POST
+def openclaw_log_exchange(request):
+    """Endpoint interne — enregistre un échange OpenClaw (appelé par le runtime)."""
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid json"}, status=400)
+
+    OpenclawExchangeLog.objects.create(
+        channel=payload.get("channel", "telegram"),
+        session_id=payload.get("session_id", ""),
+        message_id=payload.get("message_id", ""),
+        model_id=payload.get("model_id", "claude-sonnet-4-6"),
+        prompt_tokens=int(payload.get("prompt_tokens", 0)),
+        completion_tokens=int(payload.get("completion_tokens", 0)),
+    )
+    return JsonResponse({"status": "ok"})

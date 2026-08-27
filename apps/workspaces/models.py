@@ -188,7 +188,22 @@ class PtyPane(Pane):
 class HeadlessPane(Pane):
     """Chat structuré ``claude -p --output-format stream-json`` (Sprint 4)."""
 
+    MODEL_CHOICES = [
+        ("claude-haiku-4-5-20251001", "Haiku 4.5"),
+        ("claude-sonnet-4-5",         "Sonnet 4.5"),
+        ("claude-sonnet-4-6",         "Sonnet 4.6"),
+        ("claude-opus-4-6",           "Opus 4.6"),
+        ("claude-opus-4-8",           "Opus 4.8"),
+        ("gpt-oss-20b",               "OSS Local"),
+    ]
+
     prompt_initial = models.TextField(blank=True)
+    model_id = models.CharField(
+        "modèle",
+        max_length=100,
+        choices=MODEL_CHOICES,
+        default="claude-sonnet-4-6",
+    )
     # Identifiant de session Claude Code (émis dans l'événement init). Persisté
     # pour reprendre EXACTEMENT cette conversation via --resume après un
     # redémarrage — pas juste --continue (Sprint 8).
@@ -199,6 +214,22 @@ class HeadlessPane(Pane):
 
     def effective_cwd(self) -> str:
         return self.workspace.cwd
+
+    @property
+    def model_label(self) -> str:
+        return dict(self.MODEL_CHOICES).get(self.model_id, self.model_id)
+
+    @property
+    def model_tier(self) -> str:
+        """Retourne 'haiku', 'sonnet', 'opus' ou 'oss' pour le style de l'avatar."""
+        mid = self.model_id.lower()
+        if "haiku" in mid:
+            return "haiku"
+        if "sonnet" in mid:
+            return "sonnet"
+        if "opus" in mid:
+            return "opus"
+        return "oss"
 
 
 # ── Registre polymorphe (§6.9) ─────────────────────────────────────────────

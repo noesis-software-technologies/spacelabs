@@ -1,0 +1,66 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Stats OpenClaw — Budget tokens</title>
+  <style>
+    body { font-family: monospace; background: #0d0d0d; color: #e0e0e0; padding: 2rem; }
+    h1 { color: #7eb8f7; font-size: 1.1rem; margin-bottom: 1.5rem; }
+    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 1rem; }
+    .label { color: #888; font-size: .85rem; }
+    .val { font-size: 1.2rem; font-weight: bold; }
+    .ok { color: #5dde7a; }
+    .warn { color: #f5c342; }
+    .over { color: #f56b42; }
+    table { width: 100%; border-collapse: collapse; font-size: .82rem; margin-top: .5rem; }
+    th { text-align: left; color: #666; padding: .3rem .5rem; border-bottom: 1px solid #2a2a2a; }
+    td { padding: .3rem .5rem; }
+    tr:nth-child(even) { background: #151515; }
+  </style>
+</head>
+<body>
+<h1>&#9888; Budget OpenClaw — Pro Max 20x · {{ stats.budget.note }}</h1>
+
+<div class="card">
+  <div class="label">Aujourd'hui</div>
+  <div class="val {% if stats.today.cap_pct_used < 80 %}ok{% elif stats.today.cap_pct_used < 100 %}warn{% else %}over{% endif %}">
+    {{ stats.today.total|intcomma }} tok &nbsp;/&nbsp; {{ stats.budget.daily_cap_tokens|intcomma }} &nbsp;
+    ({{ stats.today.cap_pct_used }}% du plafond jour)
+  </div>
+  <div class="label" style="margin-top:.4rem">
+    in={{ stats.today.prompt|intcomma }} · out={{ stats.today.completion|intcomma }} · reste={{ stats.remaining_today|intcomma }}
+  </div>
+</div>
+
+<div class="card">
+  <div class="label">Semaine (lundi → aujourd'hui)</div>
+  <div class="val {% if stats.week.weekly_pct_used < 80 %}ok{% elif stats.week.weekly_pct_used < 100 %}warn{% else %}over{% endif %}">
+    {{ stats.week.total|intcomma }} tok &nbsp;/&nbsp; {{ stats.budget.weekly_tokens|intcomma }} &nbsp;
+    ({{ stats.week.weekly_pct_used }}% alloué)
+  </div>
+  <div class="label" style="margin-top:.4rem">
+    in={{ stats.week.prompt|intcomma }} · out={{ stats.week.completion|intcomma }}
+  </div>
+</div>
+
+<div class="card">
+  <div class="label">20 derniers échanges</div>
+  <table>
+    <tr><th>Date</th><th>Modèle</th><th>In</th><th>Out</th><th>Total</th></tr>
+    {% for e in stats.recent %}
+    <tr>
+      <td>{{ e.created_at|date:"d/m H:i" }}</td>
+      <td>{{ e.model_id }}</td>
+      <td>{{ e.prompt_tokens|intcomma }}</td>
+      <td>{{ e.completion_tokens|intcomma }}</td>
+      <td>{{ e.prompt_tokens|add:e.completion_tokens|intcomma }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" style="color:#555">Aucun échange enregistré.</td></tr>
+    {% endfor %}
+  </table>
+</div>
+
+</body>
+</html>

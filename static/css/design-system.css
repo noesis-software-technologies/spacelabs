@@ -641,3 +641,44 @@ kbd {
 .voice-btn.voice--processing { opacity: 0.6; animation: voice-proc 1s ease-in-out infinite; }
 @keyframes voice-proc { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
 @media (prefers-reduced-motion: reduce) { .voice-btn.voice--processing { animation: none; } }
+
+/* ── Agent avatars Claude Code style ──────────────────────────────────────── */
+.agent-avatar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; flex-shrink: 0; border-radius: 6px;
+}
+.agent-avatar--sm { width: 18px; height: 18px; border-radius: 4px; }
+.agent-avatar--sm svg { width: 18px; height: 18px; }
+.agent-avatar svg { width: 24px; height: 24px; }
+
+/* Couleurs par tier (inspirées du branding Claude) */
+.agent-avatar--haiku  .agent-avatar-bg { color: hsl(195 65% 42%); }   /* bleu-vert */
+.agent-avatar--sonnet .agent-avatar-bg { color: hsl(26 93% 53%); }    /* orange SpaceLabs */
+.agent-avatar--opus   .agent-avatar-bg { color: hsl(262 72% 55%); }   /* violet */
+.agent-avatar--oss    .agent-avatar-bg { color: hsl(140 55% 40%); }   /* vert local */
+
+/* Bandeau modèle dans le chat */
+.agent-model-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  background: hsl(var(--ds-bg-raised));
+  border-bottom: 1px solid hsl(var(--ds-border));
+  font-size: 11px;
+}
+.agent-model-banner-name { font-weight: 600; color: hsl(var(--ds-text)); }
+.agent-model-banner-id   { color: hsl(var(--ds-text-faint)); font-family: monospace; }
+.agent-model-banner-status { color: hsl(var(--ds-text-muted)); }
+
+/* Tag modèle dans le header de pane */
+.agent-model-tag {
+  font-size: 10px; font-family: monospace;
+  background: hsl(var(--ds-border));
+  padding: 1px 5px; border-radius: 3px;
+  color: hsl(var(--ds-text-muted));
+}
+
+/* Pane agent — légère teinte selon le tier */
+.pane--agent[data-model-tier="opus"]   { border-top: 2px solid hsl(262 72% 55% / 0.6); }
+.pane--agent[data-model-tier="sonnet"] { border-top: 2px solid hsl(26 93% 53% / 0.6);  }
+.pane--agent[data-model-tier="haiku"]  { border-top: 2px solid hsl(195 65% 42% / 0.6); }
+.pane--agent[data-model-tier="oss"]    { border-top: 2px solid hsl(140 55% 40% / 0.6); }

@@ -1,9 +1,22 @@
-<section class="pane pane--chat" data-status="{{ pane.status }}" id="pane-{{ pane.pk }}"
-         aria-label="Chat {{ pane.title }}">
+<section class="pane pane--chat pane--agent" data-status="{{ pane.status }}" id="pane-{{ pane.pk }}"
+         data-model-tier="{{ pane.model_tier }}"
+         aria-label="Agent {{ pane.title }}">
   <header class="pane-head">
+    <!-- Avatar Claude Code style -->
+    <span class="agent-avatar agent-avatar--{{ pane.model_tier }}" aria-hidden="true">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="7" fill="currentColor" class="agent-avatar-bg"/>
+        <text x="14" y="19" text-anchor="middle" font-family="monospace" font-size="13" font-weight="700"
+              fill="white" class="agent-avatar-letter">
+          {% if pane.model_tier == "haiku" %}H{% elif pane.model_tier == "sonnet" %}S{% elif pane.model_tier == "opus" %}O{% else %}L{% endif %}
+        </text>
+      </svg>
+    </span>
+
     <span class="ds-status-dot" data-status="{{ pane.status }}" aria-hidden="true"></span>
     <span class="pane-title">{{ pane.title }}</span>
-    <span class="pane-meta">chat · claude</span>
+    <span class="pane-meta agent-model-tag">{{ pane.model_label }}</span>
+
     <span class="pane-head-spacer"></span>
     <span class="ds-badge ds-badge--accent" data-pane-public-badge {% if not pane.is_public %}hidden{% endif %}>PUBLIC</span>
     {% if mcp_alert_id %}
@@ -20,36 +33,52 @@
             title="{% if pane.is_public %}Visible en direct — cliquer pour masquer{% else %}Privé — cliquer pour diffuser{% endif %}">
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
-    <button type="button" class="pane-action"
-            data-pane-zoom
-            aria-label="Zoomer / dézoomer le pane">
+    <button type="button" class="pane-action" data-pane-zoom aria-label="Zoomer / dézoomer le pane">
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
     </button>
     <button type="button" class="pane-action" data-chat-reset
-            aria-label="Nouvelle conversation (oublie l'historique Claude)"
+            aria-label="Nouvelle conversation"
             title="Nouvelle conversation — repart à neuf">
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg>
     </button>
-    <button type="button" class="pane-action pane-action--close" data-chat-kill
-            aria-label="Arrêter la session">
+    <button type="button" class="pane-action pane-action--close" data-chat-kill aria-label="Arrêter la session">
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
     </button>
     <button type="button" class="pane-action"
             hx-post="{% url 'workspaces:pane_delete' slug=workspace.slug pane_id=pane.pk %}"
             hx-target="#pane-{{ pane.pk }}" hx-swap="delete"
-            hx-confirm="Supprimer ce chat ? L'historique et la session seront perdus."
-            aria-label="Supprimer le pane">
+            hx-confirm="Supprimer cet agent ? L'historique et la session seront perdus."
+            aria-label="Supprimer l'agent">
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
     </button>
   </header>
+
   {% if pane.resume_pending %}
     <div class="pane-resume" data-resume-bar>
-      <span>Chat interrompu par un redémarrage.</span>
+      <span>Session interrompue — reprendre ?</span>
       <button type="button" class="ds-btn ds-btn--primary ds-btn--sm" data-chat-resume data-resume-auto>Reprendre</button>
     </div>
   {% endif %}
+
   <div class="pane-body chat" data-chat-host data-pane-id="{{ pane.pk }}">
+    <!-- Bandeau modèle actif -->
+    <div class="agent-model-banner">
+      <span class="agent-avatar agent-avatar--{{ pane.model_tier }} agent-avatar--sm" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="20" height="20" rx="5" fill="currentColor" class="agent-avatar-bg"/>
+          <text x="10" y="14" text-anchor="middle" font-family="monospace" font-size="10" font-weight="700" fill="white">
+            {% if pane.model_tier == "haiku" %}H{% elif pane.model_tier == "sonnet" %}S{% elif pane.model_tier == "opus" %}O{% else %}L{% endif %}
+          </text>
+        </svg>
+      </span>
+      <span class="agent-model-banner-name">{{ pane.title }}</span>
+      <span class="agent-model-banner-id">{{ pane.model_id }}</span>
+      <span class="ds-status-dot ds-status-dot--sm" data-status="{{ pane.status }}"></span>
+      <span class="agent-model-banner-status">{{ pane.get_status_display }}</span>
+    </div>
+
     <div class="chat-log" data-chat-log></div>
+
     <div class="chat-composer">
       <div class="chat-primers">
         {% for primer in priming_prompts %}
@@ -59,10 +88,12 @@
       </div>
       <div class="chat-input-row">
         <textarea class="ds-input chat-input" data-chat-input rows="2"
-                  placeholder="Décris la tâche… (Entrée pour envoyer, Maj+Entrée = nouvelle ligne)"></textarea>
+                  placeholder="Message pour {{ pane.title }} ({{ pane.model_label }})…"></textarea>
         <button type="button" class="pane-action voice-btn" data-voice="chat"
-                aria-pressed="false" aria-label="Dicter (maintenir pour parler)"
-                title="Maintenir pour dicter (fr-FR)"><svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg></button>
+                aria-pressed="false" aria-label="Dicter"
+                title="Maintenir pour dicter (fr-FR)">
+          <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        </button>
         <button type="button" class="ds-btn ds-btn--primary chat-send" data-chat-send>Envoyer</button>
       </div>
     </div>

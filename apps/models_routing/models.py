@@ -172,3 +172,95 @@ class RunLog(models.Model):
 
     class Meta:
         ordering = ["-started_at"]
+
+
+class GlobalBudget(models.Model):
+    """Singleton — enveloppe budgétaire hebdomadaire Pro Max (ADR-budget)."""
+
+    weekly_tokens = models.PositiveIntegerField(
+        default=7_000_000,
+        help_text="Allocation totale de référence sur 7 jours.",
+    )
+    daily_cap_pct = models.DecimalField(
+        max_digits=5, decimal_places=2, default="14.30",
+        help_text="Pourcentage max consommable par jour (14.3 % = 1/7).",
+    )
+    note = models.CharField(max_length=200, blank=True, default="Pro Max 20x — €180/mois")
+
+    class Meta:
+        verbose_name = "budget global"
+
+    def __str__(self) -> str:
+        return f"Budget global — {self.weekly_tokens:,} tok/semaine · {self.daily_cap_pct}%/jour"
+
+    @property
+    def daily_cap_tokens(self) -> int:
+        return int(self.weekly_tokens * float(self.daily_cap_pct) / 100)
+
+    @classmethod
+    def get(cls) -> "GlobalBudget":
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class OpenclawExchangeLog(models.Model):
+    """Log d'un échange Telegram/OpenClaw — traçabilité budgétaire."""
+
+    channel = models.CharField(max_length=32, default="telegram")
+    session_id = models.CharField(max_length=120, blank=True)
+    message_id = models.CharField(max_length=40, blank=True)
+    model_id = models.CharField(max_length=100)
+    prompt_tokens = models.PositiveIntegerField(default=0)
+    completion_tokens = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "log échange openclaw"
+        indexes = [models.Index(fields=["created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.model_id} in={self.prompt_tokens} out={self.completion_tokens}"
+
+    @property
+    def total_tokens(self) -> int:
+        return self.prompt_tokens + self.completion_tokens
+
+    # ── Agrégats budgétaires ────────────────────────────────────────────────
+
+    @classmethod
+    def daily_totals(cls, date=None):
+        from django.utils import timezone
+        from django.db.models import Sum
+        if date is None:
+            date = timezone.localdate()
+        qs = cls.objects.filter(created_at__date=date)
+        agg = qs.aggregate(
+            prompt=Sum("prompt_tokens"),
+            completion=Sum("completion_tokens"),
+        )
+        return {
+            "date": date,
+            "prompt": agg["prompt"] or 0,
+            "completion": agg["completion"] or 0,
+            "total": (agg["prompt"] or 0) + (agg["completion"] or 0),
+        }
+
+    @classmethod
+    def weekly_totals(cls):
+        from django.utils import timezone
+        from django.db.models import Sum
+        import datetime
+        today = timezone.localdate()
+        week_start = today - datetime.timedelta(days=today.weekday())
+        qs = cls.objects.filter(created_at__date__gte=week_start)
+        agg = qs.aggregate(
+            prompt=Sum("prompt_tokens"),
+            completion=Sum("completion_tokens"),
+        )
+        return {
+            "week_start": week_start,
+            "prompt": agg["prompt"] or 0,
+            "completion": agg["completion"] or 0,
+            "total": (agg["prompt"] or 0) + (agg["completion"] or 0),
+        }
