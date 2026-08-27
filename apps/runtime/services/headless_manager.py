@@ -88,10 +88,14 @@ class HeadlessManager:
         cls._instance = None
 
     @staticmethod
-    def _build_argv(resume: bool, resume_session_id: str | None) -> list[str]:
+    def _build_argv(resume: bool, resume_session_id: str | None, model_id: str = "") -> list[str]:
         """Args de ``claude -p``. Reprise fidèle par id si disponible, sinon
-        --continue (conversation la plus récente du répertoire), sinon rien."""
+        --continue (conversation la plus récente du répertoire), sinon rien.
+        model_id non vide → injecte --model avant les autres flags."""
         argv = [settings.COCKPIT_CLAUDE_BIN, *settings.COCKPIT_CLAUDE_HEADLESS_ARGS]
+        if model_id:
+            argv.insert(1, model_id)
+            argv.insert(1, "--model")
         if resume and resume_session_id:
             argv[1:1] = ["--resume", resume_session_id]
         elif resume:
@@ -103,6 +107,7 @@ class HeadlessManager:
         self, pane_id: str, owner_id: int, cwd: str,
         is_public: bool = False, public_label: str = "", redactor=None,
         resume: bool = False, resume_session_id: str | None = None,
+        model_id: str = "",
     ) -> HeadlessSession:
         if pane_id in self.sessions and self.sessions[pane_id].status == "running":
             return self.sessions[pane_id]
@@ -123,7 +128,7 @@ class HeadlessManager:
         if not os.path.isdir(cwd):
             raise PaneError(f"Répertoire introuvable : {cwd}")
 
-        argv = self._build_argv(resume, resume_session_id)
+        argv = self._build_argv(resume, resume_session_id, model_id=model_id)
         env = dict(os.environ, TERM="dumb")
         try:
             proc = await asyncio.create_subprocess_exec(

@@ -353,6 +353,7 @@ class CockpitConsumer(AsyncJsonWebsocketConsumer):
             runtime_id, owner_id=self.user.pk, cwd=record.effective_cwd(),
             is_public=record.is_public, public_label=record.public_label, redactor=redactor,
             resume=resume, resume_session_id=record.claude_session_id or None,
+            model_id=getattr(record, "model_id", ""),
         )
         await _stamp_running(record.pk)
         await self._join(session.group)
@@ -396,6 +397,7 @@ class CockpitConsumer(AsyncJsonWebsocketConsumer):
                 runtime_id, owner_id=self.user.pk, cwd=record.effective_cwd(),
                 is_public=record.is_public, public_label=record.public_label, redactor=redactor,
                 resume=bool(sid), resume_session_id=sid,
+                model_id=getattr(record, "model_id", ""),
             )
             await _stamp_running(record.pk)
             await self._join(f"pane_{runtime_id}")

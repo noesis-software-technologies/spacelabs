@@ -682,3 +682,16 @@ kbd {
 .pane--agent[data-model-tier="sonnet"] { border-top: 2px solid hsl(26 93% 53% / 0.6);  }
 .pane--agent[data-model-tier="haiku"]  { border-top: 2px solid hsl(195 65% 42% / 0.6); }
 .pane--agent[data-model-tier="oss"]    { border-top: 2px solid hsl(140 55% 40% / 0.6); }
+
+/* ── Chat empty state ─────────────────────────────────────────────────────── */
+.chat-empty-hint {
+  display: flex; align-items: center; gap: 8px;
+  padding: 24px 16px; color: hsl(var(--ds-text-faint)); font-size: 12px;
+  font-style: italic;
+}
+.chat-empty-hint code {
+  font-style: normal; font-family: monospace;
+  background: hsl(var(--ds-border)); padding: 1px 4px; border-radius: 3px;
+  color: hsl(var(--ds-text-muted));
+}
+.chat-empty-icon { font-size: 8px; color: hsl(var(--ds-ok)); }

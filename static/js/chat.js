@@ -51,8 +51,14 @@
     log.appendChild(foot);
   }
 
+  function clearEmptyHint(log) {
+    const hint = log.querySelector(".chat-empty-hint");
+    if (hint) hint.remove();
+  }
+
   function renderEvent(entry, event) {
     const log = entry.log;
+    clearEmptyHint(log);
     if (event.kind === "user") {
       renderText(log, "user", event.text);
     } else if (event.kind === "assistant") {
@@ -69,11 +75,22 @@
         renderText(log, "assistant", event.content);
       }
     } else if (event.kind === "system") {
-      log.appendChild(el("div", "chat-system", "session démarrée · " + (event.model || "claude")));
+      const model = event.model || "claude";
+      log.appendChild(el("div", "chat-system", "session démarrée · " + model));
     } else if (event.kind === "result") {
       renderResult(log, event);
     }
     scrollLog(log);
+  }
+
+  function showEmptyHint(log, modelLabel) {
+    if (log.children.length > 0) return;
+    const hint = el("div", "chat-empty-hint");
+    hint.innerHTML = '<span class="chat-empty-icon">&#9679;</span> '
+      + '<span>Prêt — envoyez un message pour démarrer '
+      + (modelLabel ? '<code>' + modelLabel + '</code>' : 'l\'agent')
+      + '.</span>';
+    log.appendChild(hint);
   }
 
   function setStatus(host, status) {
@@ -102,6 +119,12 @@
         entry.log.replaceChildren();
         entry.tools.clear();
         (msg.events || []).forEach(function (item) { renderEvent(entry, item.event); });
+        // Affiche le hint "prêt" si le log est encore vide après replay
+        if (entry.log.children.length === 0) {
+          const pane = host.closest(".pane");
+          const modelTag = pane && pane.querySelector(".agent-model-tag");
+          showEmptyHint(entry.log, modelTag ? modelTag.textContent.trim() : "");
+        }
       } else if (msg.op === "chat_event") {
         renderEvent(entry, msg.event);
       } else if (msg.op === "chat_status") {
