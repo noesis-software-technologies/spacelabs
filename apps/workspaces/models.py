@@ -231,6 +231,28 @@ class HeadlessPane(Pane):
             return "opus"
         return "oss"
 
+    def save(self, *args, **kwargs):
+        if not self.title:
+            tier_map = {"haiku": "Haiku", "sonnet": "Sonnet", "opus": "Opus", "oss": "OSS"}
+            ws_prefix = self.workspace.name[:25]
+            base = f"{ws_prefix} · {tier_map.get(self.model_tier, self.model_tier.capitalize())}"
+            used = set(
+                Pane.objects.filter(workspace=self.workspace)
+                .exclude(pk=self.pk)
+                .values_list("title", flat=True)
+            )
+            if base not in used:
+                self.title = base
+            else:
+                for i in range(2, 50):
+                    candidate = f"{base} {i}"
+                    if candidate not in used:
+                        self.title = candidate
+                        break
+                else:
+                    self.title = f"{base} {self.workspace.panes.count() + 1}"
+        super().save(*args, **kwargs)
+
 
 # ── Registre polymorphe (§6.9) ─────────────────────────────────────────────
 class RegistryEntry:

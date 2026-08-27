@@ -74,6 +74,8 @@
       } else {
         renderText(log, "assistant", event.content);
       }
+    } else if (event.kind === "compact") {
+      log.appendChild(el("div", "chat-compact", "⟳ contexte compacté — nouvelle session"));
     } else if (event.kind === "system") {
       const model = event.model || "claude";
       log.appendChild(el("div", "chat-system", "session démarrée · " + model));
