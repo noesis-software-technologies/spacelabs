@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "apps.ops",
     "apps.tasker",
     "apps.skills",
+    "apps.models_routing",
     "apps.voice",
 ]
 

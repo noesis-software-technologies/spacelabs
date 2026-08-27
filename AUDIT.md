@@ -341,3 +341,19 @@ Vérifié offline : `manage.py check` 0 issue ; suite complète 524/524 en 121 s
 InMemoryChannelLayer). La CI reproduit exactement cet env.
 Prochaine étape du backlog : passe docs (ROADMAP périmée) puis Browser dock ∥
 ASR streaming ; MODEL_ROUTING (ADR-5) déblocable dès que cette PR est mergée.
+
+## Audit S-R1 MODEL_ROUTING (2026-08-26)
+Décisions assumées faute d'arbitrage PO explicite (révocables sans migration) :
+D1 = le modèle local reste un endpoint LAN (base_url en fixture/admin) ;
+D2 = task_class portée par la Mission (champ prévu S-R2, absent en S-R1).
+Bug trouvé et corrigé pendant le sprint : record_usage faisait un
+lire-modifier-écrire (perte d'incréments en concurrence) → réécrit en
+UPDATE F() atomique ; le test lit la base explicitement (l'accessor inverse
+OneToOne sert une instance en cache après get_or_create — comportement ORM).
+Vérifié offline : check 0 issue ; suite complète 539/539 (524 baseline + 15
+nouveaux) en 120 s. Non vérifiable ici : santé d'un vrai llama-server
+(commande backends_health à lancer sur poste), latences réelles.
+Seuils 8000/6000 de la fixture : PROVISOIRES — [À CHIFFRER] avec les stats
+prompt eval / eval time du serveur local (spec §6).
+Reste pour S-R2 : ClaudeBinAdapter (enveloppe du runner headless existant),
+champ Mission.task_class, RunLog JSONL branché, événements CockpitConsumer.

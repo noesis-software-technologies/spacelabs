@@ -331,3 +331,14 @@ Première version publiable : cockpit web local-first pour Claude Code.
 - ci: workflow GitHub Actions (`.github/workflows/ci.yml`) — check Django +
   pytest sur push/PR, Python 3.12, sans faster-whisper (optionnel, lourd),
   sans Redis (dev = SQLite + InMemoryChannelLayer).
+
+## [Non versionné] — 2026-08-26 · S-R1 MODEL_ROUTING (ADR-5, socle)
+- feat(models_routing): nouvelle app — backends (claude_bin / openai_http),
+  règles de routage ordonnées, budgets de tokens par mission, RunLog ;
+  admin + migration + fixture `routing_defaults` (table de la spec §6).
+- feat(models_routing): OpenAIHttpAdapter (httpx SSE, pré-vol overflow,
+  usage réel via stream_options) + commande `backends_health`.
+- sec: base_url restreinte au LAN/loopback (validation IP privée, spec §8).
+- fix(router): incréments de budget via F() — atomiques, pas de
+  lire-modifier-écrire (deux runs simultanés ne s'écrasent plus).
+- deps: httpx ajouté aux requirements.
