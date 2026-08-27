@@ -16,4 +16,6 @@ urlpatterns = [
     path("<slug:slug>/agents/", views.agent_picker, name="agent_picker"),
     path("<slug:slug>/panes/<str:kind>/nouveau/", views.pane_create, name="pane_create"),
     path("<slug:slug>/panes/<int:pane_id>/supprimer/", views.pane_delete, name="pane_delete"),
+    path("<slug:slug>/historique/", views.history_flux, name="history_flux"),
+    path("<slug:slug>/obsidian/", views.obsidian_export, name="obsidian_export"),
 ]

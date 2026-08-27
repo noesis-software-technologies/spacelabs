@@ -65,6 +65,8 @@
             title="Coupe le direct et repasse TOUS les panes en privé, immédiatement.">Panique</button>
     <a class="ds-btn ds-btn--ghost" href="{% url 'observer:regie' %}"
        hx-get="{% url 'observer:regie' %}" hx-target="#content" hx-swap="innerHTML" hx-push-url="true">Régie</a>
+    <a class="ds-btn ds-btn--ghost" href="{% url 'workspaces:history_flux' slug=workspace.slug %}"
+       title="Historique multi-agents de ce workspace">Historique</a>
     <button type="button" class="ds-btn" data-spawn-all>
       <svg class="ds-icon ds-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Tout lancer
