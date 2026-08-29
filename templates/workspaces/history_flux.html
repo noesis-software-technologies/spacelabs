@@ -4,16 +4,24 @@
 
 {% block page_css %}
 <style>
+/* ── Layout global ─────────────────────────────────────────────────────── */
 .hf-layout { display: flex; height: calc(100vh - 60px); overflow: hidden; }
+
+/* ── Sidebar agents ────────────────────────────────────────────────────── */
 .hf-sidebar {
   width: 220px; flex-shrink: 0; background: var(--surface-2);
   border-right: 1px solid var(--border); padding: 12px; overflow-y: auto;
 }
-.hf-sidebar h3 { font-size: 11px; color: var(--text-2); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.hf-sidebar h3 {
+  font-size: 11px; color: var(--text-2); letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
 .hf-sidebar a { display: block; padding: 4px 0; font-size: 12px; color: var(--text-2); }
 .hf-sidebar a.active, .hf-sidebar a:hover { color: var(--text-1); }
 
+/* ── Main area — stream (top) + chat (bottom) ──────────────────────────── */
 .hf-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
 .hf-toolbar {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px;
   background: var(--surface-2); border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -29,7 +37,12 @@
 }
 .hf-toolbar a { font-size: 12px; color: var(--accent); }
 
-.hf-stream { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; }
+/* ── Flux des événements ──────────────────────────────────────────────── */
+.hf-stream {
+  flex: 1; overflow-y: auto; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 2px;
+  min-height: 0;
+}
 
 .hf-event {
   display: flex; gap: 10px; align-items: baseline; padding: 4px 8px;
@@ -40,37 +53,135 @@
 .hf-event--user { border-left: 2px solid var(--border); }
 .hf-event--system { border-left: 2px solid var(--text-3); opacity: 0.6; }
 
-.hf-agent {
-  display: flex; align-items: center; gap: 4px; flex-shrink: 0; width: 160px;
-}
+.hf-agent { display: flex; align-items: center; gap: 4px; flex-shrink: 0; width: 160px; }
 .hf-agent-avatar {
   width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center;
   justify-content: center; font-size: 10px; font-weight: 700; color: #fff;
   font-family: monospace; flex-shrink: 0;
 }
 .hf-agent-avatar--sonnet { background: var(--claude, #7c3aed); }
-.hf-agent-avatar--opus { background: #dc2626; }
-.hf-agent-avatar--haiku { background: #2563eb; }
-.hf-agent-avatar--oss { background: #059669; }
+.hf-agent-avatar--opus   { background: #dc2626; }
+.hf-agent-avatar--haiku  { background: #2563eb; }
+.hf-agent-avatar--oss    { background: #059669; }
 
 .hf-agent-name { font-size: 11px; font-weight: 600; color: var(--text-2); }
-.hf-time { font-size: 10px; color: var(--text-3); flex-shrink: 0; }
+.hf-time    { font-size: 10px; color: var(--text-3); flex-shrink: 0; }
 .hf-content { flex: 1; color: var(--text-1); word-break: break-word; }
-.hf-tool { color: var(--text-3); font-size: 11px; font-family: monospace; }
+.hf-tool    { color: var(--text-3); font-size: 11px; font-family: monospace; }
+.hf-empty   { color: var(--text-3); text-align: center; padding: 40px; font-size: 13px; }
 
-.hf-empty { color: var(--text-3); text-align: center; padding: 40px; font-size: 13px; }
+/* ── Chat panel (bas) ─────────────────────────────────────────────────── */
+.hf-chatpanel {
+  flex-shrink: 0; border-top: 2px solid var(--border);
+  display: flex; flex-direction: column; height: 420px;
+  background: var(--surface-1);
+}
+
+/* Tabs agents */
+.hf-tabs {
+  display: flex; gap: 2px; padding: 6px 8px;
+  background: var(--surface-2); border-bottom: 1px solid var(--border);
+  overflow-x: auto; flex-shrink: 0;
+}
+.hf-tab {
+  display: flex; align-items: center; gap: 6px; padding: 5px 10px;
+  border: 1px solid transparent; border-radius: 5px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  background: none; color: var(--text-2); white-space: nowrap;
+  transition: all 120ms;
+}
+.hf-tab:hover { background: var(--surface-1); color: var(--text-1); }
+.hf-tab[aria-selected="true"] {
+  background: var(--surface-1); color: var(--text-1);
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.hf-tab .hf-agent-avatar { width: 16px; height: 16px; font-size: 9px; }
+
+/* Chat host areas */
+.hf-chat-host {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+  /* pane--chat requis pour que chat.js monte correctement */
+}
+.hf-chat-host[hidden] { display: none; }
+
+.hf-chat-log {
+  flex: 1; overflow-y: auto; padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+/* Bulles de chat dans le panneau bas */
+.hf-chat-log .chat-msg {
+  max-width: 90%; padding: 7px 12px; border-radius: 8px; font-size: 13px;
+  line-height: 1.55; word-break: break-word;
+}
+.hf-chat-log .chat-msg--user {
+  align-self: flex-end; background: hsl(var(--ds-accent) / 0.15);
+  border: 1px solid hsl(var(--ds-accent) / 0.4); color: var(--text-1);
+}
+.hf-chat-log .chat-msg--assistant {
+  align-self: flex-start; background: var(--surface-2);
+  border: 1px solid var(--border); color: var(--text-1);
+}
+.hf-chat-log .chat-result { font-size: 11px; color: var(--text-3); padding: 2px 0; }
+.hf-chat-log .chat-system { font-size: 11px; color: var(--text-3); font-style: italic; }
+.hf-chat-log .chat-empty-hint { color: var(--text-3); font-size: 12px; padding: 12px 0; }
+.hf-chat-log .chat-tool { font-size: 11px; margin: 2px 0; }
+.hf-chat-log .chat-tool-summary { cursor: pointer; font-family: monospace; color: var(--text-2); }
+.hf-chat-log .chat-tool-name { font-weight: 600; margin-right: 6px; }
+.hf-chat-log .chat-tool-hint { opacity: 0.5; }
+.hf-chat-log .chat-tool-input, .hf-chat-log .chat-tool-result {
+  font-size: 10px; margin: 4px 0 0; padding: 4px 8px;
+  background: var(--surface-1); border-radius: 3px; overflow-x: auto;
+}
+
+/* Typewriter cursor ▋ */
+.hf-cursor {
+  display: inline-block; width: 2px; height: 1em;
+  background: hsl(var(--ds-accent)); margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: hf-blink 0.9s step-end infinite;
+}
+@keyframes hf-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Composer */
+.hf-composer {
+  display: flex; gap: 8px; align-items: flex-end;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+  background: var(--surface-2); flex-shrink: 0;
+}
+.hf-composer textarea {
+  flex: 1; resize: none; min-height: 40px; max-height: 100px;
+  background: var(--surface-1); border: 1px solid var(--border);
+  color: var(--text-1); padding: 8px 10px; border-radius: 6px;
+  font-size: 13px; font-family: inherit; line-height: 1.4;
+  transition: border-color 120ms;
+}
+.hf-composer textarea:focus { outline: none; border-color: hsl(var(--ds-accent) / 0.7); }
+.hf-composer .hf-send-btn { flex-shrink: 0; }
+.hf-composer .hf-stop-btn {
+  flex-shrink: 0; display: none;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-2); border-radius: 6px; padding: 6px 12px;
+  cursor: pointer; font-size: 12px;
+}
+.hf-chat-host[data-status="running"] .hf-stop-btn { display: inline-flex; }
+.hf-chat-host[data-status="running"] .hf-send-btn { display: none; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="hf-layout">
-  <!-- Sidebar agents -->
+
+  <!-- ── Sidebar agents ────────────────────────────────────────────────── -->
   <aside class="hf-sidebar">
     <h3>Agents</h3>
     <a href="?q={{ q }}" {% if not pane_filter %}class="active"{% endif %}>Tous</a>
     {% for pane in headless_panes %}
-    <a href="?q={{ q }}&pane={{ pane.pk }}" {% if pane_filter == pane.pk|stringformat:"s" %}class="active"{% endif %}>
-      <span class="hf-agent-avatar hf-agent-avatar--{{ pane.model_tier }}" style="display:inline-flex; vertical-align:middle; margin-right:4px;">
+    <a href="?q={{ q }}&pane={{ pane.pk }}"
+       {% if pane_filter == pane.pk|stringformat:"s" %}class="active"{% endif %}>
+      <span class="hf-agent-avatar hf-agent-avatar--{{ pane.model_tier }}"
+            style="display:inline-flex; vertical-align:middle; margin-right:4px;">
         {% if pane.model_tier == "haiku" %}H{% elif pane.model_tier == "sonnet" %}S{% elif pane.model_tier == "opus" %}O{% else %}L{% endif %}
       </span>
       {{ pane.title }}
@@ -81,8 +192,10 @@
     <a href="{% url 'workspaces:detail' workspace.slug %}">← Cockpit</a>
   </aside>
 
-  <!-- Main -->
+  <!-- ── Main ─────────────────────────────────────────────────────────── -->
   <div class="hf-main">
+
+    <!-- Toolbar RAG -->
     <div class="hf-toolbar">
       <form method="get" style="display:contents">
         {% if pane_filter %}<input type="hidden" name="pane" value="{{ pane_filter }}">{% endif %}
@@ -95,6 +208,7 @@
       </span>
     </div>
 
+    <!-- Flux historique -->
     <div class="hf-stream">
       {% for event in events %}
         {% with norm=event.normalized %}
@@ -157,7 +271,159 @@
         {% if q %}Aucun résultat pour « {{ q }} ».{% else %}Aucun événement enregistré dans ce workspace.{% endif %}
       </div>
       {% endfor %}
-    </div>
-  </div>
-</div>
+    </div><!-- /hf-stream -->
+
+    <!-- ── Chat panel ────────────────────────────────────────────────── -->
+    <div class="hf-chatpanel">
+
+      <!-- Tabs agents -->
+      <div class="hf-tabs" role="tablist">
+        {% for pane in headless_panes %}
+        <button class="hf-tab" role="tab"
+                aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                data-hf-tab="{{ pane.pk }}">
+          <span class="hf-agent-avatar hf-agent-avatar--{{ pane.model_tier }}">
+            {% if pane.model_tier == "haiku" %}H{% elif pane.model_tier == "sonnet" %}S{% elif pane.model_tier == "opus" %}O{% else %}L{% endif %}
+          </span>
+          {{ pane.title }}
+        </button>
+        {% empty %}
+        <span style="font-size:12px; color:var(--text-3); padding: 6px 10px;">
+          Aucun agent headless dans ce workspace.
+        </span>
+        {% endfor %}
+      </div>
+
+      <!-- Un panneau chat par agent (data-chat-host = auto-mounted par chat.js) -->
+      {% for pane in headless_panes %}
+      <div class="hf-chat-host pane pane--chat pane--agent"
+           data-chat-host data-pane-id="{{ pane.pk }}"
+           data-status="{{ pane.status }}"
+           data-hf-panel="{{ pane.pk }}"
+           {% if not forloop.first %}hidden{% endif %}>
+
+        <div class="hf-chat-log chat-log" data-chat-log>
+          <div class="chat-empty-hint" style="color:var(--text-3); font-size:12px; padding:12px 0;">
+            Prêt — démarrer une conversation avec <strong>{{ pane.title }}</strong>
+            (<code>{{ pane.model_id }}</code>).
+          </div>
+        </div>
+
+        <div class="hf-composer">
+          <textarea class="chat-input ds-input" data-chat-input rows="2"
+                    placeholder="Message pour {{ pane.title }} (Entrée pour envoyer, Shift+Entrée pour saut de ligne)…"></textarea>
+          <button type="button" class="ds-btn ds-btn--primary hf-send-btn chat-send" data-chat-send>
+            Envoyer ↵
+          </button>
+          <button type="button" class="hf-stop-btn" data-chat-kill
+                  title="Interrompre la génération">
+            ▣ Stop
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div><!-- /hf-chatpanel -->
+
+  </div><!-- /hf-main -->
+</div><!-- /hf-layout -->
+{% endblock %}
+
+{% block page_js %}
+<script>
+(function () {
+  "use strict";
+
+  /* ── Tab switching ─────────────────────────────────────────────────── */
+  document.querySelectorAll(".hf-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      var paneId = tab.getAttribute("data-hf-tab");
+      // Deselect all tabs
+      document.querySelectorAll(".hf-tab").forEach(function (t) {
+        t.setAttribute("aria-selected", "false");
+      });
+      tab.setAttribute("aria-selected", "true");
+      // Hide all panels, show selected
+      document.querySelectorAll("[data-hf-panel]").forEach(function (panel) {
+        if (panel.getAttribute("data-hf-panel") === paneId) {
+          panel.removeAttribute("hidden");
+        } else {
+          panel.setAttribute("hidden", "");
+        }
+      });
+    });
+  });
+
+  /* ── Textarea : Entrée = envoyer, Shift+Entrée = nouvelle ligne ─────── */
+  document.addEventListener("keydown", function (e) {
+    var ta = e.target.closest("[data-chat-input]");
+    if (!ta) return;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      var btn = ta.closest("[data-chat-host]").querySelector("[data-chat-send]");
+      if (btn) btn.click();
+    }
+  });
+
+  /* ── Typewriter effect pour les bulles assistant ────────────────────── */
+  /* On surcharge le rendu dans les panneaux .hf-chat-log en animant les
+     nouvelles bulles assistant mot par mot. Le flux WebSocket (chat_event)
+     pousse l'event complet ; on anime côté client. */
+  var WORD_DELAY = 18; // ms par mot
+
+  function typewriterBubble(bubble, text) {
+    var words = text.split(/(\s+)/);
+    var i = 0;
+    var body = bubble.querySelector(".chat-msg-body");
+    if (!body) return;
+    body.textContent = "";
+    // Ajouter curseur
+    var cursor = document.createElement("span");
+    cursor.className = "hf-cursor";
+    body.appendChild(cursor);
+
+    function tick() {
+      if (i >= words.length) {
+        cursor.remove();
+        return;
+      }
+      body.insertBefore(document.createTextNode(words[i] || ""), cursor);
+      i++;
+      setTimeout(tick, WORD_DELAY);
+    }
+    tick();
+  }
+
+  /* MutationObserver : surveille les nouvelles bulles assistant dans les
+     panels hf-chat-log. Les bulles sont créées par chat.js ; on intercepte
+     les nouveaux éléments et on anime ceux venant du live (pas du replay). */
+  var chatpanel = document.querySelector(".hf-chatpanel");
+  if (chatpanel) {
+    var twObserver = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          // Nouvelle bulle assistant dans un panneau hf-chat-log
+          if (node.classList && node.classList.contains("chat-msg--assistant")) {
+            var log = node.closest(".hf-chat-log");
+            if (log) {
+              var body = node.querySelector(".chat-msg-body");
+              var text = body ? body.textContent : "";
+              if (text && text.length > 2) {
+                typewriterBubble(node, text);
+              }
+            }
+          }
+        });
+      });
+    });
+    twObserver.observe(chatpanel, { childList: true, subtree: true });
+  }
+
+  /* ── Auto-scroll du flux historique au chargement ──────────────────── */
+  var stream = document.querySelector(".hf-stream");
+  if (stream) stream.scrollTop = stream.scrollHeight;
+
+})();
+</script>
 {% endblock %}
