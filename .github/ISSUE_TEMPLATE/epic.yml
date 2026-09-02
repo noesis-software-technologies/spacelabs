@@ -1,0 +1,128 @@
+name: "Épic (PM)"
+description: "Un problème utilisateur, une hypothèse, un flag, des sous-tâches. Owner : PM du pod. Approbation du leadership produit = label epic:approved."
+title: "[EPIC] "
+labels: ["epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Gate 0 — cadrage.** Rien ne se code avant que ce ticket porte `epic:approved` (Director PM / GPM).
+        Pas de solution imposée ici : un problème, une mesure de succès, ce qu'on ne fera pas.
+  - type: input
+    id: pod
+    attributes:
+      label: Pod
+      description: Slug du pod (voir harness.config.sh → PODS)
+      placeholder: growth | core-platform | enterprise
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème utilisateur
+      description: Qui souffre de quoi, avec quelle preuve (entretiens, data, tickets support)
+      placeholder: "Les admins multi-tenant ne voient pas leur consommation par tenant → 23 tickets support / mois, churn des comptes > 3 tenants"
+    validations:
+      required: true
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothèse et solution envisagée
+      description: "Nous pensons que [solution] pour [persona] produira [effet mesurable]. Nous le saurons quand…"
+    validations:
+      required: true
+  - type: input
+    id: north_star
+    attributes:
+      label: North Star metric (une seule)
+      placeholder: "Taux d'activation du dashboard à J+7 ≥ 40 % des admins multi-tenant"
+    validations:
+      required: true
+  - type: textarea
+    id: guardrails
+    attributes:
+      label: Guardrails (2 métriques à ne PAS dégrader)
+      placeholder: |
+        - p95 du temps de chargement de la page facturation ≤ 800 ms
+        - taux d'erreur API billing ≤ 0,1 %
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals (3 choses que cet épic ne fera PAS)
+      placeholder: |
+        - pas d'export PDF
+        - pas de facturation par usage
+        - pas de refonte du modèle Tenant
+    validations:
+      required: true
+  - type: input
+    id: flag
+    attributes:
+      label: Feature flag
+      description: "snake_case + version ; déclaré à OFF par scripts/gh/10-new-epic.sh"
+      placeholder: billing_dashboard_v1
+    validations:
+      required: true
+  - type: textarea
+    id: subtasks
+    attributes:
+      label: Sous-tâches pressenties (une par ligne)
+      description: Chacune deviendra une issue `sub-task` et une branche sub-feature/<epic>/<task>
+      placeholder: |
+        DB migrations
+        Billing API
+        UI dashboard
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Tier de lancement
+      description: "Décide l'ampleur du GTM et les sign-offs (scripts/gh/10-new-epic.sh pose le label tier:N)"
+      options:
+        - 2 — Release standard (pod ; notes de release PMM)
+        - 1 — Lancement majeur (CPO/CTO, GTM complet, presse, formation ventes)
+        - 3 — Mineur / correctif (EM + QA ; entrée CHANGELOG)
+    validations:
+      required: true
+  - type: textarea
+    id: links
+    attributes:
+      label: Documents de cadrage (liens)
+      description: PRD (PM) · recherche utilisateur · baseline analytics · maquettes (design) · doc d'architecture (tech lead) · plan GTM (PMM)
+      placeholder: |
+        PRD : https://…
+        Recherche : …
+        Baseline : …
+        Maquettes : …
+        Architecture : …
+        GTM : …
+  - type: input
+    id: sponsor
+    attributes:
+      label: Sponsor (Director PM / GPM)
+      placeholder: "@login"
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Taille estimée
+      options:
+        - S (< 1 sprint)
+        - M (1–2 sprints)
+        - L (> 2 sprints — à découper ?)
+    validations:
+      required: true
+  - type: checkboxes
+    id: dor
+    attributes:
+      label: Definition of Ready (à cocher avant approbation)
+      options:
+        - label: Recherche utilisateur menée (User Researcher) — ou explicitement non nécessaire
+        - label: Baseline du comportement actuel mesurée par l'analyste (point de comparaison post-launch)
+        - label: Design — wireframes attachés ou explicitement non nécessaires
+        - label: Tech lead consulté sur la faisabilité et les risques (migrations, perf)
+        - label: Plan de mesure défini avec l'analyste du pod (événements, tableau de bord)
+        - label: PMM informé (positionnement, date cible de lancement)
+        - label: Aucune donnée personnelle nouvelle, ou revue RGPD planifiée

@@ -1,0 +1,143 @@
+# ci-sub-feature — PR sub-feature/<epic>/<task> → feature/<epic>
+# Checks requis par le ruleset harness-feature : guard · lint · unit-tests · qa-smoke
+name: ci-sub-feature
+
+on:
+  pull_request:
+    branches: ["feature/**"]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: sub-feature-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Convention de branches (head → base)
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: python scripts/ci/check_branch.py --head "$HEAD_REF" --base "$BASE_REF"
+
+      - name: Checklist bloquante (profil sub-feature)
+        id: checklist
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_DRAFT: ${{ github.event.pull_request.draft }}
+        run: python scripts/ci/check_pr_body.py --profile sub-feature
+
+      - name: Commenter la PR si la checklist est incomplète
+        if: failure() && steps.checklist.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          MISSING: ${{ steps.checklist.outputs.missing }}
+          QA_HANDLES: ${{ vars.QA_HANDLES }}
+        run: |
+          body="$(cat <<EOF
+          ⛔ **Checklist bloquante incomplète** (profil sub-feature) : \`$MISSING\`
+
+          Coche les lignes \`- [x] TOKEN:\` correspondantes dans la description (le check se relance à l'édition).
+          ${QA_HANDLES:-@QA} — merci de signer la ligne **QA:** (nom + date) une fois le scénario passé.
+          EOF
+          )"
+          scripts/ci/upsert_comment.sh "$PR" "<!-- harness:checklist -->" "$body"
+
+      - name: Marquer la checklist comme complète
+        if: success() && github.event.pull_request.draft == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          scripts/ci/upsert_comment.sh "$PR" "<!-- harness:checklist -->" \
+            "✅ Checklist bloquante complète (profil sub-feature)." >/dev/null || true
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install ruff
+      - name: "ruff — scopé v0 aux fichiers du harnais (élargir à . après la PR d'autofix du dépôt)"
+        run: ruff check scripts apps/core
+      - name: Scripts shell du harnais
+        run: |
+          for f in scripts/gh/*.sh scripts/ci/*.sh; do bash -n "$f"; done
+
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    env:
+      # dev = SQLite + InMemoryChannelLayer : aucun service requis (cf. ci.yml historique)
+      DJANGO_SETTINGS_MODULE: ${{ vars.DJANGO_SETTINGS_MODULE || 'config.settings.dev' }}
+      SECRET_KEY: ci-only-not-a-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Dépendances
+        run: |
+          python -m pip install --upgrade pip
+          # faster-whisper est optionnel (import paresseux) et lourd : exclu de la CI, comme ci.yml
+          grep -v "faster-whisper" requirements.txt > /tmp/req.txt
+          pip install -r /tmp/req.txt
+          pip install pytest-django pytest-asyncio factory-boy django-debug-toolbar pytest pyyaml
+      - name: Django check + migrations à jour
+        run: |
+          if [ -f manage.py ]; then
+            python manage.py check
+            python manage.py makemigrations --check --dry-run
+          else
+            echo "pas de manage.py à la racine — étape Django ignorée"
+          fi
+      - name: Tests unitaires (hors e2e)
+        run: python -m pytest -q -m "not e2e"
+
+  qa-smoke:
+    name: qa-smoke
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Dépendances
+        run: |
+          # faster-whisper est optionnel (import paresseux) et lourd : exclu de la CI, comme ci.yml
+          grep -v "faster-whisper" requirements.txt > /tmp/req.txt
+          pip install -r /tmp/req.txt
+          pip install pytest-django pytest-asyncio factory-boy django-debug-toolbar pytest pyyaml
+      - name: Tests marqués smoke (parcours critiques joués par la QA)
+        env:
+          DJANGO_SETTINGS_MODULE: ${{ vars.DJANGO_SETTINGS_MODULE || 'config.settings.dev' }}
+          SECRET_KEY: ci-only-not-a-secret
+        run: |
+          set +e
+          python -m pytest -q -m smoke
+          rc=$?
+          if [ "$rc" -eq 5 ]; then
+            echo "::warning::aucun test marqué @pytest.mark.smoke — ajoute les parcours critiques (docs/process/RELEASE_PROCESS.md §QA)"
+            exit 0
+          fi
+          exit "$rc"

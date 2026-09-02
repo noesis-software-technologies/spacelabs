@@ -1,0 +1,24 @@
+# name	color	description
+epic	5319E7	Épic (ticket PM) — parent d'un lot de sous-tâches, porte un feature flag
+sub-task	0E8A16	Sous-tâche exécutée par une sub-team sur sub-feature/<epic>/<task>
+bug	D73A4A	Défaut constaté
+hotfix	B60205	Correctif urgent hotfix/* → main (profil CI hotfix)
+rollout	0075CA	Palier de déploiement d'un flag (release/* → main)
+epic:approved	0052CC	Épic validé par le leadership produit — la branche feature/* peut être créée
+po-approved	2EA44F	Go PO/PM sur une PR → main (gate bloquante, posé par un PO_APPROVERS)
+needs-po-review	FBCA04	PR → main en attente du go PO
+qa-passed	1D76DB	QA signée sur la branche d'intégration
+flag:cleanup	E4E669	Feature flag périmé à nettoyer (ouvert par flag-hygiene)
+harness	BFDADC	Modification du harnais lui-même (.github, scripts, docs/process)
+tracking	006B75	Issue de suivi d'intégration d'un épic (Main Dev Team / tech lead) — fermée par la PR d'intégration
+tier:1	B60205	Lancement majeur : CPO/CTO, GTM complet, presse, formation ventes (sign-off exec-approved requis)
+tier:2	FBCA04	Release standard : gérée dans le pod, notes de release PMM
+tier:3	C5DEF5	Mineur / correctif : EM + QA, entrée CHANGELOG
+exec-approved	5319E7	Sign-off CTO / CPO sur une PR → main d'un épic tier 1 (posé par un EXEC_APPROVERS)
+go	2EA44F	Go/No-Go automatique : GO (scripts/gh/32-go-no-go.sh)
+no-go	D73A4A	Go/No-Go automatique : NO-GO — merge bloqué par po-gate tant que le label est présent
+severity:S1	B60205	Prod cassée pour tous — hotfix immédiat (bloque tout Go/No-Go du pod)
+severity:S2	D93F0B	Fonction majeure dégradée — hotfix sous 24 h (bloque le Go/No-Go de l'épic)
+severity:S3	FBCA04	Contournement possible — prochaine intégration
+severity:S4	C5DEF5	Cosmétique
+post-launch	0E8A16	Revue post-launch + rétrospective de release d'un flag lancé (ouverte par flag-hygiene à J+N)

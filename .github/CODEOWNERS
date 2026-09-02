@@ -1,0 +1,50 @@
+# CODEOWNERS v0 spacelabs — un seul owner humain (@noesis-software-technologies) tant que les équipes
+# GitHub de harness.config.sh n'existent pas (scripts/gh/00-bootstrap-teams.sh les créera ; make -f harness.mk init re-mappe).
+# CODEOWNERS — routage automatique des revues + revue obligatoire d'un owner (rulesets).
+# La DERNIÈRE règle qui matche gagne. Une équipe = @<org>/<slug> (créées par scripts/gh/00-bootstrap-teams.sh).
+# `make init` remplace l'organisation par celle de harness.config.sh.
+# Sans organisation GitHub (dépôt personnel) : remplace chaque @noesis-software-technologies/équipe par des @logins.
+
+# --- Filet : les tech leads voient tout ---------------------------------------------------
+*                                       @noesis-software-technologies
+
+# --- Le harnais lui-même : ProdOps + tech leads (changer une gate = changer le process) ------
+/.github/                               @noesis-software-technologies @noesis-software-technologies
+/scripts/                               @noesis-software-technologies @noesis-software-technologies
+/harness.config.sh                      @noesis-software-technologies
+/docs/process/                          @noesis-software-technologies @noesis-software-technologies
+
+# --- Produit -----------------------------------------------------------------------------------
+/docs/product/                          @noesis-software-technologies
+/docs/launch/                           @noesis-software-technologies @noesis-software-technologies
+/docs/design/                           @noesis-software-technologies
+
+# --- Feature flags : déployer ≠ releaser → décision partagée PM + tech lead --------------------
+/config/feature_flags.yml               @noesis-software-technologies @noesis-software-technologies
+/apps/core/flags.py                     @noesis-software-technologies
+
+# --- Backend & modèle de données ---------------------------------------------------------------
+/apps/                                  @noesis-software-technologies
+/apps/**/migrations/                    @noesis-software-technologies @noesis-software-technologies
+/config/settings/                       @noesis-software-technologies @noesis-software-technologies
+
+# --- Frontend (templates, statiques, JS) ---------------------------------------------------------
+/apps/**/templates/                     @noesis-software-technologies
+/apps/**/static/                        @noesis-software-technologies
+/templates/                             @noesis-software-technologies
+/static/                                @noesis-software-technologies
+/frontend/                              @noesis-software-technologies
+
+# --- Qualité ---------------------------------------------------------------------------------------
+/tests/e2e/                             @noesis-software-technologies
+/tests/regression/                      @noesis-software-technologies
+/tests/smoke/                           @noesis-software-technologies
+
+# --- Mesure & données ------------------------------------------------------------------------------
+/apps/**/analytics/                     @noesis-software-technologies
+/analytics/                             @noesis-software-technologies @noesis-software-technologies
+/pipelines/                             @noesis-software-technologies
+
+# --- Déploiement ----------------------------------------------------------------------------------
+/deploy/                                @noesis-software-technologies @noesis-software-technologies
+/.github/workflows/release.yml          @noesis-software-technologies @noesis-software-technologies

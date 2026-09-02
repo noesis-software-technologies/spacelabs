@@ -1,0 +1,124 @@
+# flag-hygiene — chaque lundi :
+#   1. un flag dont l'échéance (cleanup_by) est dépassée et qui n'est pas `permanent` ouvre (ou rafraîchit)
+#      une issue `flag:cleanup` — un flag qui traîne = du code mort et deux chemins à tester ;
+#   2. un flag lancé (état on/permanent, `released_at`) depuis ≥ POST_LAUNCH_REVIEW_DAYS ouvre UNE issue
+#      `post-launch` (revue résultats vs North Star/guardrails + verdict + rétrospective de release).
+name: flag-hygiene
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"   # lundi 08:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  stale-flags:
+    name: stale-flags
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MAX_AGE: ${{ vars.FLAG_MAX_AGE_DAYS || 90 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+
+      - name: Lister les flags périmés
+        id: stale
+        run: |
+          python scripts/ci/flags_registry.py stale --max-age "$MAX_AGE" --json > stale.json
+          echo "count=$(python -c 'import json;print(len(json.load(open("stale.json"))))')" >> "$GITHUB_OUTPUT"
+          cat stale.json
+
+      - name: Ouvrir / rafraîchir une issue par flag périmé
+        if: steps.stale.outputs.count != '0'
+        run: |
+          python - <<'PY' > issues.tsv
+          import json
+          for f in json.load(open("stale.json")):
+              print("\t".join([f["name"], str(f["state"]), str(f["deadline"]), str(f["days_over"]), str(f.get("owner", "")), str(f.get("epic", ""))]))
+          PY
+          while IFS=$'\t' read -r name state deadline over owner epic; do
+            title="[flag] Nettoyer $name"
+            existing="$(gh issue list --state open --label "flag:cleanup" --search "\"$title\" in:title" --json number -q '.[0].number')"
+            body="$(cat <<EOF
+          Le feature flag \`$name\` (épic $epic, owner $owner) a dépassé son échéance de nettoyage (**$deadline**, +$over j) — état actuel : \`$state\`.
+
+          À faire (docs/process/FEATURE_FLAGS.md §Nettoyage) :
+          - [ ] décider : généraliser (supprimer le flag, garder le nouveau chemin) · itérer (repousser \`cleanup_by\` avec une raison) · tuer (supprimer flag ET code)
+          - [ ] PR de nettoyage : supprimer les \`is_enabled("$name")\` / \`{% if flags.$name %}\`, retirer l'entrée du registre
+          - [ ] tests des deux chemins remplacés par les tests du chemin conservé
+
+          _Issue ouverte automatiquement par le workflow flag-hygiene ; elle sera mise à jour chaque lundi tant que le flag existe._
+          EOF
+          )"
+            if [ -n "$existing" ]; then
+              gh issue edit "$existing" --body "$body" >/dev/null
+              echo "issue #$existing rafraîchie ($name)"
+            else
+              gh issue create --title "$title" --label "flag:cleanup" --body "$body"
+            fi
+          done < issues.tsv
+
+  post-launch-reviews:
+    name: post-launch-reviews
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REVIEW_AFTER: ${{ vars.POST_LAUNCH_REVIEW_DAYS || 7 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+
+      - name: Lister les lancements à revoir (J+N)
+        id: due
+        run: |
+          python scripts/ci/flags_registry.py review --after "$REVIEW_AFTER" --json > due.json
+          echo "count=$(python -c 'import json;print(len(json.load(open("due.json"))))')" >> "$GITHUB_OUTPUT"
+          cat due.json
+
+      - name: Ouvrir la revue post-launch (une seule fois par flag)
+        if: steps.due.outputs.count != '0'
+        run: |
+          python - <<'PY' > due.tsv
+          import json
+          for f in json.load(open("due.json")):
+              print("\t".join([f["name"], str(f.get("released_at", "")), str(f["days_since"]), str(f.get("owner", "")), str(f.get("epic", "")), str(f.get("pod", ""))]))
+          PY
+          while IFS=$'\t' read -r name released since owner epic pod; do
+            title="[post-launch] Revue J+$REVIEW_AFTER — $name"
+            existing="$(gh issue list --state all --label "post-launch" --search "\"$title\" in:title" --json number -q '.[0].number')"
+            if [ -n "$existing" ]; then echo "revue déjà ouverte (#$existing) pour $name"; continue; fi
+            body="$(cat <<EOF
+          Le flag \`$name\` (épic $epic, owner $owner) est à 100 % depuis le **$released** (J+$since). Phase 6 du cycle de vie :
+          mesurer, décider, apprendre.
+
+          ## 1. Résultats (analyste du pod)
+          - [ ] North Star de l'épic : valeur actuelle vs cible vs baseline mesurée au cadrage
+          - [ ] Guardrails : aucun dégradé (sinon : lequel, de combien)
+          - [ ] Feedback qualitatif (support, in-app, ventes) remonté par l'APM
+
+          ## 2. Verdict (PM du pod)
+          - [ ] **Généraliser** → \`scripts/ci/flags_registry.py set --name $name --state permanent\` puis PR de nettoyage (docs/process/FEATURE_FLAGS.md §Nettoyage)
+          - [ ] **Itérer** → nouvel épic (\`${name%_v*}_v<n+1>\`), \`cleanup_by\` repoussé avec la raison
+          - [ ] **Tuer** → \`scripts/gh/35-rollout.sh <slug> off\`, PR de suppression du code et du flag
+
+          ## 3. Rétrospective de release (Head of ProdOps, 30 min)
+          - [ ] Ce qui a bloqué ou été contourné (gates, revues, QA, rollout)
+          - [ ] Ce qu'on change dans la procédure → PR sur \`docs/process/RELEASE_PROCESS.md\` / \`.github/\` (label \`harness\`)
+
+          _Issue ouverte automatiquement par le workflow flag-hygiene (POST_LAUNCH_REVIEW_DAYS). L'épic se ferme quand le flag n'existe plus._
+          EOF
+          )"
+            labels=(--label post-launch)
+            [ -n "$pod" ] && labels+=(--label "pod:$pod")
+            gh issue create --title "$title" "${labels[@]}" --body "$body"
+          done < due.tsv

@@ -240,3 +240,13 @@ observateur SSE + confidentialité (RedactionRules, liste blanche, mode live,
 bouton panique) · S4 chat headless `claude -p --output-format stream-json` +
 EventLog · S5 Celery + jauges usage + MCP helper · S6 voix + publication ·
 S7 STT serveur (CrisperWhisper) · S8 reprise headless fidèle (`--resume`).
+
+## Harnais de release (toutes équipes, humaines et IA)
+
+Le dépôt est conduit par le harnais de release (`docs/process/HARNESS.md`) : Épic approuvé → terrain
+(`scripts/gh/10-new-epic.sh`, 1er commit = feature flag OFF) → `sub-feature/<epic>/<task>` → PR vers
+`feature/<epic>` (checklist + QA signée) → PR d'intégration vers `main` (Go/No-Go `scripts/gh/32-go-no-go.sh`,
+puis `po-approved`) → tag (`40-release.sh`) → paliers de rollout (`35-rollout.sh`). Règles non négociables :
+jamais de push direct sur `main`, pas de merge sans checklist cochée, tout code nouveau derrière un flag
+déclaré dans `config/feature_flags.yml`, une équipe ne pousse jamais sur la branche d'une autre
+(protocole complet : `docs/process/AI_TEAMS.md`). Vérifier le harnais : `make -f harness.mk verify`.

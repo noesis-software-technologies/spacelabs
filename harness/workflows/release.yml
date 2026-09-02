@@ -1,0 +1,108 @@
+# release — déployer ≠ releaser.
+#   push sur main   → déploiement STAGING automatique (flags à OFF : rien ne change pour les utilisateurs)
+#   tag v*          → GitHub Release (notes générées depuis les PR) puis déploiement PRODUCTION
+#                     via l'environnement `production` (Settings → Environments : reviewers EM / Tech lead)
+#   La release PRODUIT reste un palier de rollout (scripts/gh/35-rollout.sh) validé par le PO.
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: deploy-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Déployer sur staging (deploy/staging.sh)
+        env:
+          DEPLOY_ENV: staging
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          # Contrat : deploy/<env>.sh reçoit DEPLOY_ENV, GIT_SHA (et TAG en prod) — voir deploy/README.md
+          if [ -x deploy/staging.sh ]; then deploy/staging.sh; else echo "::notice::deploy/staging.sh absent — rien déployé ($GIT_SHA)"; fi
+
+  github-release:
+    name: github-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Créer la GitHub Release (notes générées depuis les PR mergées)
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG existe déjà"
+          else
+            gh release create "$TAG" --title "$TAG" --generate-notes
+          fi
+
+  deploy-production:
+    name: deploy-production
+    needs: [github-release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Déployer en production (deploy/production.sh)
+        env:
+          DEPLOY_ENV: production
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          # L'approbation « Required reviewers » de l'environnement production (EM / Tech lead) bloque ce job
+          # tant qu'elle n'est pas donnée. Contrat du hook : deploy/README.md
+          if [ -x deploy/production.sh ]; then deploy/production.sh; else echo "::notice::deploy/production.sh absent — rien déployé ($TAG)"; fi
+      - name: Prévenir le PMM (notes de release disponibles)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PMM_HANDLES: ${{ vars.PMM_HANDLES }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          url="$(gh release view "$TAG" --json url -q .url)"
+          msg="🚀 $TAG déployé en production — notes : $url — ${PMM_HANDLES:-@PMM} : lancement / communication à caler avec les paliers de rollout."
+          echo "$msg"
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            curl -sS -X POST -H 'Content-type: application/json' \
+              --data "$(jq -n --arg t "$msg" '{text: $t}')" "$SLACK_WEBHOOK_URL" >/dev/null || echo "::warning::Slack injoignable"
+          fi
+
+  smoke-production:
+    name: smoke-production
+    needs: [deploy-production]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.ref_name }}
+      PROD_HEALTH_URL: ${{ vars.PROD_HEALTH_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Smoke test de la prod (QA — phase 5)
+        run: |
+          # 1. deploy/smoke.sh si présent (scénarios QA contre la prod, flags OFF) ; 2. sinon l'URL de santé
+          if [ -x deploy/smoke.sh ]; then
+            deploy/smoke.sh
+          elif [ -n "$PROD_HEALTH_URL" ]; then
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$PROD_HEALTH_URL" || echo 000)"
+            echo "$PROD_HEALTH_URL → HTTP $code"
+            [ "$code" = "200" ] || { echo "::error::prod en échec après $TAG — repli : redéployer le tag précédent (deploy/production.sh) ou FLAG_<NOM>=off"; exit 1; }
+          else
+            echo "::notice::ni deploy/smoke.sh ni PROD_HEALTH_URL : smoke test prod non exécuté"
+          fi

@@ -1,0 +1,49 @@
+# po-gate — Go / No-Go du PO/PM sur toute PR → main (dernière gate humaine, Règle 2)
+# Check requis par le ruleset harness-main : po-gate
+# Séparé de ci-integration pour que poser un label ne relance pas la régression complète.
+name: po-gate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: po-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  po-gate:
+    name: po-gate
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      LABEL: po-approved
+      PO_APPROVERS: ${{ vars.PO_APPROVERS }}
+      PO_HANDLES: ${{ vars.PO_HANDLES }}
+      EXEC_APPROVERS: ${{ vars.EXEC_APPROVERS }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      EVENT_ACTION: ${{ github.event.action }}
+      EVENT_LABEL: ${{ github.event.label.name }}
+      EVENT_SENDER: ${{ github.event.sender.login }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nouveau commit → le go PO devient périmé (retrait du label)
+        if: github.event.action == 'synchronize' && vars.PO_GATE_STRICT != 'false'
+        run: |
+          if gh pr view "$PR" --json labels -q '.labels[].name' | grep -qx "$LABEL"; then
+            gh pr edit "$PR" --remove-label "$LABEL"
+            echo "::notice::$LABEL retiré : de nouveaux commits sont arrivés après le go PO"
+          fi
+
+      - name: Vérifier le go PO (label présent, posé par un approbateur habilité)
+        run: scripts/ci/po_gate.sh

@@ -1,0 +1,61 @@
+name: "Sous-tâche (sub-team)"
+description: "Unité de travail d'une sub-team, rattachée à un épic. Vit sur sub-feature/<epic>/<task> et entre dans feature/<epic> par PR."
+title: "[<epic>] "
+labels: ["sub-task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Préfère la création par script (rattachement automatique à l'épic) :
+        `scripts/gh/10-new-epic.sh --epic <n> --slug <epic> --pod <pod> --task "<titre>"`.
+  - type: input
+    id: epic
+    attributes:
+      label: Épic parent
+      placeholder: "#42"
+    validations:
+      required: true
+  - type: input
+    id: branch
+    attributes:
+      label: Branche
+      description: sub-feature/<epic>/<task> (kebab-case) → PR vers feature/<epic>
+      placeholder: sub-feature/billing-dashboard/billing-api
+    validations:
+      required: true
+  - type: dropdown
+    id: team
+    attributes:
+      label: Sub-team
+      options:
+        - Backend
+        - Frontend
+        - Data / Analytics
+        - Design
+        - QA
+    validations:
+      required: true
+  - type: textarea
+    id: ac
+    attributes:
+      label: Critères d'acceptation (Given / When / Then)
+      description: Ce que la QA jouera et ce que le reviewer vérifiera — chaque ligne cochable
+      value: |
+        - [ ] Given … When … Then …
+        - [ ] Given … When … Then …
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes techniques
+      description: Contrat d'API, modèle de données, points d'injection laissés par le tech lead
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of Done
+      options:
+        - label: Code derrière le flag de l'épic (OFF par défaut), vérifié flag ON et OFF
+        - label: Tests unitaires ajoutés, suite verte
+        - label: PR revue par un code owner, threads résolus
+        - label: QA Passed signé dans la PR

@@ -1,0 +1,8 @@
+# Mises à jour des actions GitHub (les PR dependabot/* ciblent main, profil hotfix, checklist exemptée)
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels: ["harness"]

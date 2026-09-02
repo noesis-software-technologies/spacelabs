@@ -1,0 +1,10 @@
+line-length = 120
+target-version = "py310"
+# ruff ≥ 0.16 formate aussi les blocs Python des .md : la doc reste en prose, pas en code formaté
+extend-exclude = ["docs", "*.md"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[lint.per-file-ignores]
+"tests/*" = ["E501"]

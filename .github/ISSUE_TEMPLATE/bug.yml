@@ -1,0 +1,51 @@
+name: "Bug"
+description: "Un défaut constaté (prod, staging ou branche d'intégration)."
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Sévérité
+      options:
+        - S1 — prod cassée pour tous (hotfix immédiat)
+        - S2 — fonction majeure dégradée (hotfix sous 24 h)
+        - S3 — contournement possible (prochaine intégration)
+        - S4 — cosmétique
+    validations:
+      required: true
+  - type: input
+    id: epic
+    attributes:
+      label: Épic concerné
+      description: "#numéro de l'épic (le Go/No-Go de l'épic bloque sur tout bug S1/S2 ouvert qui le cite)"
+      placeholder: "#42"
+  - type: input
+    id: where
+    attributes:
+      label: Environnement et version
+      placeholder: "prod v1.12.3 · staging · feature/billing-dashboard"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      value: |
+        1.
+        2.
+        3.
+        Résultat obtenu :
+        Résultat attendu :
+    validations:
+      required: true
+  - type: input
+    id: flag
+    attributes:
+      label: Feature flag concerné (si le bug est derrière un flag)
+      placeholder: billing_dashboard_v1 — préciser l'état (off / rollout N % / on)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, captures, requêtes
+      render: shell

@@ -1,0 +1,17 @@
+# Registre des feature flags — SOURCE DE VÉRITÉ (docs/FEATURE_FLAGS.md).
+# Modifié par scripts/ci/flags_registry.py (add / set) ; états : off | rollout | on | permanent.
+# Toujours quoter off/on (YAML 1.1 les lirait comme des booléens).
+#
+# Exemple d'entrée (créée par scripts/gh/10-new-epic.sh) :
+# flags:
+#   - name: billing_dashboard_v1
+#     epic: '#42'
+#     pod: growth
+#     owner: '@noesis-software-technologies/pod-growth'
+#     state: 'off'
+#     percentage: 0
+#     allow_users: []
+#     created: '2026-08-29'
+#     cleanup_by: '2026-11-27'
+#     description: ''
+flags: []

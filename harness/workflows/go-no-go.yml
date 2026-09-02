@@ -1,0 +1,42 @@
+# go-no-go — tableau de bord Go/No-Go automatique d'un épic, à la demande (Head of ProdOps)
+# Même moteur que scripts/gh/32-go-no-go.sh en local : rapport + label go / no-go sur la PR d'intégration.
+name: go-no-go
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Slug de l'épic (branche feature/<slug>)"
+        required: true
+        type: string
+      epic:
+        description: "Numéro de l'épic (facultatif : lu dans le registre de la branche)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  go-no-go:
+    name: go-no-go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Rapport Go/No-Go
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ inputs.slug }}
+          EPIC: ${{ inputs.epic }}
+        run: |
+          args=("$SLUG")
+          [ -n "$EPIC" ] && args+=(--epic "$EPIC")
+          scripts/gh/32-go-no-go.sh "${args[@]}" || echo "::warning::verdict NO-GO — voir le rapport ci-dessus"

@@ -1,0 +1,140 @@
+# ci-integration — PR feature/<epic> | release/<epic>-<palier> | hotfix/<slug> → main
+# Checks requis par le ruleset harness-main : guard · regression · flag-check (+ po-gate, workflow séparé)
+name: ci-integration
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: integration-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-latest
+    outputs:
+      profile: ${{ steps.profile.outputs.profile }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Convention de branches (seules feature/*, release/*, hotfix/* entrent dans main)
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: python scripts/ci/check_branch.py --head "$HEAD_REF" --base "$BASE_REF"
+
+      - name: Profil de checklist selon la branche
+        id: profile
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            feature/*)    profile=integration ;;
+            release/*)    profile=rollout ;;
+            hotfix/*)     profile=hotfix ;;
+            dependabot/*) profile=hotfix ;;
+            *)            profile=integration ;;
+          esac
+          echo "profile=$profile" >> "$GITHUB_OUTPUT"
+          echo "profil : $profile"
+
+      - name: Checklist bloquante
+        id: checklist
+        if: github.actor != 'dependabot[bot]'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_DRAFT: ${{ github.event.pull_request.draft }}
+          PROFILE: ${{ steps.profile.outputs.profile }}
+        run: python scripts/ci/check_pr_body.py --profile "$PROFILE"
+
+      - name: Commenter la PR si la checklist est incomplète
+        if: failure() && steps.checklist.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          MISSING: ${{ steps.checklist.outputs.missing }}
+          PROFILE: ${{ steps.profile.outputs.profile }}
+          QA_HANDLES: ${{ vars.QA_HANDLES }}
+        run: |
+          body="$(cat <<EOF
+          ⛔ **Checklist bloquante incomplète** (profil $PROFILE) : \`$MISSING\`
+
+          Coche les lignes \`- [x] TOKEN:\` correspondantes dans la description (le check se relance à l'édition).
+          ${QA_HANDLES:-@QA} — la ligne **QA:** doit être signée (nom + date) sur la branche d'intégration.
+          EOF
+          )"
+          scripts/ci/upsert_comment.sh "$PR" "<!-- harness:checklist -->" "$body"
+
+      - name: Marquer la checklist comme complète
+        if: success() && github.actor != 'dependabot[bot]' && github.event.pull_request.draft == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          PROFILE: ${{ steps.profile.outputs.profile }}
+        run: |
+          scripts/ci/upsert_comment.sh "$PR" "<!-- harness:checklist -->" \
+            "✅ Checklist bloquante complète (profil $PROFILE)." >/dev/null || true
+
+  regression:
+    name: regression
+    runs-on: ubuntu-latest
+    env:
+      # dev = SQLite + InMemoryChannelLayer : aucun service requis (cf. ci.yml historique)
+      DJANGO_SETTINGS_MODULE: ${{ vars.DJANGO_SETTINGS_MODULE || 'config.settings.dev' }}
+      SECRET_KEY: ci-only-not-a-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Dépendances
+        run: |
+          python -m pip install --upgrade pip
+          # faster-whisper est optionnel (import paresseux) et lourd : exclu de la CI, comme ci.yml
+          grep -v "faster-whisper" requirements.txt > /tmp/req.txt
+          pip install -r /tmp/req.txt
+          pip install pytest-django pytest-asyncio factory-boy django-debug-toolbar pytest pyyaml
+      - name: Django check + migrations à jour
+        run: |
+          if [ -f manage.py ]; then
+            python manage.py check
+            python manage.py makemigrations --check --dry-run
+          else
+            echo "pas de manage.py à la racine — étape Django ignorée"
+          fi
+      - name: Régression complète (toute la suite, hors e2e)
+        run: python -m pytest -q -m "not e2e"
+      - name: Tests end-to-end Playwright (si vars.E2E_ENABLED == 'true')
+        if: vars.E2E_ENABLED == 'true'
+        run: |
+          pip install playwright pytest-playwright
+          python -m playwright install --with-deps chromium
+          python -m pytest -q -m e2e
+
+  flag-check:
+    name: flag-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install pyyaml
+      - name: Registre valide, flags du code déclarés, flags périmés signalés
+        env:
+          MAX_AGE: ${{ vars.FLAG_MAX_AGE_DAYS || 90 }}
+        run: python scripts/ci/flags_registry.py check --code-root . --max-age "$MAX_AGE"
