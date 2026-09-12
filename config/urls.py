@@ -17,6 +17,7 @@ urlpatterns = [
     path("skills/", include("apps.skills.urls")),
     path("voice/", include("apps.voice.urls")),
     path("routage/", include("apps.models_routing.urls")),
+    path("vitrine/", include("apps.vitrine.urls")),
     path("django-admin/", admin.site.urls),
     path("healthz", healthz, name="healthz"),
 ]
