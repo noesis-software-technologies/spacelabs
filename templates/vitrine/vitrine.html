@@ -100,13 +100,118 @@
     .vt-search::placeholder { color: hsl(240 5% 40%); }
     .vt-search:focus { border-color: hsl(26 93% 53% / .5); }
 
-    /* ── Grille ───────────────────────────────────────────────── */
-    .vt-grid {
+    /* ── Scène : focus desktop (gauche) + grille 4 col (droite) ─── */
+    .vt-stage {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: 5fr 7fr;
+      gap: 1.25rem;
       padding: 1.5rem 2rem;
       flex: 1;
+      align-items: start;
+    }
+
+    /* ── Focus carrousel (desktop) ────────────────────────────── */
+    .vt-feature {
+      position: sticky;
+      top: 84px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid hsl(240 10% 12%);
+      background:
+        linear-gradient(180deg,
+          color-mix(in srgb, var(--vt-accent-raw, #f77615) 12%, hsl(240 10% 5%)),
+          hsl(240 10% 5%) 60%);
+      box-shadow: 0 24px 60px hsl(240 11% 1% / .6),
+                  0 0 40px color-mix(in srgb, var(--vt-accent-raw, #f77615) 14%, transparent);
+      transition: box-shadow 400ms, background 400ms;
+    }
+    .vt-feature-frame {
+      position: relative;
+      display: flex; flex-direction: column;
+      margin: .9rem .9rem 0;
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid hsl(240 10% 16%);
+      background: hsl(240 9% 3%);
+      aspect-ratio: 16 / 10;
+      box-shadow: 0 16px 40px hsl(240 11% 1% / .7);
+    }
+    .vt-feature-frame iframe,
+    .vt-feature-frame img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: none; object-fit: cover; object-position: top center;
+      display: block;
+    }
+    .vt-feature-frame img { z-index: 0; }        /* poster (screenshot) en fond */
+    .vt-feature-frame iframe { z-index: 1; background: transparent; }  /* live par-dessus */
+    /* Voile de chargement pendant que l'iframe se charge */
+    .vt-feature-frame::after {
+      content: 'chargement du live…';
+      position: absolute; inset: 0; z-index: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-family: var(--ds-font-mono, monospace);
+      color: hsl(240 5% 40%); background: hsl(240 9% 4%);
+    }
+    .vt-feature-badge {
+      position: absolute; top: .6rem; right: .6rem; z-index: 3;
+      font-size: .6rem; font-family: var(--ds-font-mono, monospace);
+      letter-spacing: .1em;
+      padding: .18rem .5rem; border-radius: 999px;
+      background: hsl(240 11% 3% / .7); backdrop-filter: blur(6px);
+      color: hsl(26 93% 62%); border: 1px solid hsl(26 93% 53% / .4);
+    }
+    .vt-feature-info { padding: 1rem 1.1rem 1.15rem; display: flex; flex-direction: column; gap: .5rem; }
+    .vt-feature-top { display: flex; align-items: center; gap: .55rem; }
+    .vt-feature-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--vt-accent-raw, #f77615); flex-shrink: 0; }
+    .vt-feature-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; }
+    .vt-feature-cat {
+      margin-left: auto; font-size: .62rem; font-family: var(--ds-font-mono, monospace);
+      padding: .14rem .55rem; border-radius: 999px;
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 16%, hsl(240 9% 9%));
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 72%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 35%, transparent);
+    }
+    .vt-feature-tagline {
+      font-size: .95rem; font-weight: 600;
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 55%, white);
+    }
+    .vt-feature-desc { font-size: .82rem; line-height: 1.55; color: hsl(240 5% 62%); }
+    .vt-feature-foot { display: flex; align-items: center; gap: .7rem; margin-top: .2rem; }
+    .vt-feature-url { font-family: var(--ds-font-mono, monospace); font-size: .68rem; color: hsl(240 5% 45%); }
+    .vt-feature-count {
+      margin-left: auto; font-size: .66rem; font-family: var(--ds-font-mono, monospace);
+      color: hsl(240 5% 50%);
+    }
+    .vt-feature-count b { color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 75%, white); }
+    .vt-feature-nav {
+      display: inline-flex; gap: .3rem;
+    }
+    .vt-feature-nav button {
+      width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px; border: 1px solid hsl(240 10% 15%); background: transparent;
+      color: hsl(240 5% 60%); cursor: pointer; font-size: .8rem; line-height: 1;
+      transition: color 150ms, border-color 150ms, background 150ms;
+    }
+    .vt-feature-nav button:hover { color: hsl(var(--ds-fg)); border-color: var(--vt-accent-raw, #f77615); }
+    .vt-feature-progress {
+      height: 3px; border-radius: 999px; background: hsl(240 10% 12%);
+      overflow: hidden; margin-top: .1rem;
+    }
+    .vt-feature-progress span {
+      display: block; height: 100%; width: 0;
+      background: var(--vt-accent-raw, #f77615);
+      box-shadow: 0 0 10px var(--vt-accent-raw, #f77615);
+    }
+    .vt-feature.is-playing .vt-feature-progress span { animation: vt-fill var(--dur, 8s) linear forwards; }
+    @keyframes vt-fill { from { width: 0; } to { width: 100%; } }
+
+    /* ── Grille (droite) 4 colonnes ───────────────────────────── */
+    .vt-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
       align-content: start;
     }
 
@@ -385,11 +490,9 @@
 
     /* ── Mode TV / Chromecast ─────────────────────────────────── */
     body.tv-mode .vt-header { padding: 1.5rem 3rem; }
-    body.tv-mode .vt-grid {
-      padding: 2rem 3rem;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 1.5rem;
-    }
+    body.tv-mode .vt-stage { padding: 2rem 3rem; gap: 1.75rem; }
+    body.tv-mode .vt-grid { gap: 1.4rem; }
+    body.tv-mode .vt-feature-name { font-size: 1.35rem; }
     body.tv-mode .vt-card-nom { font-size: 1.05rem; }
     body.tv-mode .vt-card-tagline { font-size: .8rem; }
 
@@ -397,8 +500,17 @@
     .vt-card[hidden] { display: none; }
 
     /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .vt-stage { grid-template-columns: 1fr; }
+      .vt-feature { position: static; }
+      .vt-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .vt-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     @media (max-width: 600px) {
-      .vt-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: .75rem; }
+      .vt-stage { padding: 1rem; gap: 1rem; }
+      .vt-grid { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
       .vt-header { padding: .75rem 1rem; gap: .5rem; }
       .vt-search { width: 130px; }
       .vt-device--desktop { max-height: 44vh; }
@@ -439,8 +551,14 @@
     </div>
   </header>
 
-  <!-- Grille -->
-  <main class="vt-grid" id="vt-grid">
+  <!-- Scène : focus desktop (gauche) + grille 4 colonnes (droite) -->
+  <main class="vt-stage">
+
+    <!-- Focus carrousel — l'application en desktop (rempli par JS) -->
+    <section class="vt-feature" id="vt-feature" aria-label="Application en vedette"></section>
+
+    <!-- Grille produits (4 colonnes) -->
+    <div class="vt-grid" id="vt-grid">
     {% for p in produits %}
     <article class="vt-card"
              role="button" tabindex="0"
@@ -448,6 +566,10 @@
              data-url="{{ p.url }}"
              data-mode="{{ p.preview_mode }}"
              data-nom="{{ p.nom }}"
+             data-tagline="{{ p.tagline }}"
+             data-cat="{{ p.categorie }}"
+             data-desc="{{ p.description }}"
+             data-couleur="{{ p.couleur }}"
              data-search="{{ p.nom|lower }} {{ p.tagline|lower }} {{ p.categorie|lower }}"
              style="--i: {{ forloop.counter0 }}; --vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
 
@@ -484,6 +606,7 @@
     {% empty %}
     <p style="color:hsl(240 5% 45%);padding:2rem;grid-column:1/-1;">Aucun produit dans le catalogue.</p>
     {% endfor %}
+    </div>
   </main>
 
   <!-- Modal -->
@@ -603,6 +726,87 @@
     }
 
     function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ── Focus carrousel desktop ─────────────────────────────────
+    (function () {
+      const feature = document.getElementById('vt-feature');
+      const cards = [...document.querySelectorAll('.vt-card')];
+      if (!feature || !cards.length) return;
+
+      const items = cards.map(c => ({
+        url: c.dataset.url || '', nom: c.dataset.nom || '', tagline: c.dataset.tagline || '',
+        cat: c.dataset.cat || '', desc: c.dataset.desc || '',
+        couleur: c.dataset.couleur || '#f77615', mode: c.dataset.mode || 'desktop',
+      }));
+
+      feature.innerHTML =
+        '<div class="vt-feature-frame" id="ft-frame" title="Ouvrir en grand">' +
+          '<span class="vt-feature-badge">● LIVE DESKTOP</span>' +
+          '<div id="ft-media" style="flex:1;display:flex;min-height:0;"></div>' +
+        '</div>' +
+        '<div class="vt-feature-info">' +
+          '<div class="vt-feature-top"><span class="vt-feature-dot"></span>' +
+            '<span class="vt-feature-name" id="ft-name"></span>' +
+            '<span class="vt-feature-cat" id="ft-cat"></span></div>' +
+          '<div class="vt-feature-tagline" id="ft-tag"></div>' +
+          '<div class="vt-feature-desc" id="ft-desc"></div>' +
+          '<div class="vt-feature-foot">' +
+            '<span class="vt-feature-nav">' +
+              '<button id="ft-prev" aria-label="Précédent">‹</button>' +
+              '<button id="ft-next" aria-label="Suivant">›</button></span>' +
+            '<span class="vt-feature-url" id="ft-url"></span>' +
+            '<span class="vt-feature-count" id="ft-count"></span></div>' +
+          '<div class="vt-feature-progress"><span id="ft-bar"></span></div>' +
+        '</div>';
+
+      const el = id => document.getElementById(id);
+      let idx = 0, timer = null, paused = false;
+      const DUR = 8000;
+
+      function render(i) {
+        idx = (i + items.length) % items.length;
+        const it = items[idx];
+        feature.style.setProperty('--vt-accent-raw', it.couleur);
+        el('ft-name').textContent = it.nom;
+        el('ft-cat').textContent  = it.cat;
+        el('ft-tag').textContent  = it.tagline;
+        el('ft-desc').textContent = it.desc;
+        el('ft-url').textContent  = it.url.replace(/^https?:\/\//, '');
+        el('ft-count').innerHTML  = '<b>' + String(idx + 1).padStart(2, '0') + '</b> / ' + String(items.length).padStart(2, '0');
+        const safe = /^https?:\/\//.test(it.url) ? it.url : '';
+        el('ft-media').innerHTML = '<iframe src="' + safe + '" loading="lazy" ' +
+          'sandbox="allow-scripts allow-same-origin allow-forms" title="' + escHtml(it.nom) + ' desktop"></iframe>';
+        // Relancer la barre de progression
+        feature.classList.remove('is-playing');
+        feature.style.setProperty('--dur', (DUR / 1000) + 's');
+        void feature.offsetWidth;
+        if (!paused) feature.classList.add('is-playing');
+      }
+      function schedule() {
+        clearTimeout(timer);
+        if (paused) return;
+        timer = setTimeout(() => { render(idx + 1); schedule(); }, DUR);
+      }
+      function go(i) { render(i); schedule(); }
+
+      el('ft-prev').addEventListener('click', () => go(idx - 1));
+      el('ft-next').addEventListener('click', () => go(idx + 1));
+      el('ft-frame').addEventListener('click', e => {
+        if (e.target.closest('.vt-feature-badge')) return;
+        const it = items[idx];
+        openModal(it.nom, it.url, it.mode, it.couleur);
+      });
+
+      feature.addEventListener('mouseenter', () => { paused = true; clearTimeout(timer); feature.classList.remove('is-playing'); });
+      feature.addEventListener('mouseleave', () => { paused = false; feature.classList.add('is-playing'); schedule(); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { paused = true; clearTimeout(timer); }
+        else { paused = false; schedule(); }
+      });
+
+      render(0);
+      schedule();
+    })();
   </script>
 </body>
 </html>
