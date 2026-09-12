@@ -139,27 +139,19 @@
       min-height: 380px;
       box-shadow: 0 16px 40px hsl(240 11% 1% / .7);
     }
-    /* Aperçu desktop = capture pleine page qui défile (aucun iframe → jamais bloqué) */
+    /* Aperçu desktop = capture pleine LARGEUR (jamais rognée gauche/droite),
+       qui défile verticalement (translateY piloté en JS). Aucun iframe. */
     .vt-feature-frame img {
-      position: absolute; inset: 0; z-index: 1;
-      width: 100%; height: 100%;
+      position: absolute; top: 0; left: 0; z-index: 1;
+      width: 100%; height: auto;
       border: none; display: block;
-      object-fit: cover; object-position: top center;
-      animation: vt-scan 22s ease-in-out infinite;
+      will-change: transform;
+      background: hsl(240 9% 4%);
     }
-    /* Balayage vertical de la page complète (haut → bas → haut) */
-    @keyframes vt-scan {
-      0%,  8%   { object-position: top center; }
-      50%       { object-position: bottom center; }
-      92%, 100% { object-position: top center; }
-    }
-    .vt-feature-frame:hover img { animation-play-state: paused; }
     .vt-feature-frame::after {
-      content: 'aperçu indisponible';
+      content: '';
       position: absolute; inset: 0; z-index: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .72rem; font-family: var(--ds-font-mono, monospace);
-      color: hsl(240 5% 38%); background: hsl(240 9% 4%);
+      background: hsl(240 9% 4%);
     }
     .vt-feature-badge {
       position: absolute; top: .6rem; right: .6rem; z-index: 3;
@@ -787,8 +779,33 @@
         '</div>';
 
       const el = id => document.getElementById(id);
-      let idx = 0, timer = null, paused = false;
+      let idx = 0, timer = null, paused = false, panAnim = null;
       const DUR = 8000;
+
+      // Défilement vertical de la capture pleine largeur (voir toute la page,
+      // gauche+droite jamais rognées). Distance calculée sur la hauteur réelle.
+      function startPan(img) {
+        if (panAnim) { panAnim.cancel(); panAnim = null; }
+        const frame = document.getElementById('ft-frame');
+        if (!frame || !img.clientHeight) return;
+        const frameH = frame.clientHeight, imgH = img.clientHeight;
+        const dist = Math.max(0, imgH - frameH);
+        img.style.transform = 'translateY(0)';
+        if (dist < 8) {                          // page courte : centrée, rien à faire défiler
+          img.style.top = Math.max(0, (frameH - imgH) / 2) + 'px';
+          return;
+        }
+        img.style.top = '0px';
+        const dur = Math.max(9000, dist * 22);   // vitesse ~ constante
+        if (!img.animate) return;                // navigateur sans WAAPI : image fixe
+        panAnim = img.animate(
+          [{ transform: 'translateY(0)' },
+           { transform: 'translateY(-' + dist + 'px)' },
+           { transform: 'translateY(0)' }],
+          { duration: dur, iterations: Infinity, easing: 'ease-in-out' }
+        );
+        if (paused) panAnim.pause();
+      }
 
       function render(i) {
         idx = (i + items.length) % items.length;
@@ -802,9 +819,15 @@
         el('ft-count').innerHTML  = '<b>' + String(idx + 1).padStart(2, '0') + '</b> / ' + String(items.length).padStart(2, '0');
         const live = el('ft-live');
         if (live) live.href = /^https?:\/\//.test(it.url) ? it.url : '#';
-        // Aperçu = capture desktop pleine page (repli mobile si absente). Aucun iframe.
-        el('ft-media').innerHTML = '<img src="' + it.shotDesktop + '" alt="' + escHtml(it.nom) + ' desktop" ' +
-          'onerror="this.onerror=null;this.src=\'' + it.shotMobile + '\'">';
+        // Aperçu = capture desktop pleine largeur qui défile (repli mobile si absente). Aucun iframe.
+        const media = el('ft-media');
+        media.innerHTML = '';
+        const img = document.createElement('img');
+        img.alt = it.nom + ' desktop';
+        img.onerror = function () { this.onerror = null; this.src = it.shotMobile; };
+        img.onload = function () { startPan(img); };
+        img.src = it.shotDesktop;
+        media.appendChild(img);
         // Relancer la barre de progression
         feature.classList.remove('is-playing');
         feature.style.setProperty('--dur', (DUR / 1000) + 's');
@@ -826,11 +849,11 @@
         openModal(it.nom, it.url, it.mode, it.couleur);
       });
 
-      feature.addEventListener('mouseenter', () => { paused = true; clearTimeout(timer); feature.classList.remove('is-playing'); });
-      feature.addEventListener('mouseleave', () => { paused = false; feature.classList.add('is-playing'); schedule(); });
+      feature.addEventListener('mouseenter', () => { paused = true; clearTimeout(timer); feature.classList.remove('is-playing'); if (panAnim) panAnim.pause(); });
+      feature.addEventListener('mouseleave', () => { paused = false; feature.classList.add('is-playing'); schedule(); if (panAnim) panAnim.play(); });
       document.addEventListener('visibilitychange', () => {
-        if (document.hidden) { paused = true; clearTimeout(timer); }
-        else { paused = false; schedule(); }
+        if (document.hidden) { paused = true; clearTimeout(timer); if (panAnim) panAnim.pause(); }
+        else { paused = false; schedule(); if (panAnim) panAnim.play(); }
       });
 
       render(0);
