@@ -137,22 +137,27 @@
       aspect-ratio: 16 / 10;
       box-shadow: 0 16px 40px hsl(240 11% 1% / .7);
     }
-    .vt-feature-frame iframe,
+    /* Aperçu desktop = capture pleine page qui défile (aucun iframe → jamais bloqué) */
     .vt-feature-frame img {
-      position: absolute; inset: 0;
+      position: absolute; inset: 0; z-index: 1;
       width: 100%; height: 100%;
-      border: none; object-fit: cover; object-position: top center;
-      display: block;
+      border: none; display: block;
+      object-fit: cover; object-position: top center;
+      animation: vt-scan 22s ease-in-out infinite;
     }
-    .vt-feature-frame img { z-index: 0; }        /* poster (screenshot) en fond */
-    .vt-feature-frame iframe { z-index: 1; background: transparent; }  /* live par-dessus */
-    /* Voile de chargement pendant que l'iframe se charge */
+    /* Balayage vertical de la page complète (haut → bas → haut) */
+    @keyframes vt-scan {
+      0%,  8%   { object-position: top center; }
+      50%       { object-position: bottom center; }
+      92%, 100% { object-position: top center; }
+    }
+    .vt-feature-frame:hover img { animation-play-state: paused; }
     .vt-feature-frame::after {
-      content: 'chargement du live…';
+      content: 'aperçu indisponible';
       position: absolute; inset: 0; z-index: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: .7rem; font-family: var(--ds-font-mono, monospace);
-      color: hsl(240 5% 40%); background: hsl(240 9% 4%);
+      font-size: .72rem; font-family: var(--ds-font-mono, monospace);
+      color: hsl(240 5% 38%); background: hsl(240 9% 4%);
     }
     .vt-feature-badge {
       position: absolute; top: .6rem; right: .6rem; z-index: 3;
@@ -179,7 +184,20 @@
     }
     .vt-feature-desc { font-size: .82rem; line-height: 1.55; color: hsl(240 5% 62%); }
     .vt-feature-foot { display: flex; align-items: center; gap: .7rem; margin-top: .2rem; }
-    .vt-feature-url { font-family: var(--ds-font-mono, monospace); font-size: .68rem; color: hsl(240 5% 45%); }
+    .vt-feature-url {
+      font-family: var(--ds-font-mono, monospace); font-size: .68rem; color: hsl(240 5% 45%);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%;
+    }
+    .vt-feature-live {
+      font-size: .68rem; font-weight: 600; text-decoration: none;
+      padding: .2rem .6rem; border-radius: 999px;
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 78%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 45%, transparent);
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 12%, transparent);
+      transition: background 150ms, border-color 150ms;
+      white-space: nowrap;
+    }
+    .vt-feature-live:hover { background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 22%, transparent); }
     .vt-feature-count {
       margin-left: auto; font-size: .66rem; font-family: var(--ds-font-mono, monospace);
       color: hsl(240 5% 50%);
@@ -733,15 +751,20 @@
       const cards = [...document.querySelectorAll('.vt-card')];
       if (!feature || !cards.length) return;
 
-      const items = cards.map(c => ({
-        url: c.dataset.url || '', nom: c.dataset.nom || '', tagline: c.dataset.tagline || '',
-        cat: c.dataset.cat || '', desc: c.dataset.desc || '',
-        couleur: c.dataset.couleur || '#f77615', mode: c.dataset.mode || 'desktop',
-      }));
+      const items = cards.map(c => {
+        const mob = (c.querySelector('.vt-card-shot img') || {}).src || '';
+        return {
+          url: c.dataset.url || '', nom: c.dataset.nom || '', tagline: c.dataset.tagline || '',
+          cat: c.dataset.cat || '', desc: c.dataset.desc || '',
+          couleur: c.dataset.couleur || '#f77615', mode: c.dataset.mode || 'desktop',
+          shotMobile: mob,
+          shotDesktop: mob.replace('/screenshots/', '/desktop/'),
+        };
+      });
 
       feature.innerHTML =
         '<div class="vt-feature-frame" id="ft-frame" title="Ouvrir en grand">' +
-          '<span class="vt-feature-badge">● LIVE DESKTOP</span>' +
+          '<span class="vt-feature-badge">● APERÇU DESKTOP</span>' +
           '<div id="ft-media" style="flex:1;display:flex;min-height:0;"></div>' +
         '</div>' +
         '<div class="vt-feature-info">' +
@@ -755,6 +778,7 @@
               '<button id="ft-prev" aria-label="Précédent">‹</button>' +
               '<button id="ft-next" aria-label="Suivant">›</button></span>' +
             '<span class="vt-feature-url" id="ft-url"></span>' +
+            '<a class="vt-feature-live" id="ft-live" target="_blank" rel="noopener">Voir en direct ↗</a>' +
             '<span class="vt-feature-count" id="ft-count"></span></div>' +
           '<div class="vt-feature-progress"><span id="ft-bar"></span></div>' +
         '</div>';
@@ -773,9 +797,11 @@
         el('ft-desc').textContent = it.desc;
         el('ft-url').textContent  = it.url.replace(/^https?:\/\//, '');
         el('ft-count').innerHTML  = '<b>' + String(idx + 1).padStart(2, '0') + '</b> / ' + String(items.length).padStart(2, '0');
-        const safe = /^https?:\/\//.test(it.url) ? it.url : '';
-        el('ft-media').innerHTML = '<iframe src="' + safe + '" loading="lazy" ' +
-          'sandbox="allow-scripts allow-same-origin allow-forms" title="' + escHtml(it.nom) + ' desktop"></iframe>';
+        const live = el('ft-live');
+        if (live) live.href = /^https?:\/\//.test(it.url) ? it.url : '#';
+        // Aperçu = capture desktop pleine page (repli mobile si absente). Aucun iframe.
+        el('ft-media').innerHTML = '<img src="' + it.shotDesktop + '" alt="' + escHtml(it.nom) + ' desktop" ' +
+          'onerror="this.onerror=null;this.src=\'' + it.shotMobile + '\'">';
         // Relancer la barre de progression
         feature.classList.remove('is-playing');
         feature.style.setProperty('--dur', (DUR / 1000) + 's');
