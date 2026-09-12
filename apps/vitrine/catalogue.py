@@ -464,3 +464,16 @@ PRODUITS = [
         "icone": """<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>""",
     },
 ]
+
+# ── Produits retirés de la vitrine car hors production ───────────────────────
+# Vérifié le 2026-09-12 (health-check HTTP + navigateur réel) :
+#   502 Bad Gateway : biorl, cdcnails, deepdive, dopr, o9n, pricerhub, streakx, upvid
+#   DNS introuvable : nexafoundry (foundry.io)
+#   Certificat SSL invalide : katanakungfu, kimchi
+# Les définitions restent ci-dessus : il suffit de retirer le slug de cet ensemble
+# pour les réafficher une fois le site de nouveau en ligne.
+_HORS_PROD = {
+    "biorl", "cdcnails", "deepdive", "dopr", "o9n", "pricerhub",
+    "streakx", "upvid", "nexafoundry", "katanakungfu", "kimchi",
+}
+PRODUITS = [p for p in PRODUITS if p["slug"] not in _HORS_PROD]

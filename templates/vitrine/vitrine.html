@@ -134,7 +134,9 @@
       border-radius: 10px; overflow: hidden;
       border: 1px solid hsl(240 10% 16%);
       background: hsl(240 9% 3%);
-      aspect-ratio: 16 / 10;
+      /* Aperçu desktop en pleine hauteur d'écran (≈100vh moins header + infos) */
+      height: calc(100vh - 14rem);
+      min-height: 380px;
       box-shadow: 0 16px 40px hsl(240 11% 1% / .7);
     }
     /* Aperçu desktop = capture pleine page qui défile (aucun iframe → jamais bloqué) */
@@ -528,6 +530,7 @@
     }
     @media (max-width: 600px) {
       .vt-stage { padding: 1rem; gap: 1rem; }
+      .vt-feature-frame { height: 54vh; min-height: 260px; }
       .vt-grid { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
       .vt-header { padding: .75rem 1rem; gap: .5rem; }
       .vt-search { width: 130px; }
