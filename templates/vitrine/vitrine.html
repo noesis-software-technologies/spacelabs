@@ -6,7 +6,6 @@
   <title>Nos produits — SpaceLabs</title>
   <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=avatar2">
   <style>
-    /* ── Layout vitrine ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -18,325 +17,309 @@
       flex-direction: column;
     }
 
-    /* ── Header ─────────────────────────────────────────────── */
+    /* ── Header ──────────────────────────────────────────────── */
     .vt-header {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 1.25rem 2rem;
-      border-bottom: 1px solid hsl(var(--ds-border, 240 10% 14%));
-    }
-    .vt-brand {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: -.02em;
-      color: hsl(var(--ds-fg));
-      text-decoration: none;
-    }
-    .vt-brand svg { width: 26px; height: 26px; }
-    .vt-header-title {
-      font-size: .8rem;
-      font-weight: 500;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-      margin-left: auto;
-    }
-    .vt-controls {
-      display: flex;
-      gap: .5rem;
-    }
-    .vt-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .35rem;
-      padding: .35rem .75rem;
-      border: 1px solid hsl(var(--ds-border, 240 10% 14%));
-      border-radius: var(--ds-radius-sm, 6px);
-      background: transparent;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-      font-size: .75rem;
-      font-family: inherit;
-      cursor: pointer;
-      transition: color 150ms, border-color 150ms, background 150ms;
-    }
-    .vt-btn:hover,
-    .vt-btn[aria-pressed="true"] {
-      color: hsl(var(--ds-fg));
-      border-color: hsl(var(--ds-accent, 26 93% 53%));
-      background: hsl(var(--ds-accent, 26 93% 53%) / .08);
-    }
-    .vt-btn svg { width: 14px; height: 14px; }
-
-    /* ── Grille de tiles ─────────────────────────────────────── */
-    .vt-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1.25rem;
-      padding: 2rem;
-      flex: 1;
-    }
-
-    /* ── Tile produit ─────────────────────────────────────────── */
-    .vt-tile {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: .75rem;
-      padding: 1.25rem;
-      border: 1px solid hsl(var(--ds-border, 240 10% 14%));
-      border-radius: var(--ds-radius, 10px);
-      background: hsl(var(--ds-bg-raised, 240 10% 6%));
-      cursor: pointer;
-      transition: border-color var(--ds-motion-tap, 150ms), transform var(--ds-motion-tap, 150ms);
-      outline: none;
-    }
-    .vt-tile:hover,
-    .vt-tile:focus-visible {
-      border-color: var(--vt-accent, hsl(var(--ds-accent, 26 93% 53%)));
-      transform: translateY(-2px);
-    }
-    .vt-tile-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--ds-radius-sm, 6px);
-      background: var(--vt-accent-bg, hsl(var(--ds-accent, 26 93% 53%) / .12));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--vt-accent, hsl(var(--ds-accent, 26 93% 53%)));
+      padding: 1.1rem 2rem;
+      border-bottom: 1px solid hsl(240 10% 10%);
       flex-shrink: 0;
     }
-    .vt-tile-icon svg { width: 22px; height: 22px; }
-    .vt-tile-meta {
-      display: flex;
-      flex-direction: column;
-      gap: .25rem;
+    .vt-brand {
+      display: flex; align-items: center; gap: .55rem;
+      font-size: 1rem; font-weight: 700; letter-spacing: -.02em;
+      color: hsl(var(--ds-fg)); text-decoration: none;
     }
-    .vt-tile-nom {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: -.015em;
-    }
-    .vt-tile-tagline {
-      font-size: .78rem;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-    }
-    .vt-tile-desc {
-      font-size: .75rem;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-      line-height: 1.55;
-    }
-    .vt-tile-footer {
-      margin-top: auto;
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-    }
-    .vt-badge {
-      font-size: .68rem;
-      font-family: var(--ds-font-mono, 'JetBrains Mono', monospace);
-      padding: .15rem .5rem;
+    .vt-brand svg { width: 22px; height: 22px; }
+    .vt-count {
+      font-size: .72rem;
+      font-family: var(--ds-font-mono, monospace);
+      color: hsl(240 5% 45%);
+      padding: .2rem .55rem;
+      background: hsl(240 10% 8%);
+      border: 1px solid hsl(240 10% 12%);
       border-radius: 4px;
-      background: hsl(var(--ds-bg-inset, 240 9% 2%));
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-      border: 1px solid hsl(var(--ds-border, 240 10% 14%));
     }
-    .vt-tile-arrow {
-      margin-left: auto;
-      width: 16px;
-      height: 16px;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
+    .vt-controls { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+    .vt-btn {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .35rem .75rem;
+      border: 1px solid hsl(240 10% 14%);
+      border-radius: 6px;
+      background: transparent;
+      color: hsl(240 5% 55%);
+      font-size: .73rem; font-family: inherit; cursor: pointer;
+      transition: color 150ms, border-color 150ms, background 150ms;
+    }
+    .vt-btn:hover, .vt-btn[aria-pressed="true"] {
+      color: hsl(var(--ds-fg));
+      border-color: hsl(26 93% 53% / .6);
+      background: hsl(26 93% 53% / .08);
+    }
+    .vt-btn svg { width: 13px; height: 13px; }
+    .vt-search {
+      padding: .35rem .75rem;
+      border: 1px solid hsl(240 10% 14%);
+      border-radius: 6px;
+      background: hsl(240 10% 6%);
+      color: hsl(var(--ds-fg));
+      font-size: .73rem; font-family: inherit;
+      outline: none; width: 180px;
+      transition: border-color 150ms;
+    }
+    .vt-search::placeholder { color: hsl(240 5% 40%); }
+    .vt-search:focus { border-color: hsl(26 93% 53% / .5); }
+
+    /* ── Grille ───────────────────────────────────────────────── */
+    .vt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+      padding: 1.5rem 2rem;
+      flex: 1;
+      align-content: start;
     }
 
-    /* ── Modal preview ───────────────────────────────────────── */
+    /* ── Card produit ─────────────────────────────────────────── */
+    .vt-card {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      outline: none;
+      border: 1px solid hsl(240 10% 10%);
+      background: hsl(240 10% 6%);
+      aspect-ratio: 9/14;
+      display: flex;
+      flex-direction: column;
+      transition: transform 200ms var(--ds-ease-out, ease-out),
+                  border-color 200ms,
+                  box-shadow 200ms;
+    }
+    .vt-card:hover, .vt-card:focus-visible {
+      transform: translateY(-4px) scale(1.01);
+      border-color: var(--vt-accent, hsl(26 93% 53% / .5));
+      box-shadow: 0 16px 40px hsl(240 11% 2% / .6),
+                  0 0 0 1px var(--vt-accent, hsl(26 93% 53% / .3));
+    }
+
+    /* Screenshot zone */
+    .vt-card-shot {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: hsl(240 9% 4%);
+    }
+    .vt-card-shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      transition: transform 400ms var(--ds-ease-out, ease-out);
+    }
+    .vt-card:hover .vt-card-shot img { transform: scale(1.04); }
+
+    /* Placeholder quand pas de screenshot */
+    .vt-card-shot-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 30%,
+        color-mix(in srgb, var(--vt-accent-raw, #f77615) 12%, transparent),
+        hsl(240 9% 4%) 70%);
+      color: var(--vt-accent-raw, #f77615);
+      opacity: .7;
+    }
+    .vt-card-shot-placeholder svg { width: 40px; height: 40px; }
+
+    /* Gradient de lecture en bas */
+    .vt-card-shot::after {
+      content: '';
+      position: absolute;
+      inset: 40% 0 0 0;
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        hsl(240 10% 6% / .7) 60%,
+        hsl(240 10% 6%) 100%);
+      pointer-events: none;
+    }
+
+    /* Infos texte */
+    .vt-card-body {
+      padding: .75rem .875rem .875rem;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+      position: relative;
+      z-index: 1;
+    }
+    .vt-card-top {
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .vt-card-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--vt-accent-raw, #f77615);
+      flex-shrink: 0;
+    }
+    .vt-card-nom {
+      font-size: .9rem; font-weight: 700; letter-spacing: -.01em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .vt-card-tagline {
+      font-size: .7rem;
+      color: hsl(240 5% 55%);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .vt-card-footer {
+      display: flex; align-items: center; gap: .4rem;
+      margin-top: .2rem;
+    }
+    .vt-badge {
+      font-size: .62rem;
+      font-family: var(--ds-font-mono, monospace);
+      padding: .12rem .45rem;
+      border-radius: 3px;
+      background: hsl(240 9% 9%);
+      color: hsl(240 5% 45%);
+      border: 1px solid hsl(240 10% 13%);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 120px;
+    }
+    .vt-card-mode {
+      margin-left: auto;
+      width: 13px; height: 13px;
+      color: hsl(240 5% 35%);
+      flex-shrink: 0;
+    }
+
+    /* ── Modal preview ────────────────────────────────────────── */
     .vt-modal-backdrop {
       display: none;
-      position: fixed;
-      inset: 0;
-      background: hsl(240 11% 4% / .85);
-      backdrop-filter: blur(6px);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
+      position: fixed; inset: 0;
+      background: hsl(240 11% 2% / .88);
+      backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 1.5rem;
     }
     .vt-modal-backdrop.is-open { display: flex; }
 
     .vt-modal {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: 1100px;
-      max-height: calc(100vh - 4rem);
-      background: hsl(var(--ds-bg-raised, 240 10% 6%));
-      border: 1px solid hsl(var(--ds-border, 240 10% 14%));
-      border-radius: var(--ds-radius-lg, 16px);
+      display: flex; flex-direction: column;
+      width: 100%; max-width: 1080px;
+      max-height: calc(100vh - 3rem);
+      background: hsl(240 10% 5%);
+      border: 1px solid hsl(240 10% 12%);
+      border-radius: 16px;
       overflow: hidden;
     }
-
-    /* ── Modal header ──────────────────────────────────────────── */
     .vt-modal-header {
-      display: flex;
-      align-items: center;
-      gap: .75rem;
-      padding: .875rem 1.25rem;
-      border-bottom: 1px solid hsl(var(--ds-border, 240 10% 14%));
+      display: flex; align-items: center; gap: .75rem;
+      padding: .75rem 1.1rem;
+      border-bottom: 1px solid hsl(240 10% 10%);
       flex-shrink: 0;
     }
-    .vt-modal-name {
-      font-weight: 700;
-      letter-spacing: -.01em;
-    }
+    .vt-modal-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .vt-modal-name { font-weight: 700; font-size: .95rem; }
     .vt-modal-url {
-      font-family: var(--ds-font-mono, 'JetBrains Mono', monospace);
-      font-size: .72rem;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
+      font-family: var(--ds-font-mono, monospace); font-size: .68rem;
+      color: hsl(240 5% 45%);
     }
-    .vt-modal-actions {
-      margin-left: auto;
-      display: flex;
-      gap: .5rem;
-    }
+    .vt-modal-actions { margin-left: auto; display: flex; gap: .4rem; }
     .vt-modal-close {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      border: 1px solid hsl(var(--ds-border, 240 10% 14%));
-      border-radius: var(--ds-radius-sm, 6px);
-      background: transparent;
-      color: hsl(var(--ds-fg-muted, 240 5% 55%));
-      cursor: pointer;
-      font-size: 1rem;
-      line-height: 1;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px;
+      border: 1px solid hsl(240 10% 15%); border-radius: 5px;
+      background: transparent; color: hsl(240 5% 50%);
+      cursor: pointer; font-size: .9rem; line-height: 1;
       transition: color 150ms, border-color 150ms;
     }
-    .vt-modal-close:hover { color: hsl(var(--ds-danger, 0 79% 63%)); border-color: hsl(var(--ds-danger, 0 79% 63%)); }
+    .vt-modal-close:hover { color: hsl(0 79% 63%); border-color: hsl(0 79% 63%); }
 
-    /* ── Device frames ───────────────────────────────────────── */
+    /* Device wrap */
     .vt-device-wrap {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      overflow: hidden;
-      background: hsl(var(--ds-bg-inset, 240 9% 2%));
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem; overflow: hidden;
+      background: hsl(240 9% 3%);
     }
 
     /* Desktop frame */
     .vt-device--desktop {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      max-width: 860px;
-      height: 100%;
-      max-height: 560px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 24px 64px hsl(240 11% 2% / .7);
-      border: 1px solid hsl(240 10% 18%);
+      display: flex; flex-direction: column;
+      width: 100%; max-width: 820px; height: 100%; max-height: 540px;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 24px 60px hsl(240 11% 1% / .8);
+      border: 1px solid hsl(240 10% 16%);
     }
-    .vt-device-chrome {
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-      padding: .5rem .75rem;
-      background: hsl(240 10% 10%);
-      border-bottom: 1px solid hsl(240 10% 15%);
+    .vt-chrome {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .45rem .7rem;
+      background: hsl(240 10% 9%);
+      border-bottom: 1px solid hsl(240 10% 13%);
       flex-shrink: 0;
     }
-    .vt-chrome-dots {
-      display: flex;
-      gap: 5px;
-    }
-    .vt-chrome-dots span {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
+    .vt-chrome-dots { display: flex; gap: 5px; }
+    .vt-chrome-dots span { width: 10px; height: 10px; border-radius: 50%; }
     .vt-chrome-dots span:nth-child(1) { background: hsl(0 79% 63%); }
     .vt-chrome-dots span:nth-child(2) { background: hsl(48 71% 58%); }
     .vt-chrome-dots span:nth-child(3) { background: hsl(125 44% 52%); }
     .vt-chrome-bar {
-      flex: 1;
-      font-size: .68rem;
-      font-family: var(--ds-font-mono, monospace);
-      color: hsl(240 5% 55%);
-      background: hsl(240 9% 7%);
-      border: 1px solid hsl(240 10% 15%);
-      border-radius: 4px;
-      padding: .2rem .5rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      flex: 1; font-size: .66rem;
+      font-family: var(--ds-font-mono, monospace); color: hsl(240 5% 50%);
+      background: hsl(240 9% 6%); border: 1px solid hsl(240 10% 13%);
+      border-radius: 4px; padding: .18rem .5rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .vt-device--desktop iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-      background: #fff;
-    }
+    .vt-device--desktop iframe { flex: 1; width: 100%; border: none; background: #fff; }
 
     /* Mobile frame */
     .vt-device--mobile {
-      width: 280px;
-      height: 540px;
-      border-radius: 34px;
-      border: 6px solid hsl(240 10% 18%);
+      width: 270px; height: 530px;
+      border-radius: 32px;
+      border: 6px solid hsl(240 10% 16%);
       overflow: hidden;
-      box-shadow: 0 24px 64px hsl(240 11% 2% / .7), inset 0 0 0 1px hsl(240 10% 12%);
-      display: flex;
-      flex-direction: column;
-      background: #000;
-      position: relative;
+      box-shadow: 0 24px 60px hsl(240 11% 1% / .8),
+                  inset 0 0 0 1px hsl(240 10% 10%);
+      display: flex; flex-direction: column;
+      background: #000; position: relative;
     }
     .vt-mobile-notch {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90px;
-      height: 22px;
-      background: hsl(240 10% 18%);
-      border-radius: 0 0 16px 16px;
-      z-index: 2;
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 80px; height: 20px;
+      background: hsl(240 10% 16%); border-radius: 0 0 14px 14px; z-index: 2;
     }
-    .vt-device--mobile iframe {
-      flex: 1;
-      width: 100%;
-      border: none;
-      background: #fff;
-    }
+    .vt-device--mobile iframe { flex: 1; width: 100%; border: none; background: #fff; }
 
-    /* ── Mode TV (Chromecast) ─────────────────────────────────── */
+    /* ── Mode TV / Chromecast ─────────────────────────────────── */
     body.tv-mode .vt-header { padding: 1.5rem 3rem; }
     body.tv-mode .vt-grid {
-      padding: 2.5rem 3rem;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 1.75rem;
+      padding: 2rem 3rem;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.5rem;
     }
-    body.tv-mode .vt-tile { padding: 1.75rem; }
-    body.tv-mode .vt-tile-icon { width: 56px; height: 56px; }
-    body.tv-mode .vt-tile-icon svg { width: 28px; height: 28px; }
-    body.tv-mode .vt-tile-nom { font-size: 1.2rem; }
-    body.tv-mode .vt-tile-tagline { font-size: .9rem; }
-    body.tv-mode .vt-tile-desc { font-size: .85rem; }
+    body.tv-mode .vt-card-nom { font-size: 1.05rem; }
+    body.tv-mode .vt-card-tagline { font-size: .8rem; }
+
+    /* ── Filtrage (hidden cards) ──────────────────────────────── */
+    .vt-card[hidden] { display: none; }
 
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 600px) {
-      .vt-grid { grid-template-columns: 1fr; padding: 1rem; }
-      .vt-header { padding: 1rem; }
-      .vt-modal { max-height: 95vh; }
-      .vt-device--desktop { max-height: 45vh; }
-      .vt-device--mobile { width: 220px; height: 420px; }
+      .vt-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: .75rem; }
+      .vt-header { padding: .75rem 1rem; gap: .5rem; }
+      .vt-search { width: 130px; }
+      .vt-device--desktop { max-height: 44vh; }
+      .vt-device--mobile { width: 210px; height: 410px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .vt-tile { transition: none; }
+      .vt-card, .vt-card-shot img { transition: none; }
     }
   </style>
 </head>
@@ -352,15 +335,16 @@
       </svg>
       SpaceLabs
     </a>
-    <span class="vt-header-title">{{ produits|length }} produit{{ produits|length|pluralize }}</span>
+    <span class="vt-count">{{ produits|length }} produits</span>
     <div class="vt-controls">
-      <button class="vt-btn" id="btn-tv" aria-pressed="false" title="Mode TV (Chromecast)">
+      <input class="vt-search" type="search" id="vt-search" placeholder="Rechercher…" autocomplete="off">
+      <button class="vt-btn" id="btn-tv" aria-pressed="false" title="Mode TV Chromecast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
              stroke-linecap="round" stroke-linejoin="round">
           <rect x="2" y="4" width="20" height="14" rx="2"/>
           <path d="M8 20h8M12 18v2"/>
         </svg>
-        Mode TV
+        TV
       </button>
     </div>
   </header>
@@ -368,43 +352,55 @@
   <!-- Grille -->
   <main class="vt-grid" id="vt-grid">
     {% for p in produits %}
-    <article class="vt-tile"
-             role="button"
-             tabindex="0"
-             aria-label="Ouvrir {{ p.nom }}"
+    <article class="vt-card"
+             role="button" tabindex="0"
              data-slug="{{ p.slug }}"
              data-url="{{ p.url }}"
              data-mode="{{ p.preview_mode }}"
              data-nom="{{ p.nom }}"
-             data-couleur="{{ p.couleur }}"
-             style="--vt-accent: {{ p.couleur }}; --vt-accent-bg: color-mix(in srgb, {{ p.couleur }} 12%, transparent);">
-      <div class="vt-tile-icon">
-        {{ p.icone }}
+             data-search="{{ p.nom|lower }} {{ p.tagline|lower }} {{ p.categorie|lower }}"
+             style="--vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
+
+      <!-- Screenshot ou placeholder -->
+      <div class="vt-card-shot">
+        {% with shot_url='vitrine/screenshots/'|add:p.slug|add:'.jpg' %}
+        <img src="{% static shot_url %}"
+             alt="{{ p.nom }} preview"
+             loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="vt-card-shot-placeholder" style="display:none">
+          {{ p.icone }}
+        </div>
+        {% endwith %}
       </div>
-      <div class="vt-tile-meta">
-        <span class="vt-tile-nom">{{ p.nom }}</span>
-        <span class="vt-tile-tagline">{{ p.tagline }}</span>
-      </div>
-      <p class="vt-tile-desc">{{ p.description }}</p>
-      <div class="vt-tile-footer">
-        <span class="vt-badge">{{ p.categorie }}</span>
-        <svg class="vt-tile-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
+
+      <!-- Infos -->
+      <div class="vt-card-body">
+        <div class="vt-card-top">
+          <span class="vt-card-dot"></span>
+          <span class="vt-card-nom">{{ p.nom }}</span>
+        </div>
+        <span class="vt-card-tagline">{{ p.tagline }}</span>
+        <div class="vt-card-footer">
+          <span class="vt-badge">{{ p.categorie }}</span>
+          {% if p.preview_mode == 'mobile' %}
+          <svg class="vt-card-mode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          {% else %}
+          <svg class="vt-card-mode" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          {% endif %}
+        </div>
       </div>
     </article>
     {% empty %}
-    <p style="color: hsl(var(--ds-fg-muted, 240 5% 55%)); padding: 2rem; grid-column: 1/-1;">
-      Aucun produit dans le catalogue.
-    </p>
+    <p style="color:hsl(240 5% 45%);padding:2rem;grid-column:1/-1;">Aucun produit dans le catalogue.</p>
     {% endfor %}
   </main>
 
-  <!-- Modal preview -->
-  <div class="vt-modal-backdrop" id="vt-modal" role="dialog" aria-modal="true" aria-label="Aperçu produit">
+  <!-- Modal -->
+  <div class="vt-modal-backdrop" id="vt-modal" role="dialog" aria-modal="true">
     <div class="vt-modal">
       <div class="vt-modal-header">
+        <span class="vt-modal-dot" id="modal-dot"></span>
         <span class="vt-modal-name" id="modal-name"></span>
         <span class="vt-modal-url" id="modal-url-label"></span>
         <div class="vt-modal-actions">
@@ -416,7 +412,7 @@
             </svg>
             <span id="modal-mode-label">Mobile</span>
           </button>
-          <a class="vt-btn" id="modal-open-link" target="_blank" rel="noopener" title="Ouvrir dans un nouvel onglet">
+          <a class="vt-btn" id="modal-open-link" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
                  stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -425,119 +421,98 @@
             </svg>
             Ouvrir
           </a>
-          <button class="vt-modal-close" id="modal-close" aria-label="Fermer">✕</button>
+          <button class="vt-modal-close" id="modal-close">✕</button>
         </div>
       </div>
-      <div class="vt-device-wrap" id="device-wrap">
-        <!-- rempli par JS -->
-      </div>
+      <div class="vt-device-wrap" id="device-wrap"></div>
     </div>
   </div>
 
   <script>
-    // ── État ─────────────────────────────────────────────────────
-    let currentMode = 'desktop'; // mode actif dans la modale
-    let currentUrl  = '';
+    let currentMode = 'desktop', currentUrl = '';
 
-    // ── Tiles → ouvrir modal ──────────────────────────────────────
-    document.querySelectorAll('.vt-tile').forEach(tile => {
-      const open = () => openModal(
-        tile.dataset.nom,
-        tile.dataset.url,
-        tile.dataset.mode || 'desktop'
-      );
-      tile.addEventListener('click', open);
-      tile.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-      });
+    // Ouverture cards
+    document.querySelectorAll('.vt-card').forEach(card => {
+      const open = () => openModal(card.dataset.nom, card.dataset.url, card.dataset.mode, card.style.getPropertyValue('--vt-accent-raw').trim());
+      card.addEventListener('click', open);
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
     });
 
-    // ── Fermer modal ──────────────────────────────────────────────
+    // Fermeture
     document.getElementById('modal-close').addEventListener('click', closeModal);
-    document.getElementById('vt-modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeModal();
-    });
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') closeModal();
-    });
+    document.getElementById('vt-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-    // ── Basculer mobile ↔ desktop ─────────────────────────────────
+    // Toggle mode
     document.getElementById('modal-toggle-mode').addEventListener('click', () => {
       currentMode = currentMode === 'desktop' ? 'mobile' : 'desktop';
       renderDevice(currentUrl, currentMode);
-      updateModeButton(currentMode);
+      updateModeBtn(currentMode);
     });
 
-    // ── Mode TV ───────────────────────────────────────────────────
+    // Mode TV
     document.getElementById('btn-tv').addEventListener('click', function () {
       const on = document.body.classList.toggle('tv-mode');
       this.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
 
-    // ── Fonctions ─────────────────────────────────────────────────
-    function openModal(nom, url, mode) {
-      currentUrl  = url;
-      currentMode = mode;
-      document.getElementById('modal-name').textContent      = nom;
+    // Recherche
+    document.getElementById('vt-search').addEventListener('input', function () {
+      const q = this.value.toLowerCase().trim();
+      document.querySelectorAll('.vt-card').forEach(c => {
+        c.hidden = q && !c.dataset.search.includes(q);
+      });
+    });
+
+    function openModal(nom, url, mode, couleur) {
+      currentUrl = url; currentMode = mode;
+      document.getElementById('modal-name').textContent = nom;
       document.getElementById('modal-url-label').textContent = url;
-      document.getElementById('modal-open-link').href        = url;
+      document.getElementById('modal-open-link').href = url;
+      document.getElementById('modal-dot').style.background = couleur || '#f77615';
       renderDevice(url, mode);
-      updateModeButton(mode);
+      updateModeBtn(mode);
       document.getElementById('vt-modal').classList.add('is-open');
       document.getElementById('modal-close').focus();
     }
 
     function closeModal() {
       document.getElementById('vt-modal').classList.remove('is-open');
-      // Vider l'iframe pour arrêter le chargement réseau
       document.getElementById('device-wrap').innerHTML = '';
     }
 
     function renderDevice(url, mode) {
       const wrap = document.getElementById('device-wrap');
+      const safeUrl = /^https?:\/\//.test(url) ? url : '';
       if (mode === 'mobile') {
-        wrap.innerHTML = `
-          <div class="vt-device--mobile">
-            <div class="vt-mobile-notch"></div>
-            <iframe src="${escUrl(url)}" loading="lazy" title="Aperçu mobile" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-          </div>`;
+        wrap.innerHTML = `<div class="vt-device--mobile">
+          <div class="vt-mobile-notch"></div>
+          <iframe src="${safeUrl}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms" title="Aperçu mobile"></iframe>
+        </div>`;
       } else {
-        wrap.innerHTML = `
-          <div class="vt-device--desktop">
-            <div class="vt-device-chrome">
-              <div class="vt-chrome-dots"><span></span><span></span><span></span></div>
-              <div class="vt-chrome-bar">${escHtml(url)}</div>
-            </div>
-            <iframe src="${escUrl(url)}" loading="lazy" title="Aperçu desktop" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
-          </div>`;
+        wrap.innerHTML = `<div class="vt-device--desktop">
+          <div class="vt-chrome">
+            <div class="vt-chrome-dots"><span></span><span></span><span></span></div>
+            <div class="vt-chrome-bar">${escHtml(url)}</div>
+          </div>
+          <iframe src="${safeUrl}" loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms" title="Aperçu desktop"></iframe>
+        </div>`;
       }
     }
 
-    function updateModeButton(mode) {
+    function updateModeBtn(mode) {
       const label = document.getElementById('modal-mode-label');
       const icon  = document.getElementById('modal-mode-icon');
       if (mode === 'mobile') {
         label.textContent = 'Desktop';
-        icon.innerHTML = `
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>`;
+        icon.innerHTML = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>';
       } else {
         label.textContent = 'Mobile';
-        icon.innerHTML = `
-          <rect x="5" y="2" width="14" height="20" rx="2"/>
-          <line x1="12" y1="18" x2="12.01" y2="18"/>`;
+        icon.innerHTML = '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>';
       }
     }
 
-    function escUrl(s) {
-      // Accepte uniquement https:// ou http://
-      return /^https?:\/\//.test(s) ? s : '';
-    }
-
-    function escHtml(s) {
-      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   </script>
 </body>
 </html>
