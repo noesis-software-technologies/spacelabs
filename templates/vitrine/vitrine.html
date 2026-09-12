@@ -118,8 +118,54 @@
       object-position: top center;
       display: block;
       transition: transform 400ms var(--ds-ease-out, ease-out);
+      /* Défilement continu façon "visite mobile" — décalé par carte via --i */
+      animation: vt-pan 16s ease-in-out infinite;
+      animation-delay: calc(var(--i, 0) * -0.9s);
+      will-change: object-position;
     }
-    .vt-card:hover .vt-card-shot img { transform: scale(1.04); }
+    .vt-card:hover .vt-card-shot img {
+      transform: scale(1.04);
+      animation-play-state: paused;
+    }
+
+    /* Défilement vertical de l'aperçu (haut → bas → haut) */
+    @keyframes vt-pan {
+      0%,   6%  { object-position: top center; }
+      50%       { object-position: bottom center; }
+      94%, 100% { object-position: top center; }
+    }
+
+    /* Entrée en cascade des cartes */
+    .vt-card {
+      animation: vt-rise 520ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)) both;
+      animation-delay: calc(var(--i, 0) * 35ms);
+    }
+    @keyframes vt-rise {
+      from { opacity: 0; transform: translateY(14px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* Indicateur LIVE (page en ligne en permanence) */
+    .vt-live {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .66rem; font-family: var(--ds-font-mono, monospace);
+      letter-spacing: .08em; color: hsl(125 44% 62%);
+      padding: .2rem .55rem;
+      background: hsl(125 44% 20% / .18);
+      border: 1px solid hsl(125 44% 40% / .35);
+      border-radius: 4px;
+    }
+    .vt-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: hsl(125 60% 55%);
+      box-shadow: 0 0 0 0 hsl(125 60% 55% / .7);
+      animation: vt-pulse 1.8s ease-out infinite;
+    }
+    @keyframes vt-pulse {
+      0%   { box-shadow: 0 0 0 0 hsl(125 60% 55% / .7); }
+      70%  { box-shadow: 0 0 0 7px hsl(125 60% 55% / 0); }
+      100% { box-shadow: 0 0 0 0 hsl(125 60% 55% / 0); }
+    }
 
     /* Placeholder quand pas de screenshot */
     .vt-card-shot-placeholder {
@@ -320,6 +366,8 @@
 
     @media (prefers-reduced-motion: reduce) {
       .vt-card, .vt-card-shot img { transition: none; }
+      .vt-card, .vt-card-shot img, .vt-live-dot { animation: none !important; }
+      .vt-card-shot img { object-position: top center; }
     }
   </style>
 </head>
@@ -336,6 +384,7 @@
       SpaceLabs
     </a>
     <span class="vt-count">{{ produits|length }} produits</span>
+    <span class="vt-live"><span class="vt-live-dot"></span>LIVE</span>
     <div class="vt-controls">
       <input class="vt-search" type="search" id="vt-search" placeholder="Rechercher…" autocomplete="off">
       <button class="vt-btn" id="btn-tv" aria-pressed="false" title="Mode TV Chromecast">
@@ -359,7 +408,7 @@
              data-mode="{{ p.preview_mode }}"
              data-nom="{{ p.nom }}"
              data-search="{{ p.nom|lower }} {{ p.tagline|lower }} {{ p.categorie|lower }}"
-             style="--vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
+             style="--i: {{ forloop.counter0 }}; --vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
 
       <!-- Screenshot ou placeholder -->
       <div class="vt-card-shot">
