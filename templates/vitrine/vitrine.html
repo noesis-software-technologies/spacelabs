@@ -15,6 +15,26 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+    /* Aurora animée en fond — vibe portfolio moderne */
+    body::before {
+      content: '';
+      position: fixed; inset: -20vmax;
+      z-index: -1;
+      background:
+        radial-gradient(38vmax 38vmax at 12% 8%,  hsl(26 93% 53% / .16), transparent 60%),
+        radial-gradient(32vmax 32vmax at 88% 4%,  hsl(280 80% 60% / .14), transparent 60%),
+        radial-gradient(40vmax 40vmax at 78% 92%, hsl(205 90% 55% / .14), transparent 62%),
+        radial-gradient(30vmax 30vmax at 8% 96%,  hsl(150 70% 50% / .12), transparent 60%);
+      filter: blur(8px);
+      animation: vt-aurora 26s ease-in-out infinite alternate;
+    }
+    @keyframes vt-aurora {
+      0%   { transform: translate3d(0,0,0)      scale(1); }
+      50%  { transform: translate3d(2vw,-1.5vh,0) scale(1.06); }
+      100% { transform: translate3d(-2vw,1.5vh,0) scale(1.03); }
     }
 
     /* ── Header ──────────────────────────────────────────────── */
@@ -23,15 +43,24 @@
       align-items: center;
       gap: 1rem;
       padding: 1.1rem 2rem;
-      border-bottom: 1px solid hsl(240 10% 10%);
+      border-bottom: 1px solid hsl(240 10% 10% / .7);
       flex-shrink: 0;
+      position: sticky; top: 0; z-index: 50;
+      background: hsl(240 11% 4% / .55);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
     .vt-brand {
       display: flex; align-items: center; gap: .55rem;
-      font-size: 1rem; font-weight: 700; letter-spacing: -.02em;
+      font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em;
       color: hsl(var(--ds-fg)); text-decoration: none;
     }
-    .vt-brand svg { width: 22px; height: 22px; }
+    .vt-brand span.vt-brand-name {
+      background: linear-gradient(92deg, hsl(26 93% 58%), hsl(340 82% 62%) 45%, hsl(265 85% 68%) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .vt-brand svg { width: 22px; height: 22px; color: hsl(26 93% 58%); }
     .vt-count {
       font-size: .72rem;
       font-family: var(--ds-font-mono, monospace);
@@ -84,24 +113,36 @@
     /* ── Card produit ─────────────────────────────────────────── */
     .vt-card {
       position: relative;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       cursor: pointer;
       outline: none;
-      border: 1px solid hsl(240 10% 10%);
-      background: hsl(240 10% 6%);
+      border: 1px solid hsl(240 10% 12%);
+      background:
+        linear-gradient(180deg,
+          color-mix(in srgb, var(--vt-accent-raw, #f77615) 10%, hsl(240 10% 6%)),
+          hsl(240 10% 6%) 55%);
       aspect-ratio: 9/14;
       display: flex;
       flex-direction: column;
-      transition: transform 200ms var(--ds-ease-out, ease-out),
-                  border-color 200ms,
-                  box-shadow 200ms;
+      transition: transform 260ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)),
+                  border-color 260ms,
+                  box-shadow 260ms;
+    }
+    /* Barre d'accent colorée en haut de chaque carte */
+    .vt-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--vt-accent-raw, #f77615);
+      opacity: .85; z-index: 3;
+      box-shadow: 0 0 14px var(--vt-accent-raw, #f77615);
     }
     .vt-card:hover, .vt-card:focus-visible {
-      transform: translateY(-4px) scale(1.01);
+      transform: translateY(-6px) scale(1.02) rotate(-.5deg);
       border-color: var(--vt-accent, hsl(26 93% 53% / .5));
-      box-shadow: 0 16px 40px hsl(240 11% 2% / .6),
-                  0 0 0 1px var(--vt-accent, hsl(26 93% 53% / .3));
+      box-shadow: 0 22px 50px hsl(240 11% 2% / .7),
+                  0 0 34px color-mix(in srgb, var(--vt-accent-raw, #f77615) 30%, transparent),
+                  0 0 0 1px var(--vt-accent, hsl(26 93% 53% / .35));
     }
 
     /* Screenshot zone */
@@ -137,7 +178,7 @@
 
     /* Entrée en cascade des cartes */
     .vt-card {
-      animation: vt-rise 520ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)) both;
+      animation: vt-rise 520ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)) backwards;
       animation-delay: calc(var(--i, 0) * 35ms);
     }
     @keyframes vt-rise {
@@ -229,11 +270,11 @@
     .vt-badge {
       font-size: .62rem;
       font-family: var(--ds-font-mono, monospace);
-      padding: .12rem .45rem;
-      border-radius: 3px;
-      background: hsl(240 9% 9%);
-      color: hsl(240 5% 45%);
-      border: 1px solid hsl(240 10% 13%);
+      padding: .14rem .5rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 16%, hsl(240 9% 9%));
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 70%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 35%, transparent);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       max-width: 120px;
     }
@@ -381,7 +422,7 @@
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
         <path d="M12.6 7.4 9 12.6h2.6l-.6 4.4 3.6-5.2h-2.6z" fill="currentColor" stroke="none"/>
       </svg>
-      SpaceLabs
+      <span class="vt-brand-name">SpaceLabs</span>
     </a>
     <span class="vt-count">{{ produits|length }} produits</span>
     <span class="vt-live"><span class="vt-live-dot"></span>LIVE</span>
