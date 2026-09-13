@@ -246,6 +246,88 @@ const PRODUITS = {{ produits_json|safe }};
 const canvas = document.getElementById('three-canvas');
 let W = innerWidth, H = innerHeight;
 
+/* ── Image / screenshot helpers ────────────────────────────── */
+function loadImage(url) {
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = () => res(im);
+    im.onerror = rej;
+    im.src = url;
+  });
+}
+async function loadShot(p) {           // desktop puis mobile en repli
+  for (const u of [p.shot, p.shot_mobile]) {
+    if (!u) continue;
+    try { return await loadImage(u); } catch (e) {}
+  }
+  return null;
+}
+function cropSquare(img) {             // recadrage carré centré (haut de page)
+  const s = Math.min(img.naturalWidth, img.naturalHeight);
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const g = c.getContext('2d');
+  g.drawImage(img, (img.naturalWidth - s) / 2, 0, s, s, 0, 0, 512, 512);
+  return c;
+}
+
+/* ── HUD Jarvis reticle texture ────────────────────────────── */
+function makeHudTexture(size, opts) {
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  const cx = size / 2, cy = size / 2;
+  const col = opts.color || 'rgba(168,85,247,';
+  g.clearRect(0, 0, size, size);
+  g.translate(cx, cy);
+
+  // Cercles pointillés concentriques
+  [0.42, 0.62, 0.82].forEach((rr, i) => {
+    g.beginPath();
+    g.setLineDash(i === 1 ? [2, 10] : [size * 0.02, size * 0.03]);
+    g.lineWidth = 1.5;
+    g.strokeStyle = col + (0.5 - i * 0.12) + ')';
+    g.arc(0, 0, size * rr, 0, Math.PI * 2);
+    g.stroke();
+  });
+  g.setLineDash([]);
+
+  // Graduations (ticks) sur le cercle médian
+  const R = size * 0.62;
+  for (let a = 0; a < 360; a += 6) {
+    const big = a % 30 === 0;
+    const r1 = R - (big ? size * 0.035 : size * 0.016);
+    const rad = a * Math.PI / 180;
+    g.beginPath();
+    g.moveTo(Math.cos(rad) * r1, Math.sin(rad) * r1);
+    g.lineTo(Math.cos(rad) * R, Math.sin(rad) * R);
+    g.lineWidth = big ? 2.2 : 1;
+    g.strokeStyle = col + (big ? 0.75 : 0.35) + ')';
+    g.stroke();
+  }
+
+  // Arcs de scan brillants
+  g.lineWidth = 3;
+  g.strokeStyle = col + '0.9)';
+  g.beginPath(); g.arc(0, 0, size * 0.82, -0.5, 0.6); g.stroke();
+  g.beginPath(); g.arc(0, 0, size * 0.82, Math.PI - 0.35, Math.PI + 0.45); g.stroke();
+
+  // Équerres d'angle (brackets)
+  const b = size * 0.46, len = size * 0.06;
+  g.strokeStyle = col + '0.85)';
+  g.lineWidth = 2.4;
+  [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx, sy]) => {
+    g.beginPath();
+    g.moveTo(sx*b, sy*b - sy*len); g.lineTo(sx*b, sy*b); g.lineTo(sx*b - sx*len, sy*b);
+    g.stroke();
+  });
+
+  const tx = new THREE.CanvasTexture(c);
+  tx.colorSpace = THREE.SRGBColorSpace;
+  return tx;
+}
+
 /* ── Renderer ──────────────────────────────────────────────── */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -282,9 +364,40 @@ const orbMat = new THREE.MeshStandardMaterial({
   emissiveIntensity: 0.9,
   metalness: 0.4,
   roughness: 0.35,
+  map: null,
+  emissiveMap: null,
 });
 const orb = new THREE.Mesh(new THREE.SphereGeometry(1.15, 64, 64), orbMat);
 orbGroup.add(orb);
+
+// Le centre névralgique diffuse les screenshots des produits (cycle)
+(async () => {
+  const shots = [];
+  for (const p of PRODUITS) {
+    const im = await loadShot(p);
+    if (im) {
+      const tx = new THREE.CanvasTexture(cropSquare(im));
+      tx.colorSpace = THREE.SRGBColorSpace;
+      shots.push(tx);
+    }
+    if (shots.length >= 16) break;
+  }
+  if (!shots.length) return;
+  let k = 0;
+  const apply = () => {
+    const tx = shots[k % shots.length];
+    orbMat.map = tx;
+    orbMat.emissiveMap = tx;
+    orbMat.color.set(0xffffff);
+    orbMat.emissive.set(0x8b5cf6);
+    orbMat.emissiveIntensity = 0.55;
+    orbMat.roughness = 0.5;
+    orbMat.needsUpdate = true;
+    k++;
+  };
+  apply();
+  setInterval(apply, 4000);
+})();
 
 // Atmospheric glow shells (BackSide + AdditiveBlending)
 [
@@ -321,6 +434,19 @@ const ringMeshes = ringDefs.map(d => {
   return m;
 });
 
+/* ── HUD Jarvis (reticle face caméra autour du cœur) ───────── */
+const hudGroup = new THREE.Group();
+scene.add(hudGroup);
+const hudA = new THREE.Mesh(
+  new THREE.PlaneGeometry(8.4, 8.4),
+  new THREE.MeshBasicMaterial({ map: makeHudTexture(1024, { color: 'rgba(168,85,247,' }),
+    transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+const hudB = new THREE.Mesh(
+  new THREE.PlaneGeometry(5.6, 5.6),
+  new THREE.MeshBasicMaterial({ map: makeHudTexture(768, { color: 'rgba(124,58,237,' }),
+    transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+hudGroup.add(hudA, hudB);
+
 /* ── Stars ─────────────────────────────────────────────────── */
 {
   const N = 2800;
@@ -347,57 +473,54 @@ const ringMeshes = ringDefs.map(d => {
 }
 
 /* ── Project planes ────────────────────────────────────────── */
-function makeCardTexture(p) {
+function makeCardTexture(p, img) {
   const cw = 420, ch = 180;
   const c = document.createElement('canvas');
   c.width = cw; c.height = ch;
   const g = c.getContext('2d');
 
-  // Background
-  g.fillStyle = 'rgba(8,5,22,0.82)';
-  g.beginPath();
-  g.roundRect(0, 0, cw, ch, 14);
-  g.fill();
+  // Fond : screenshot en cover (aligné haut) si dispo, sinon aplat sombre
+  g.save();
+  g.beginPath(); g.roundRect(0, 0, cw, ch, 14); g.clip();
+  if (img) {
+    const s = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+    const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+    g.drawImage(img, (cw - dw) / 2, 0, dw, dh);
+    const gr = g.createLinearGradient(0, ch * 0.30, 0, ch);
+    gr.addColorStop(0, 'rgba(8,5,22,0)');
+    gr.addColorStop(1, 'rgba(8,5,22,0.92)');
+    g.fillStyle = gr; g.fillRect(0, 0, cw, ch);
+  } else {
+    g.fillStyle = 'rgba(8,5,22,0.82)'; g.fillRect(0, 0, cw, ch);
+    g.font = '15px Inter, Arial, sans-serif';
+    g.fillStyle = 'rgba(240,240,244,0.45)';
+    const tag = p.tagline.length > 40 ? p.tagline.slice(0, 39) + '…' : p.tagline;
+    g.fillText(tag, 20, 92);
+  }
+  g.restore();
 
-  // Border
-  g.strokeStyle = 'rgba(255,255,255,0.10)';
-  g.lineWidth = 1.5;
-  g.beginPath(); g.roundRect(0, 0, cw, ch, 14); g.stroke();
-
-  // Accent top bar (gradient)
+  // Barre d'accent haut
   const grad = g.createLinearGradient(0, 0, cw, 0);
-  grad.addColorStop(0, p.couleur + 'dd');
-  grad.addColorStop(0.6, p.couleur + '44');
+  grad.addColorStop(0, p.couleur + 'ee');
+  grad.addColorStop(0.6, p.couleur + '55');
   grad.addColorStop(1, 'transparent');
   g.fillStyle = grad;
   g.beginPath(); g.roundRect(0, 0, cw, 4, [14, 14, 0, 0]); g.fill();
 
-  // Colored dot
-  g.beginPath(); g.arc(22, 46, 5, 0, Math.PI*2);
+  // Bandeau info en bas
+  g.beginPath(); g.arc(22, ch - 50, 5, 0, Math.PI * 2);
   g.fillStyle = p.couleur; g.fill();
+  g.font = '600 12px Inter, Arial, sans-serif';
+  g.fillStyle = p.couleur + 'dd';
+  g.fillText(p.categorie.toUpperCase(), 36, ch - 46);
+  g.font = 'bold 26px "Space Grotesk", Arial, sans-serif';
+  g.fillStyle = '#F5F3FF';
+  g.fillText(p.nom.slice(0, 18), 20, ch - 18);
 
-  // Category
-  g.font = '500 13px Inter, Arial, sans-serif';
-  g.fillStyle = p.couleur + 'bb';
-  g.fillText(p.categorie.toUpperCase(), 36, 50);
-
-  // Project name
-  g.font = 'bold 28px "Space Grotesk", Arial, sans-serif';
-  g.fillStyle = '#F0F0F4';
-  g.fillText(p.nom.slice(0, 16), 20, 98);
-
-  // Tagline
-  g.font = '15px Inter, Arial, sans-serif';
-  g.fillStyle = 'rgba(240,240,244,0.45)';
-  const tag = p.tagline.length > 38 ? p.tagline.slice(0, 37) + '…' : p.tagline;
-  g.fillText(tag, 20, 128);
-
-  // URL hint
-  if (p.url) {
-    g.font = '11px Inter, Arial, sans-serif';
-    g.fillStyle = 'rgba(168,85,247,0.55)';
-    g.fillText(p.url.replace(/^https?:\/\//, '').slice(0, 28), 20, 158);
-  }
+  // Bordure
+  g.strokeStyle = 'rgba(255,255,255,0.12)';
+  g.lineWidth = 1.5;
+  g.beginPath(); g.roundRect(0, 0, cw, ch, 14); g.stroke();
 
   return new THREE.CanvasTexture(c);
 }
@@ -422,6 +545,17 @@ const planeMeshes = featured.map((p, i) => {
   mesh.userData = { baseAngle: (i / NPLANES) * Math.PI * 2, speed: 0.08 + (i % 3) * 0.018 };
   planeGroup.add(mesh);
   return mesh;
+});
+
+// Charger les vrais screenshots dans les nœuds de la constellation
+featured.forEach((p, i) => {
+  loadShot(p).then(img => {
+    if (!img) return;
+    const tx = makeCardTexture(p, img);
+    tx.colorSpace = THREE.SRGBColorSpace;
+    planeMeshes[i].material.map = tx;
+    planeMeshes[i].material.needsUpdate = true;
+  });
 });
 
 /* ── Mouse parallax ────────────────────────────────────────── */
@@ -457,6 +591,11 @@ function animate() {
   // Rings rotation
   ringMeshes.forEach(r => { r.rotation.y += r.userData.speed * dt; });
 
+  // HUD Jarvis : arcs qui tournent en sens opposés
+  hudA.rotation.z += dt * 0.06;
+  hudB.rotation.z -= dt * 0.09;
+  hudA.material.opacity = 0.42 + Math.sin(t * 1.6) * 0.10;
+
   // Project planes orbit on tilted ellipse
   const orbitR = 4.1, orbitTilt = 0.35;
   planeMeshes.forEach((m, i) => {
@@ -475,6 +614,9 @@ function animate() {
 
   // Gentle scene auto-rotation
   scene.rotation.y = t * 0.03;
+
+  // Le HUD reste face caméra (annule la rotation de scène)
+  hudGroup.rotation.y = -scene.rotation.y;
 
   // Mouse parallax on camera
   camera.position.x += (targetX - camera.position.x) * 0.025;

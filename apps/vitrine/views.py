@@ -1,13 +1,16 @@
 import json
 
 from django.shortcuts import render
+from django.templatetags.static import static
 from django.views.decorators.cache import cache_page
 
 from .catalogue import PRODUITS
 
 _PRODUITS_JSON = json.dumps([
     {"slug": p["slug"], "nom": p["nom"], "tagline": p["tagline"],
-     "categorie": p["categorie"], "couleur": p["couleur"], "url": p.get("url", "")}
+     "categorie": p["categorie"], "couleur": p["couleur"], "url": p.get("url", ""),
+     "shot": static(f"vitrine/desktop/{p['slug']}.jpg"),
+     "shot_mobile": static(f"vitrine/screenshots/{p['slug']}.jpg")}
     for p in PRODUITS
 ])
 
