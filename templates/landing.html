@@ -6,318 +6,272 @@
 <title>SpaceLabs — Multi-agent Claude</title>
 <meta name="description" content="Orchestrez n instances Claude Code en parallèle depuis un cockpit unique. Piloté à la voix, diffusable en direct.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+*{margin:0;padding:0;box-sizing:border-box}
 
-:root {
-  --bg:      #06060E;
-  --surface: rgba(255,255,255,0.04);
-  --border:  rgba(255,255,255,0.08);
-  --text-1:  #F0F0F4;
-  --text-2:  rgba(240,240,244,0.45);
-  --text-3:  rgba(240,240,244,0.22);
-  --accent:  #7C3AED;
-  --accent2: #A855F7;
-}
-
-html, body { height: 100%; background: var(--bg); color: var(--text-1); font-family: 'Inter', sans-serif; overflow-x: hidden; }
-
-/* ── Canvas fond ─────────────────────────────────────────────────── */
-#bg-canvas {
-  position: fixed; inset: 0; z-index: 0;
-  pointer-events: none;
+:root{
+  --bg:#06060E;
+  --border:rgba(255,255,255,0.07);
+  --t1:#F0F0F4;
+  --t2:rgba(240,240,244,0.42);
+  --t3:rgba(240,240,244,0.18);
+  --acc:#7C3AED;
+  --acc2:#A855F7;
+  --term:#B57BFF;
+  --term-dim:#6B3FA0;
 }
 
-/* ── Wrapper global ──────────────────────────────────────────────── */
-.page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Courier New',monospace;overflow-x:hidden}
 
-/* ── Nav ─────────────────────────────────────────────────────────── */
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px 40px;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  background: rgba(6,6,14,0.6);
-}
-.nav-logo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
-  color: var(--text-1); text-decoration: none;
-}
-.nav-logo span { color: var(--accent2); }
-.nav-links { display: flex; gap: 32px; }
-.nav-links a {
-  font-size: 13px; color: var(--text-2); text-decoration: none;
-  letter-spacing: 0.02em; transition: color 150ms;
-}
-.nav-links a:hover { color: var(--text-1); }
-.nav-cta {
-  font-size: 13px; font-weight: 500;
-  color: var(--text-1); text-decoration: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 8px 18px; border-radius: 6px;
-  transition: background 150ms, border-color 150ms;
-}
-.nav-cta:hover { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.5); }
+/* ── Scanlines ─────────────────────────────────────────────── */
+#scan{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(124,58,237,.018) 0,rgba(124,58,237,.018) 1px,transparent 1px,transparent 4px)}
 
-/* ── Hero ─────────────────────────────────────────────────────────── */
-.hero {
-  flex: 1; display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  padding: 120px 40px 80px;
-  text-align: center; position: relative;
-}
+/* ── Canvas ────────────────────────────────────────────────── */
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-.hero-eyebrow {
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--accent2); margin-bottom: 32px;
-  display: flex; align-items: center; gap: 10px;
-}
-.hero-eyebrow::before, .hero-eyebrow::after {
-  content: ''; flex: 1; max-width: 48px; height: 1px;
-  background: linear-gradient(to right, transparent, var(--accent2));
-}
-.hero-eyebrow::after { background: linear-gradient(to left, transparent, var(--accent2)); }
+/* ── Layout ────────────────────────────────────────────────── */
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
 
-.hero-split {
-  display: flex; align-items: center; justify-content: space-between;
-  width: 100%; max-width: 1200px; gap: 0;
-  margin-bottom: 8px;
+/* ── Nav ───────────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 40px;
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  background:rgba(6,6,14,.7);
+  font-size:13px;letter-spacing:.04em;
 }
-.hero-word {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(80px, 12vw, 180px);
-  font-weight: 700; letter-spacing: -0.04em; line-height: 0.9;
-  color: var(--text-1);
-  user-select: none;
+.nav-logo{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:18px;font-weight:700;letter-spacing:-.02em;
+  color:var(--t1);text-decoration:none;
 }
-.hero-word--right { color: transparent; -webkit-text-stroke: 1px rgba(240,240,244,0.3); }
+.nav-logo span{color:var(--acc2)}
+.nav-mid{color:var(--t3);letter-spacing:.08em}
+.nav-cta{
+  color:var(--term);text-decoration:none;
+  border:1px solid var(--term-dim);
+  padding:7px 16px;
+  transition:background .15s,border-color .15s;
+}
+.nav-cta:hover{background:rgba(124,58,237,.2);border-color:var(--acc2)}
 
-.hero-center {
-  display: flex; flex-direction: column; align-items: center;
-  gap: 6px; flex-shrink: 0; padding: 0 20px;
-}
-.hero-orb {
-  width: 120px; height: 120px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #A855F7 0%, #7C3AED 40%, #3B0764 80%, transparent 100%);
-  box-shadow: 0 0 60px rgba(124,58,237,0.4), 0 0 120px rgba(124,58,237,0.15);
-  animation: pulse 4s ease-in-out infinite;
-  position: relative;
-}
-.hero-orb::after {
-  content: ''; position: absolute; inset: -8px; border-radius: 50%;
-  border: 1px solid rgba(168,85,247,0.25);
-  animation: ring 4s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(124,58,237,0.4),0 0 120px rgba(124,58,237,0.15)} 50%{transform:scale(1.06);box-shadow:0 0 80px rgba(168,85,247,0.6),0 0 160px rgba(124,58,237,0.25)} }
-@keyframes ring { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:0.4} }
-
-.hero-sub {
-  font-size: 13px; color: var(--text-2); letter-spacing: 0.05em;
-  text-transform: uppercase;
+/* ── Hero ──────────────────────────────────────────────────── */
+.hero{
+  flex:1;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  padding:130px 40px 60px;text-align:center;
 }
 
-.hero-desc {
-  max-width: 520px; margin: 40px auto 0;
-  font-size: 17px; line-height: 1.7; color: var(--text-2); font-weight: 300;
+.hero-eyebrow{
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--term-dim);margin-bottom:36px;
 }
-.hero-desc strong { color: var(--text-1); font-weight: 500; }
 
-.hero-actions {
-  display: flex; gap: 14px; margin-top: 44px; justify-content: center;
+.hero-split{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;max-width:1200px;
 }
-.btn-primary {
-  font-size: 14px; font-weight: 500;
-  background: var(--accent); color: #fff;
-  padding: 12px 28px; border-radius: 8px; text-decoration: none;
-  border: none; cursor: pointer;
-  transition: background 150ms, transform 120ms, box-shadow 150ms;
-  box-shadow: 0 0 24px rgba(124,58,237,0.4);
+.hero-word{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(72px,11vw,168px);
+  font-weight:700;letter-spacing:-.04em;line-height:.9;
+  color:var(--t1);user-select:none;
 }
-.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 0 40px rgba(168,85,247,0.5); }
-.btn-secondary {
-  font-size: 14px; font-weight: 400;
-  background: var(--surface); color: var(--text-2);
-  padding: 12px 28px; border-radius: 8px; text-decoration: none;
-  border: 1px solid var(--border); cursor: pointer;
-  transition: color 150ms, border-color 150ms;
-}
-.btn-secondary:hover { color: var(--text-1); border-color: rgba(255,255,255,0.2); }
+.hero-word--r{color:transparent;-webkit-text-stroke:1px rgba(240,240,244,.25)}
 
-/* ── Stats bar ───────────────────────────────────────────────────── */
-.stats {
-  display: flex; justify-content: center; gap: 0;
-  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-  margin-top: 80px;
+.hero-center{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;padding:0 24px}
+.hero-orb{
+  width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#A855F7 0%,#7C3AED 45%,#3B0764 85%,transparent 100%);
+  box-shadow:0 0 55px rgba(124,58,237,.45),0 0 110px rgba(124,58,237,.15);
+  animation:pulse 4s ease-in-out infinite;position:relative;
 }
-.stat {
-  flex: 1; max-width: 220px; padding: 28px 20px;
-  text-align: center; border-right: 1px solid var(--border);
-  position: relative;
+.hero-orb::after{
+  content:'';position:absolute;inset:-10px;border-radius:50%;
+  border:1px solid rgba(168,85,247,.2);
+  animation:ring 4s ease-in-out infinite;
 }
-.stat:last-child { border-right: none; }
-.stat-num {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 36px; font-weight: 700; letter-spacing: -0.03em;
-  color: var(--text-1); line-height: 1;
-  margin-bottom: 6px;
-}
-.stat-num span { color: var(--accent2); }
-.stat-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06);box-shadow:0 0 75px rgba(168,85,247,.6),0 0 150px rgba(124,58,237,.2)}}
+@keyframes ring{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.3}}
+.hero-sub{font-size:11px;color:var(--term-dim);letter-spacing:.1em;text-transform:uppercase}
 
-/* ── Features ─────────────────────────────────────────────────────── */
-.features {
-  padding: 100px 40px;
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-  max-width: 1200px; margin: 0 auto; width: 100%;
-  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+/* ── Terminal block ────────────────────────────────────────── */
+.term-block{
+  margin:40px auto 0;max-width:520px;width:100%;
+  border:1px solid var(--term-dim);
+  padding:20px 24px;
+  background:rgba(124,58,237,.04);
+  text-align:left;
 }
-.feature {
-  padding: 40px 36px;
-  background: var(--surface);
-  transition: background 200ms;
+.t-line{
+  white-space:nowrap;overflow:hidden;
+  opacity:0;
+  font-size:13px;line-height:1.9;
+  border-right:2px solid var(--term);
+  width:0;
+  animation:ttype .6s steps(32) forwards, tblink .7s step-end infinite;
+  animation-fill-mode:forwards;
 }
-.feature:hover { background: rgba(124,58,237,0.06); }
-.feature-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px; font-size: 18px;
-}
-.feature h3 {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.01em;
-}
-.feature p { font-size: 13px; line-height: 1.7; color: var(--text-2); }
+.t-line:nth-child(1){animation-delay:.3s}
+.t-line:nth-child(2){animation-delay:1s}
+.t-line:nth-child(3){animation-delay:1.7s}
+.t-line:nth-child(4){animation-delay:2.4s}
+.t-line:nth-child(5){animation-delay:3.1s;border-right-color:transparent;
+  animation:ttype .6s steps(32) forwards 3.1s, tcursor 1s step-end infinite 3.7s}
+@keyframes ttype{from{width:0;opacity:1}to{width:100%;opacity:1}}
+@keyframes tblink{50%{border-right-color:transparent}}
+@keyframes tcursor{50%{opacity:.25}}
+.t-dim{color:var(--term-dim)}
+.t-acc{color:var(--term)}
+.t-ok{color:var(--acc2)}
 
-/* ── Bottom nav stage ────────────────────────────────────────────── */
-.stage-bar {
-  display: flex; justify-content: center; gap: 0;
-  padding: 32px 40px; border-top: 1px solid var(--border);
-  margin-top: 80px;
+/* ── Hero actions ──────────────────────────────────────────── */
+.hero-actions{display:flex;gap:14px;margin-top:36px;justify-content:center;flex-wrap:wrap}
+.btn-primary{
+  font-family:'Courier New',monospace;
+  font-size:13px;letter-spacing:.06em;
+  background:var(--acc);color:#fff;
+  padding:12px 26px;text-decoration:none;
+  border:1px solid var(--acc);
+  transition:background .15s,box-shadow .15s;
+  box-shadow:0 0 22px rgba(124,58,237,.4);
 }
-.stage {
-  flex: 1; max-width: 200px; padding: 0 20px; text-align: left;
-  border-left: 1px solid var(--border);
+.btn-primary:hover{background:var(--acc2);border-color:var(--acc2);box-shadow:0 0 36px rgba(168,85,247,.5)}
+.btn-secondary{
+  font-family:'Courier New',monospace;
+  font-size:13px;letter-spacing:.06em;
+  color:var(--term);text-decoration:none;
+  border:1px solid var(--term-dim);
+  padding:12px 26px;
+  transition:background .15s,border-color .15s;
 }
-.stage:first-child { border-left: none; }
-.stage-num { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; margin-bottom: 6px; }
-.stage-name { font-size: 12px; color: var(--text-2); letter-spacing: 0.05em; text-transform: uppercase; }
+.btn-secondary:hover{background:rgba(124,58,237,.1);border-color:var(--term)}
 
-/* ── Footer ──────────────────────────────────────────────────────── */
-footer {
-  text-align: center; padding: 24px 40px;
-  font-size: 11px; color: var(--text-3); letter-spacing: 0.06em;
-  border-top: 1px solid var(--border);
+/* ── Stats bar ─────────────────────────────────────────────── */
+.stats{
+  display:flex;justify-content:center;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  margin-top:80px;
 }
-footer a { color: var(--text-2); text-decoration: none; }
-footer a:hover { color: var(--text-1); }
+.stat{flex:1;max-width:220px;padding:26px 20px;text-align:center;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-num{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:34px;font-weight:700;letter-spacing:-.03em;
+  color:var(--t1);line-height:1;margin-bottom:6px;
+}
+.stat-num em{color:var(--acc2);font-style:normal}
+.stat-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+
+/* ── Features ASCII ────────────────────────────────────────── */
+.features-wrap{padding:80px 40px 0;max-width:960px;margin:0 auto;width:100%}
+.feat-head{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--term-dim);margin-bottom:28px}
+.feat-tbl{
+  font-size:12px;line-height:1.55;color:var(--t2);
+  white-space:pre;overflow-x:auto;
+  border:1px solid var(--term-dim);padding:0;
+}
+.feat-tbl b{color:var(--term);font-weight:400}
+.feat-tbl .row:hover{background:rgba(124,58,237,.06)}
+.feat-tbl .row{display:block;padding:0}
+
+/* ── Stage bar ─────────────────────────────────────────────── */
+.stage-bar{
+  display:flex;justify-content:center;
+  padding:28px 40px;border-top:1px solid var(--border);
+  margin-top:80px;font-size:11px;
+}
+.stage{flex:1;max-width:180px;padding:0 20px;border-left:1px solid var(--border)}
+.stage:first-child{border-left:none}
+.stage-num{color:var(--t3);letter-spacing:.1em;margin-bottom:4px}
+.stage-name{color:var(--t2);letter-spacing:.07em;text-transform:uppercase}
+
+/* ── Footer ────────────────────────────────────────────────── */
+footer{
+  text-align:center;padding:20px 40px;
+  font-size:11px;color:var(--t3);letter-spacing:.06em;
+  border-top:1px solid var(--border);
+}
+footer a{color:var(--t2);text-decoration:none}
+footer a:hover{color:var(--t1)}
 </style>
 </head>
 <body>
 
+<div id="scan"></div>
 <canvas id="bg-canvas"></canvas>
 
 <div class="page">
 
-  <!-- Nav -->
   <nav>
     <a class="nav-logo" href="/">Space<span>Labs</span></a>
-    <div class="nav-links">
-      <a href="#features">Fonctionnalités</a>
-      <a href="#features">Agents</a>
-      <a href="{% url 'workspaces:home' %}">Cockpit</a>
-    </div>
-    <a class="nav-cta" href="{% url 'comptes:login' %}">Connexion</a>
+    <span class="nav-mid">// orchestration multi-agents</span>
+    <a class="nav-cta" href="{% url 'comptes:login' %}">[ login ]</a>
   </nav>
 
-  <!-- Hero -->
   <section class="hero">
-    <div class="hero-eyebrow">Orchestration multi-agents</div>
+    <div class="hero-eyebrow">$ spacelabs --init &nbsp;·&nbsp; v2026.9</div>
 
     <div class="hero-split">
-      <span class="hero-word hero-word--left">SPACE</span>
+      <span class="hero-word">SPACE</span>
       <div class="hero-center">
         <div class="hero-orb"></div>
         <div class="hero-sub">by Noesis</div>
       </div>
-      <span class="hero-word hero-word--right">LABS</span>
+      <span class="hero-word hero-word--r">LABS</span>
     </div>
 
-    <p class="hero-desc">
-      Lancez <strong>n instances Claude Code</strong> en parallèle depuis un cockpit unique.
-      Piloté à la voix, diffusable en direct, planifié par un Master Tasker.
-    </p>
+    <div class="term-block">
+      <div class="t-line"><span class="t-dim">$</span> <span class="t-acc">spacelabs</span> --init --workspace "BrainGod Team"</div>
+      <div class="t-line"><span class="t-dim">&gt;</span> Agents actifs&nbsp;&nbsp;&nbsp;: <span class="t-ok">16 / 16</span></div>
+      <div class="t-line"><span class="t-dim">&gt;</span> Mission en cours : <span class="t-ok">RUNNING</span></div>
+      <div class="t-line"><span class="t-dim">&gt;</span> Stream live&nbsp;&nbsp;&nbsp;&nbsp; : <span class="t-ok">observer.local:8000</span></div>
+      <div class="t-line"><span class="t-dim">&gt;</span> Statut&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; : <span class="t-acc">READY ▋</span></div>
+    </div>
 
     <div class="hero-actions">
       <a class="btn-primary" href="{% url 'comptes:login' %}">Entrer dans le cockpit</a>
-      <a class="btn-secondary" href="#features">Voir les fonctionnalités</a>
+      <a class="btn-secondary" href="#features">[ voir les fonctionnalités ]</a>
     </div>
   </section>
 
-  <!-- Stats -->
   <div class="stats">
     <div class="stat">
-      <div class="stat-num">16<span>+</span></div>
+      <div class="stat-num">16<em>+</em></div>
       <div class="stat-label">Agents simultanés</div>
     </div>
     <div class="stat">
-      <div class="stat-num"><span>&lt;</span>50ms</div>
+      <div class="stat-num"><em>&lt;</em>50ms</div>
       <div class="stat-label">Latence stream</div>
     </div>
     <div class="stat">
-      <div class="stat-num">100<span>%</span></div>
+      <div class="stat-num">100<em>%</em></div>
       <div class="stat-label">Open source</div>
     </div>
     <div class="stat">
-      <div class="stat-num">0<span>$</span></div>
-      <div class="stat-label">Par mois (self-host)</div>
+      <div class="stat-num">0<em>$</em></div>
+      <div class="stat-label">Self-hosted</div>
     </div>
   </div>
 
-  <!-- Features -->
-  <div id="features" style="padding: 100px 40px 0; max-width:1200px; margin:0 auto; width:100%;">
-    <div class="hero-eyebrow" style="justify-content:flex-start; margin-bottom:48px;">Fonctionnalités</div>
-  </div>
-  <div style="padding: 0 40px 0; max-width:1200px; margin:0 auto; width:100%;">
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">⬡</div>
-      <h3>Multi-agents en parallèle</h3>
-      <p>Jusqu'à 16 instances Claude Code par workspace — PTY interactives et sessions headless, toutes plafonnées et jaugées.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">◈</div>
-      <h3>Master Tasker</h3>
-      <p>Un planner IA décompose votre objectif en DAG de tâches. Le dispatcher les assigne aux agents libres sous contrainte de budget et de priorité.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">◎</div>
-      <h3>Voix native</h3>
-      <p>Push-to-talk ou streaming ASR (CrisperWhisper). Les intentions sont routées vers les agents ou le Tasker par un routeur déterministe.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">▣</div>
-      <h3>Observateur SSE</h3>
-      <p>Diffusez votre cockpit en lecture seule — sur grand écran ou en live stream. Confidentialité par pane, aucune installation requise.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">◧</div>
-      <h3>Historique & RAG</h3>
-      <p>Chaque événement stream-json est persisté dans EventLog. Exportez un vault Obsidian en un clic. Recherche plein texte intégrée.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⬡</div>
-      <h3>Design system dense</h3>
-      <p>Quatre paliers de densité (cozy → micro). L'interface s'adapte de l'écran unique au mur de 16 agents lisible à 3 mètres.</p>
-    </div>
-  </div>
+  <div id="features" class="features-wrap">
+    <div class="feat-head">// fonctionnalités</div>
+    <div class="feat-tbl"><b>+--------------------+-------------------------------------------+</b>
+<b>|</b> MODULE             <b>|</b> DESCRIPTION                               <b>|</b>
+<b>+--------------------+-------------------------------------------+</b>
+<span class="row"><b>|</b> multi-agents       <b>|</b> 16 Claude Code en parallèle par workspace <b>|</b></span>
+<span class="row"><b>|</b> master-tasker      <b>|</b> DAG de tâches, dispatch, retry, budget    <b>|</b></span>
+<span class="row"><b>|</b> voix-native        <b>|</b> push-to-talk + streaming ASR (Whisper)    <b>|</b></span>
+<span class="row"><b>|</b> observateur-sse    <b>|</b> diffusion live lecture seule, 0 install   <b>|</b></span>
+<span class="row"><b>|</b> historique-rag     <b>|</b> EventLog complet + export Obsidian        <b>|</b></span>
+<span class="row"><b>|</b> design-dense       <b>|</b> 4 paliers densité — de cozy à micro       <b>|</b></span>
+<b>+--------------------+-------------------------------------------+</b></div>
   </div>
 
-  <!-- Stage bar -->
   <div class="stage-bar">
     <div class="stage"><div class="stage-num">01</div><div class="stage-name">Spawn</div></div>
     <div class="stage"><div class="stage-num">02</div><div class="stage-name">Dispatch</div></div>
@@ -326,92 +280,51 @@ footer a:hover { color: var(--text-1); }
     <div class="stage"><div class="stage-num">05</div><div class="stage-name">Stream</div></div>
   </div>
 
-  <footer>
-    &copy; 2026 <a href="/">SpaceLabs</a> · par <a href="#">Noesis Software Technologies</a>
-  </footer>
+  <footer>$ _ powered by <a href="/">SpaceLabs</a> · Django · Claude Code &nbsp;·&nbsp; <a href="#">Noesis Software Technologies</a> &copy; 2026</footer>
 
 </div>
 
 <script>
-(function () {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
+(function(){
+  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  /* Particles */
-  const PARTICLE_COUNT = 80;
-  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
-    x: Math.random() * window.innerWidth,
-    y: Math.random() * window.innerHeight,
-    vx: (Math.random() - 0.5) * 0.18,
-    vy: (Math.random() - 0.5) * 0.18,
-    r: Math.random() * 1.4 + 0.3,
-    alpha: Math.random() * 0.4 + 0.05,
+  const pts=Array.from({length:70},()=>({
+    x:Math.random()*window.innerWidth,
+    y:Math.random()*window.innerHeight,
+    vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,
+    r:Math.random()*1.2+.3,a:Math.random()*.35+.05
   }));
+  const G=80;
 
-  /* Grid lines */
-  const GRID = 80;
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
 
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // vignette violet
+    const g=ctx.createRadialGradient(c.width/2,c.height/2,0,c.width/2,c.height/2,c.width*.7);
+    g.addColorStop(0,'rgba(124,58,237,.06)');g.addColorStop(1,'rgba(6,6,14,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,c.width,c.height);
 
-    /* Radial vignette */
-    const grad = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, 0,
-      canvas.width / 2, canvas.height / 2, canvas.width * 0.75
-    );
-    grad.addColorStop(0, 'rgba(124,58,237,0.07)');
-    grad.addColorStop(1, 'rgba(6,6,14,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // grid
+    ctx.strokeStyle='rgba(255,255,255,.02)';ctx.lineWidth=1;
+    for(let x=0;x<c.width;x+=G){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke()}
+    for(let y=0;y<c.height;y+=G){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke()}
 
-    /* Grid */
-    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < canvas.width; x += GRID) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += GRID) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-
-    /* Particles */
-    particles.forEach(p => {
-      p.x += p.vx; p.y += p.vy;
-      if (p.x < 0) p.x = canvas.width;
-      if (p.x > canvas.width) p.x = 0;
-      if (p.y < 0) p.y = canvas.height;
-      if (p.y > canvas.height) p.y = 0;
-
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(168,85,247,${p.alpha})`;
-      ctx.fill();
+    // particles + links
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;
+      if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(168,85,247,${p.a})`;ctx.fill();
     });
-
-    /* Connexions proches */
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 120) {
-          ctx.strokeStyle = `rgba(124,58,237,${0.12 * (1 - d / 120)})`;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
-        }
-      }
+    ctx.lineWidth=.5;
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<110){ctx.strokeStyle=`rgba(124,58,237,${.1*(1-d/110)})`;
+        ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke()}
     }
-
     requestAnimationFrame(draw);
   }
   draw();
