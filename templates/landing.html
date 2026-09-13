@@ -24,14 +24,14 @@
 
 html,body{height:100%;background:var(--bg);color:var(--t1);font-family:'Courier New',monospace;overflow-x:hidden}
 
-/* ── Scanlines ─────────────────────────────────────────────── */
+/* ── Scanlines overlay ─────────────────────────────────────── */
 #scan{position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:repeating-linear-gradient(0deg,rgba(124,58,237,.018) 0,rgba(124,58,237,.018) 1px,transparent 1px,transparent 4px)}
+  background:repeating-linear-gradient(0deg,rgba(124,58,237,.016) 0,rgba(124,58,237,.016) 1px,transparent 1px,transparent 4px)}
 
-/* ── Canvas ────────────────────────────────────────────────── */
-#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+/* ── Three.js canvas ───────────────────────────────────────── */
+#three-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* ── Layout ────────────────────────────────────────────────── */
+/* ── Page layout ───────────────────────────────────────────── */
 .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
 
 /* ── Nav ───────────────────────────────────────────────────── */
@@ -44,19 +44,12 @@ nav{
   background:rgba(6,6,14,.7);
   font-size:13px;letter-spacing:.04em;
 }
-.nav-logo{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:18px;font-weight:700;letter-spacing:-.02em;
-  color:var(--t1);text-decoration:none;
-}
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;
+  letter-spacing:-.02em;color:var(--t1);text-decoration:none}
 .nav-logo span{color:var(--acc2)}
 .nav-mid{color:var(--t3);letter-spacing:.08em}
-.nav-cta{
-  color:var(--term);text-decoration:none;
-  border:1px solid var(--term-dim);
-  padding:7px 16px;
-  transition:background .15s,border-color .15s;
-}
+.nav-cta{color:var(--term);text-decoration:none;border:1px solid var(--term-dim);
+  padding:7px 16px;transition:background .15s,border-color .15s}
 .nav-cta:hover{background:rgba(124,58,237,.2);border-color:var(--acc2)}
 
 /* ── Hero ──────────────────────────────────────────────────── */
@@ -64,16 +57,14 @@ nav{
   flex:1;display:flex;flex-direction:column;
   justify-content:center;align-items:center;
   padding:130px 40px 60px;text-align:center;
+  min-height:100vh;
 }
-
-.hero-eyebrow{
-  font-size:11px;letter-spacing:.2em;text-transform:uppercase;
-  color:var(--term-dim);margin-bottom:36px;
-}
+.hero-eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--term-dim);margin-bottom:36px}
 
 .hero-split{
   display:flex;align-items:center;justify-content:space-between;
-  width:100%;max-width:1200px;
+  width:100%;max-width:1200px;pointer-events:none;
 }
 .hero-word{
   font-family:'Space Grotesk',sans-serif;
@@ -82,38 +73,26 @@ nav{
   color:var(--t1);user-select:none;
 }
 .hero-word--r{color:transparent;-webkit-text-stroke:1px rgba(240,240,244,.25)}
+.hero-gap{flex:1;min-width:clamp(200px,22vw,340px);pointer-events:none}
 
-.hero-center{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;padding:0 24px}
-.hero-orb{
-  width:110px;height:110px;border-radius:50%;
-  background:radial-gradient(circle at 35% 35%,#A855F7 0%,#7C3AED 45%,#3B0764 85%,transparent 100%);
-  box-shadow:0 0 55px rgba(124,58,237,.45),0 0 110px rgba(124,58,237,.15);
-  animation:pulse 4s ease-in-out infinite;position:relative;
+.hero-sub{
+  margin-top:12px;font-size:11px;color:var(--term-dim);
+  letter-spacing:.1em;text-transform:uppercase;
 }
-.hero-orb::after{
-  content:'';position:absolute;inset:-10px;border-radius:50%;
-  border:1px solid rgba(168,85,247,.2);
-  animation:ring 4s ease-in-out infinite;
-}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06);box-shadow:0 0 75px rgba(168,85,247,.6),0 0 150px rgba(124,58,237,.2)}}
-@keyframes ring{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.18);opacity:.3}}
-.hero-sub{font-size:11px;color:var(--term-dim);letter-spacing:.1em;text-transform:uppercase}
+.hero-sub a{color:var(--acc2);text-decoration:none;transition:color .15s}
+.hero-sub a:hover{color:var(--t1)}
 
 /* ── Terminal block ────────────────────────────────────────── */
 .term-block{
-  margin:40px auto 0;max-width:520px;width:100%;
-  border:1px solid var(--term-dim);
-  padding:20px 24px;
-  background:rgba(124,58,237,.04);
-  text-align:left;
+  margin:36px auto 0;max-width:520px;width:100%;
+  border:1px solid var(--term-dim);padding:20px 24px;
+  background:rgba(124,58,237,.04);text-align:left;
 }
 .t-line{
   white-space:nowrap;overflow:hidden;
-  opacity:0;
-  font-size:13px;line-height:1.9;
-  border-right:2px solid var(--term);
-  width:0;
-  animation:ttype .6s steps(32) forwards, tblink .7s step-end infinite;
+  opacity:0;font-size:13px;line-height:1.9;
+  border-right:2px solid var(--term);width:0;
+  animation:ttype .6s steps(32) forwards,tblink .7s step-end infinite;
   animation-fill-mode:forwards;
 }
 .t-line:nth-child(1){animation-delay:.3s}
@@ -121,126 +100,58 @@ nav{
 .t-line:nth-child(3){animation-delay:1.7s}
 .t-line:nth-child(4){animation-delay:2.4s}
 .t-line:nth-child(5){animation-delay:3.1s;border-right-color:transparent;
-  animation:ttype .6s steps(32) forwards 3.1s, tcursor 1s step-end infinite 3.7s}
+  animation:ttype .6s steps(32) forwards 3.1s,tcursor 1s step-end infinite 3.7s}
 @keyframes ttype{from{width:0;opacity:1}to{width:100%;opacity:1}}
 @keyframes tblink{50%{border-right-color:transparent}}
 @keyframes tcursor{50%{opacity:.25}}
-.t-dim{color:var(--term-dim)}
-.t-acc{color:var(--term)}
-.t-ok{color:var(--acc2)}
+.t-dim{color:var(--term-dim)}.t-acc{color:var(--term)}.t-ok{color:var(--acc2)}
 
 /* ── Hero actions ──────────────────────────────────────────── */
 .hero-actions{display:flex;gap:14px;margin-top:36px;justify-content:center;flex-wrap:wrap}
 .btn-primary{
-  font-family:'Courier New',monospace;
-  font-size:13px;letter-spacing:.06em;
-  background:var(--acc);color:#fff;
-  padding:12px 26px;text-decoration:none;
-  border:1px solid var(--acc);
-  transition:background .15s,box-shadow .15s;
+  font-family:'Courier New',monospace;font-size:13px;letter-spacing:.06em;
+  background:var(--acc);color:#fff;padding:12px 26px;text-decoration:none;
+  border:1px solid var(--acc);transition:background .15s,box-shadow .15s;
   box-shadow:0 0 22px rgba(124,58,237,.4);
 }
 .btn-primary:hover{background:var(--acc2);border-color:var(--acc2);box-shadow:0 0 36px rgba(168,85,247,.5)}
 .btn-secondary{
-  font-family:'Courier New',monospace;
-  font-size:13px;letter-spacing:.06em;
-  color:var(--term);text-decoration:none;
-  border:1px solid var(--term-dim);
-  padding:12px 26px;
-  transition:background .15s,border-color .15s;
+  font-family:'Courier New',monospace;font-size:13px;letter-spacing:.06em;
+  color:var(--term);text-decoration:none;border:1px solid var(--term-dim);
+  padding:12px 26px;transition:background .15s,border-color .15s;
 }
 .btn-secondary:hover{background:rgba(124,58,237,.1);border-color:var(--term)}
 
-/* ── Orbital ring ──────────────────────────────────────────── */
-.orbital-wrap{
-  position:relative;width:100%;max-width:1200px;
-  height:clamp(320px,42vw,520px);
-  display:flex;align-items:center;justify-content:space-between;
-  margin-top:16px;
-}
-.orbital-zone{
-  position:relative;
-  width:clamp(240px,26vw,360px);
-  height:clamp(240px,26vw,360px);
-  flex-shrink:0;
-}
-.hero-orb2{
-  position:absolute;top:50%;left:50%;
-  width:120px;height:120px;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  background:radial-gradient(circle at 35% 35%,#A855F7 0%,#7C3AED 45%,#3B0764 85%,transparent 100%);
-  box-shadow:0 0 55px rgba(124,58,237,.45),0 0 110px rgba(124,58,237,.15);
-  animation:pulse 4s ease-in-out infinite;z-index:2;
-}
-.hero-orb2::after{
-  content:'';position:absolute;inset:-12px;border-radius:50%;
-  border:1px solid rgba(168,85,247,.2);
-  animation:ring 4s ease-in-out infinite;
-}
-.orbital-card{
-  position:absolute;
-  width:140px;padding:10px 12px;
-  background:rgba(10,8,24,.68);
-  backdrop-filter:blur(16px) saturate(1.4);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:10px;
-  box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 0 1px rgba(168,85,247,.06);
-  pointer-events:none;
-  transition:opacity .3s;
-  z-index:3;
-}
-.oc-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
-.oc-header{display:flex;align-items:center;margin-bottom:4px}
-.oc-nom{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:#F0F0F4;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.oc-tag{font-size:9px;color:rgba(240,240,244,.38);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.oc-cat{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(168,85,247,.55);margin-top:5px}
-
 /* ── Stats bar ─────────────────────────────────────────────── */
-.stats{
-  display:flex;justify-content:center;
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  margin-top:80px;
-}
+.stats{display:flex;justify-content:center;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:80px}
 .stat{flex:1;max-width:220px;padding:26px 20px;text-align:center;border-right:1px solid var(--border)}
 .stat:last-child{border-right:none}
-.stat-num{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:34px;font-weight:700;letter-spacing:-.03em;
-  color:var(--t1);line-height:1;margin-bottom:6px;
-}
+.stat-num{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700;
+  letter-spacing:-.03em;color:var(--t1);line-height:1;margin-bottom:6px}
 .stat-num em{color:var(--acc2);font-style:normal}
 .stat-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
 
-/* ── Features ASCII ────────────────────────────────────────── */
+/* ── Features ──────────────────────────────────────────────── */
 .features-wrap{padding:80px 40px 0;max-width:960px;margin:0 auto;width:100%}
 .feat-head{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--term-dim);margin-bottom:28px}
-.feat-tbl{
-  font-size:12px;line-height:1.55;color:var(--t2);
-  white-space:pre;overflow-x:auto;
-  border:1px solid var(--term-dim);padding:0;
-}
+.feat-tbl{font-size:12px;line-height:1.55;color:var(--t2);
+  white-space:pre;overflow-x:auto;border:1px solid var(--term-dim);padding:0}
 .feat-tbl b{color:var(--term);font-weight:400}
 .feat-tbl .row:hover{background:rgba(124,58,237,.06)}
 .feat-tbl .row{display:block;padding:0}
 
 /* ── Stage bar ─────────────────────────────────────────────── */
-.stage-bar{
-  display:flex;justify-content:center;
-  padding:28px 40px;border-top:1px solid var(--border);
-  margin-top:80px;font-size:11px;
-}
+.stage-bar{display:flex;justify-content:center;
+  padding:28px 40px;border-top:1px solid var(--border);margin-top:80px;font-size:11px}
 .stage{flex:1;max-width:180px;padding:0 20px;border-left:1px solid var(--border)}
 .stage:first-child{border-left:none}
 .stage-num{color:var(--t3);letter-spacing:.1em;margin-bottom:4px}
 .stage-name{color:var(--t2);letter-spacing:.07em;text-transform:uppercase}
 
 /* ── Footer ────────────────────────────────────────────────── */
-footer{
-  text-align:center;padding:20px 40px;
-  font-size:11px;color:var(--t3);letter-spacing:.06em;
-  border-top:1px solid var(--border);
-}
+footer{text-align:center;padding:20px 40px;font-size:11px;color:var(--t3);
+  letter-spacing:.06em;border-top:1px solid var(--border)}
 footer a{color:var(--t2);text-decoration:none}
 footer a:hover{color:var(--t1)}
 </style>
@@ -248,7 +159,7 @@ footer a:hover{color:var(--t1)}
 <body>
 
 <div id="scan"></div>
-<canvas id="bg-canvas"></canvas>
+<canvas id="three-canvas"></canvas>
 
 <div class="page">
 
@@ -261,15 +172,17 @@ footer a:hover{color:var(--t1)}
   <section class="hero">
     <div class="hero-eyebrow">$ spacelabs --init &nbsp;·&nbsp; v2026.9</div>
 
-    <div class="orbital-wrap" id="orbital-wrap">
+    <div class="hero-split">
       <span class="hero-word">SPACE</span>
-      <div class="orbital-zone" id="orbital-zone">
-        <div class="hero-orb2" id="hero-orb"></div>
-        <!-- orbital cards injected by JS -->
-      </div>
+      <div class="hero-gap"></div>
       <span class="hero-word hero-word--r">LABS</span>
     </div>
-    <div class="hero-sub" style="margin-top:8px;font-size:11px;color:var(--term-dim);letter-spacing:.1em;text-transform:uppercase">by Noesis · <a href="{% url 'vitrine:index' %}" style="color:var(--acc2);text-decoration:none">{{ produits_count }} projets →</a></div>
+
+    <div class="hero-sub">
+      by Noesis &nbsp;·&nbsp;
+      <a href="{% url 'vitrine:index' %}">{{ produits_count }} projets</a> &nbsp;·&nbsp;
+      <a href="{% url 'vitrine:v2' %}">constellation →</a>
+    </div>
 
     <div class="term-block">
       <div class="t-line"><span class="t-dim">$</span> <span class="t-acc">spacelabs</span> --init --workspace "BrainGod Team"</div>
@@ -286,22 +199,10 @@ footer a:hover{color:var(--t1)}
   </section>
 
   <div class="stats">
-    <div class="stat">
-      <div class="stat-num">16<em>+</em></div>
-      <div class="stat-label">Agents simultanés</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num"><em>&lt;</em>50ms</div>
-      <div class="stat-label">Latence stream</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">100<em>%</em></div>
-      <div class="stat-label">Open source</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">0<em>$</em></div>
-      <div class="stat-label">Self-hosted</div>
-    </div>
+    <div class="stat"><div class="stat-num">16<em>+</em></div><div class="stat-label">Agents simultanés</div></div>
+    <div class="stat"><div class="stat-num"><em>&lt;</em>50ms</div><div class="stat-label">Latence stream</div></div>
+    <div class="stat"><div class="stat-num">100<em>%</em></div><div class="stat-label">Open source</div></div>
+    <div class="stat"><div class="stat-num">0<em>$</em></div><div class="stat-label">Self-hosted</div></div>
   </div>
 
   <div id="features" class="features-wrap">
@@ -330,104 +231,261 @@ footer a:hover{color:var(--t1)}
 
 </div>
 
-<script>
-/* ── Orbital glassmorphism cards ───────────────────────────── */
-(function(){
-  const PRODUITS = {{ produits_json|safe }};
-  const zone = document.getElementById('orbital-zone');
-  const orb  = document.getElementById('hero-orb');
-  if (!zone || !PRODUITS.length) return;
+<!-- ── Three.js scene ─────────────────────────────────────── -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.min.js"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
 
-  // Pick 8 spread-out products
-  const step = Math.floor(PRODUITS.length / 8);
-  const featured = Array.from({length:8}, (_,i) => PRODUITS[(i * step) % PRODUITS.length]);
+const PRODUITS = {{ produits_json|safe }};
+const canvas = document.getElementById('three-canvas');
+let W = innerWidth, H = innerHeight;
 
-  const cards = featured.map((p, i) => {
-    const el = document.createElement('div');
-    el.className = 'orbital-card';
-    el.innerHTML = `
-      <div class="oc-header">
-        <span class="oc-dot" style="background:${p.couleur}"></span>
-        <span class="oc-nom">${p.nom}</span>
-      </div>
-      <div class="oc-tag">${p.tagline}</div>
-      <div class="oc-cat">${p.categorie}</div>`;
-    zone.appendChild(el);
-    return el;
+/* ── Renderer ──────────────────────────────────────────────── */
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(W, H);
+renderer.setClearColor(0x06060E, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+/* ── Scene & camera ────────────────────────────────────────── */
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x06060E, 0.022);
+
+const camera = new THREE.PerspectiveCamera(52, W / H, 0.1, 100);
+camera.position.set(0, 0.5, 7.5);
+camera.lookAt(0, 0, 0);
+
+/* ── Lights ────────────────────────────────────────────────── */
+scene.add(new THREE.AmbientLight(0x120830, 3));
+const purpleLight = new THREE.PointLight(0x7c3aed, 12, 14);
+purpleLight.position.set(0, 0, 0);
+scene.add(purpleLight);
+const rimLight = new THREE.PointLight(0xa855f7, 4, 20);
+rimLight.position.set(-4, 3, -3);
+scene.add(rimLight);
+
+/* ── Central orb ───────────────────────────────────────────── */
+const orbGroup = new THREE.Group();
+scene.add(orbGroup);
+
+// Core sphere
+const orbMat = new THREE.MeshStandardMaterial({
+  color: 0x4c1d95,
+  emissive: 0x7c3aed,
+  emissiveIntensity: 0.9,
+  metalness: 0.4,
+  roughness: 0.35,
+});
+const orb = new THREE.Mesh(new THREE.SphereGeometry(1.15, 64, 64), orbMat);
+orbGroup.add(orb);
+
+// Atmospheric glow shells (BackSide + AdditiveBlending)
+[
+  { r: 1.40, opacity: 0.08 },
+  { r: 1.75, opacity: 0.045 },
+  { r: 2.30, opacity: 0.020 },
+].forEach(({ r, opacity }) => {
+  const m = new THREE.MeshBasicMaterial({
+    color: 0xa855f7,
+    transparent: true, opacity,
+    side: THREE.BackSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  orbGroup.add(new THREE.Mesh(new THREE.SphereGeometry(r, 32, 32), m));
+});
+
+/* ── Orbital rings ─────────────────────────────────────────── */
+const ringDefs = [
+  { r: 2.6,  tube: 0.009, rotX: Math.PI * 0.07, rotZ: 0,              color: 0x7c3aed, speed: 0.18  },
+  { r: 3.5,  tube: 0.006, rotX: Math.PI * 0.38, rotZ: Math.PI * 0.15, color: 0xa855f7, speed: -0.11 },
+  { r: 4.6,  tube: 0.005, rotX: Math.PI * 0.55, rotZ: -Math.PI * 0.2, color: 0x6d28d9, speed: 0.07  },
+];
+const ringMeshes = ringDefs.map(d => {
+  const mat = new THREE.MeshBasicMaterial({
+    color: d.color, transparent: true, opacity: 0.28,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const m = new THREE.Mesh(new THREE.TorusGeometry(d.r, d.tube, 4, 120), mat);
+  m.rotation.x = d.rotX;
+  m.rotation.z = d.rotZ;
+  m.userData.speed = d.speed;
+  scene.add(m);
+  return m;
+});
+
+/* ── Stars ─────────────────────────────────────────────────── */
+{
+  const N = 2800;
+  const pos = new Float32Array(N * 3);
+  const sizes = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 18 + Math.random() * 35;
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+    sizes[i] = 0.4 + Math.random() * 1.8;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  const mat = new THREE.PointsMaterial({
+    color: 0xd0c0ff, transparent: true, opacity: 0.6,
+    size: 0.06, sizeAttenuation: true,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  scene.add(new THREE.Points(geo, mat));
+}
+
+/* ── Project planes ────────────────────────────────────────── */
+function makeCardTexture(p) {
+  const cw = 420, ch = 180;
+  const c = document.createElement('canvas');
+  c.width = cw; c.height = ch;
+  const g = c.getContext('2d');
+
+  // Background
+  g.fillStyle = 'rgba(8,5,22,0.82)';
+  g.beginPath();
+  g.roundRect(0, 0, cw, ch, 14);
+  g.fill();
+
+  // Border
+  g.strokeStyle = 'rgba(255,255,255,0.10)';
+  g.lineWidth = 1.5;
+  g.beginPath(); g.roundRect(0, 0, cw, ch, 14); g.stroke();
+
+  // Accent top bar (gradient)
+  const grad = g.createLinearGradient(0, 0, cw, 0);
+  grad.addColorStop(0, p.couleur + 'dd');
+  grad.addColorStop(0.6, p.couleur + '44');
+  grad.addColorStop(1, 'transparent');
+  g.fillStyle = grad;
+  g.beginPath(); g.roundRect(0, 0, cw, 4, [14, 14, 0, 0]); g.fill();
+
+  // Colored dot
+  g.beginPath(); g.arc(22, 46, 5, 0, Math.PI*2);
+  g.fillStyle = p.couleur; g.fill();
+
+  // Category
+  g.font = '500 13px Inter, Arial, sans-serif';
+  g.fillStyle = p.couleur + 'bb';
+  g.fillText(p.categorie.toUpperCase(), 36, 50);
+
+  // Project name
+  g.font = 'bold 28px "Space Grotesk", Arial, sans-serif';
+  g.fillStyle = '#F0F0F4';
+  g.fillText(p.nom.slice(0, 16), 20, 98);
+
+  // Tagline
+  g.font = '15px Inter, Arial, sans-serif';
+  g.fillStyle = 'rgba(240,240,244,0.45)';
+  const tag = p.tagline.length > 38 ? p.tagline.slice(0, 37) + '…' : p.tagline;
+  g.fillText(tag, 20, 128);
+
+  // URL hint
+  if (p.url) {
+    g.font = '11px Inter, Arial, sans-serif';
+    g.fillStyle = 'rgba(168,85,247,0.55)';
+    g.fillText(p.url.replace(/^https?:\/\//, '').slice(0, 28), 20, 158);
+  }
+
+  return new THREE.CanvasTexture(c);
+}
+
+// Pick ~12 evenly spaced products
+const NPLANES = Math.min(12, PRODUITS.length);
+const step    = Math.max(1, Math.floor(PRODUITS.length / NPLANES));
+const featured = Array.from({ length: NPLANES }, (_, i) => PRODUITS[(i * step) % PRODUITS.length]);
+
+const planeGroup = new THREE.Group();
+scene.add(planeGroup);
+
+const planeMeshes = featured.map((p, i) => {
+  const tex = makeCardTexture(p);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex, transparent: true, opacity: 0.88,
+    side: THREE.DoubleSide, depthWrite: false,
+    blending: THREE.NormalBlending,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.15, 0.92), mat);
+  mesh.userData = { baseAngle: (i / NPLANES) * Math.PI * 2, speed: 0.08 + (i % 3) * 0.018 };
+  planeGroup.add(mesh);
+  return mesh;
+});
+
+/* ── Mouse parallax ────────────────────────────────────────── */
+let targetX = 0, targetY = 0;
+window.addEventListener('mousemove', e => {
+  targetX = (e.clientX / W - 0.5) * 1.6;
+  targetY = -(e.clientY / H - 0.5) * 1.0;
+});
+
+/* ── Resize ────────────────────────────────────────────────── */
+window.addEventListener('resize', () => {
+  W = innerWidth; H = innerHeight;
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+});
+
+/* ── Animation loop ────────────────────────────────────────── */
+let t = 0;
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  t += dt;
+
+  // Orb slow pulse
+  const pulse = 1 + Math.sin(t * 1.1) * 0.025;
+  orbGroup.scale.setScalar(pulse);
+  orbMat.emissiveIntensity = 0.85 + Math.sin(t * 1.3) * 0.12;
+  purpleLight.intensity = 11 + Math.sin(t * 0.9) * 2;
+
+  // Rings rotation
+  ringMeshes.forEach(r => { r.rotation.y += r.userData.speed * dt; });
+
+  // Project planes orbit on tilted ellipse
+  const orbitR = 4.1, orbitTilt = 0.35;
+  planeMeshes.forEach((m, i) => {
+    const angle = m.userData.baseAngle + t * m.userData.speed;
+    const x = Math.cos(angle) * orbitR;
+    const z = Math.sin(angle) * orbitR * 0.55;
+    const y = Math.sin(angle + Math.PI * 0.5) * orbitR * orbitTilt;
+    m.position.set(x, y, z);
+    // Depth fade: planes behind center are dimmer
+    const depth = (Math.sin(angle) + 1) / 2;  // 0..1
+    m.material.opacity = 0.35 + depth * 0.55;
+    m.scale.setScalar(0.82 + depth * 0.22);
+    // Always face camera (billboard)
+    m.lookAt(camera.position);
   });
 
-  let t = 0;
-  const baseAngles = featured.map((_, i) => (i / featured.length) * Math.PI * 2);
+  // Gentle scene auto-rotation
+  scene.rotation.y = t * 0.03;
 
-  function tick() {
-    t += 0.004;
-    const zw = zone.offsetWidth / 2;
-    const zh = zone.offsetHeight / 2;
-    const rx = zw * 0.82;  // ellipse x radius
-    const ry = zh * 0.72;  // ellipse y radius
+  // Mouse parallax on camera
+  camera.position.x += (targetX - camera.position.x) * 0.025;
+  camera.position.y += (targetY + 0.5 - camera.position.y) * 0.025;
+  camera.lookAt(0, 0, 0);
 
-    cards.forEach((card, i) => {
-      const angle = baseAngles[i] + t;
-      const x = zw + Math.cos(angle) * rx - 70;  // 70 = half card width
-      const y = zh + Math.sin(angle) * ry - 30;  // 30 = half card height
-      card.style.left = x + 'px';
-      card.style.top  = y + 'px';
-      // Depth: cards behind orb are slightly transparent
-      const depth = Math.sin(angle);
-      card.style.opacity = (0.45 + (depth + 1) / 2 * 0.55).toFixed(2);
-      card.style.zIndex  = depth > 0 ? 4 : 1;
-      card.style.transform = `scale(${0.88 + (depth + 1) / 2 * 0.12})`;
-    });
-    requestAnimationFrame(tick);
-  }
-  tick();
-})();
+  renderer.render(scene, camera);
+}
 
-/* ── Background canvas ─────────────────────────────────────── */
-(function(){
-  const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
-  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
-  resize();window.addEventListener('resize',resize);
-
-  const pts=Array.from({length:70},()=>({
-    x:Math.random()*window.innerWidth,
-    y:Math.random()*window.innerHeight,
-    vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,
-    r:Math.random()*1.2+.3,a:Math.random()*.35+.05
-  }));
-  const G=80;
-
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-
-    // vignette violet
-    const g=ctx.createRadialGradient(c.width/2,c.height/2,0,c.width/2,c.height/2,c.width*.7);
-    g.addColorStop(0,'rgba(124,58,237,.06)');g.addColorStop(1,'rgba(6,6,14,0)');
-    ctx.fillStyle=g;ctx.fillRect(0,0,c.width,c.height);
-
-    // grid
-    ctx.strokeStyle='rgba(255,255,255,.02)';ctx.lineWidth=1;
-    for(let x=0;x<c.width;x+=G){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,c.height);ctx.stroke()}
-    for(let y=0;y<c.height;y+=G){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(c.width,y);ctx.stroke()}
-
-    // particles + links
-    pts.forEach(p=>{
-      p.x+=p.vx;p.y+=p.vy;
-      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;
-      if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
-      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(168,85,247,${p.a})`;ctx.fill();
-    });
-    ctx.lineWidth=.5;
-    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
-      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<110){ctx.strokeStyle=`rgba(124,58,237,${.1*(1-d/110)})`;
-        ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke()}
-    }
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
+// Wait for fonts then start
+document.fonts.ready.then(() => animate());
 </script>
 </body>
 </html>

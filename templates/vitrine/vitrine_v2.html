@@ -3,89 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SpaceLabs — Constellation des projets</title>
+<title>SpaceLabs — Constellation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#05050F;color:#F0F0F4;font-family:'Inter',sans-serif;overflow:hidden}
+html,body{width:100%;height:100%;background:#04040D;color:#F0F0F4;font-family:'Inter',sans-serif;overflow:hidden}
 
-/* ── Glow bottom ───────────────────────────────────────────── */
-.glow{position:fixed;bottom:-200px;left:50%;transform:translateX(-50%);
-  width:900px;height:500px;border-radius:50%;
-  background:radial-gradient(ellipse at center,rgba(90,40,200,.22) 0%,transparent 70%);
-  pointer-events:none;z-index:0}
+canvas{position:fixed;inset:0;z-index:1}
 
-/* ── Canvas ────────────────────────────────────────────────── */
-canvas{position:fixed;inset:0;z-index:1;cursor:crosshair}
-
-/* ── Nav ───────────────────────────────────────────────────── */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;
   display:flex;align-items:center;justify-content:space-between;
-  padding:18px 36px;
-  background:rgba(5,5,15,.7);backdrop-filter:blur(14px);
+  padding:16px 32px;
+  background:rgba(4,4,13,.75);backdrop-filter:blur(18px);
   border-bottom:1px solid rgba(255,255,255,.06)}
-.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
   color:#F0F0F4;text-decoration:none;letter-spacing:-.02em}
 .nav-logo span{color:#A855F7}
-.nav-right{display:flex;align-items:center;gap:20px;font-size:12px;color:rgba(240,240,244,.4)}
-.nav-right a{color:rgba(240,240,244,.5);text-decoration:none;transition:color .15s}
+.nav-right{display:flex;align-items:center;gap:18px;font-size:11px}
+.nav-right a{color:rgba(240,240,244,.45);text-decoration:none;transition:color .15s;letter-spacing:.04em}
 .nav-right a:hover{color:#F0F0F4}
 .nav-right a.active{color:#A855F7}
+.nav-count{color:rgba(240,240,244,.25);font-size:10px;letter-spacing:.06em}
 
-/* ── Filters ───────────────────────────────────────────────── */
-.filters{position:fixed;top:64px;left:0;right:0;z-index:99;
-  display:flex;gap:8px;padding:10px 36px;overflow-x:auto;
-  background:rgba(5,5,15,.5);backdrop-filter:blur(8px);
+.filters{position:fixed;top:56px;left:0;right:0;z-index:99;
+  display:flex;gap:6px;padding:8px 32px;overflow-x:auto;
+  background:rgba(4,4,13,.6);backdrop-filter:blur(10px);
   border-bottom:1px solid rgba(255,255,255,.04);scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
-.filter-btn{flex-shrink:0;font-size:11px;letter-spacing:.06em;
-  padding:5px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.03);color:rgba(240,240,244,.45);cursor:pointer;
-  transition:all .15s;white-space:nowrap}
+.filter-btn{flex-shrink:0;font-size:10px;letter-spacing:.07em;
+  padding:4px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.09);
+  background:transparent;color:rgba(240,240,244,.38);cursor:pointer;
+  transition:all .15s;white-space:nowrap;font-family:inherit}
 .filter-btn:hover{border-color:rgba(168,85,247,.4);color:#F0F0F4}
-.filter-btn.active{border-color:#A855F7;background:rgba(168,85,247,.12);color:#A855F7}
+.filter-btn.active{border-color:#A855F7;background:rgba(168,85,247,.1);color:#A855F7}
 
-/* ── Hover card ────────────────────────────────────────────── */
-#hover-card{
+#tooltip{
   position:fixed;z-index:200;
-  min-width:200px;max-width:240px;
-  padding:16px 18px;
-  background:rgba(10,8,24,.72);
-  backdrop-filter:blur(20px) saturate(1.5);
+  padding:14px 16px;
+  background:rgba(8,6,22,.78);
+  backdrop-filter:blur(22px) saturate(1.6);
   border:1px solid rgba(255,255,255,.1);
   border-radius:12px;
-  box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(168,85,247,.1);
-  pointer-events:none;
-  opacity:0;transition:opacity .2s;
+  box-shadow:0 12px 48px rgba(0,0,0,.7),0 0 0 1px rgba(168,85,247,.08);
+  pointer-events:none;opacity:0;transition:opacity .18s;
+  min-width:190px;max-width:230px;
 }
-#hover-card.visible{opacity:1}
-.hc-cat{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(168,85,247,.7);margin-bottom:8px}
-.hc-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
-  color:#F0F0F4;margin-bottom:4px;letter-spacing:-.01em}
-.hc-tagline{font-size:12px;color:rgba(240,240,244,.5);line-height:1.5;margin-bottom:12px}
-.hc-link{font-size:11px;letter-spacing:.06em;
-  color:#A855F7;text-decoration:none;
-  border:1px solid rgba(168,85,247,.35);
-  padding:5px 10px;display:inline-block;transition:.15s}
-.hc-link:hover{background:rgba(168,85,247,.15)}
-.hc-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+#tooltip.on{opacity:1}
+.tt-cat{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(168,85,247,.65);margin-bottom:6px;display:flex;align-items:center;gap:5px}
+.tt-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tt-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:#F0F0F4;margin-bottom:3px;letter-spacing:-.01em}
+.tt-tag{font-size:11px;color:rgba(240,240,244,.45);line-height:1.5;margin-bottom:10px}
+.tt-link{font-size:10px;letter-spacing:.07em;color:#A855F7;text-decoration:none;
+  border:1px solid rgba(168,85,247,.3);padding:4px 9px;display:inline-block;transition:.12s}
+.tt-link:hover{background:rgba(168,85,247,.14)}
 
-/* ── Count badge ───────────────────────────────────────────── */
-.badge{position:fixed;bottom:24px;right:24px;z-index:99;
-  font-size:11px;color:rgba(240,240,244,.3);letter-spacing:.06em}
+.hint{position:fixed;bottom:20px;right:20px;z-index:99;
+  font-size:10px;color:rgba(240,240,244,.22);letter-spacing:.06em}
 </style>
 </head>
 <body>
 
-<div class="glow"></div>
 <canvas id="c"></canvas>
 
 <nav>
   <a class="nav-logo" href="/">Space<span>Labs</span></a>
   <div class="nav-right">
-    <span id="count-label">{{ produits|length }} projets</span>
+    <span class="nav-count" id="nav-count"></span>
     <a href="{% url 'vitrine:index' %}">Grille</a>
     <a href="{% url 'vitrine:v2' %}" class="active">Constellation</a>
     <a href="{% url 'workspaces:home' %}">Espace</a>
@@ -96,217 +80,234 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;
   <button class="filter-btn active" data-cat="all">Tous</button>
 </div>
 
-<div id="hover-card">
-  <div class="hc-cat"><span class="hc-dot" id="hc-dot"></span><span id="hc-cat"></span></div>
-  <div class="hc-name" id="hc-name"></div>
-  <div class="hc-tagline" id="hc-tagline"></div>
-  <a class="hc-link" id="hc-link" href="#" target="_blank" rel="noopener">Ouvrir →</a>
+<div id="tooltip">
+  <div class="tt-cat"><span class="tt-dot" id="tt-dot"></span><span id="tt-cat"></span></div>
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-tag"  id="tt-tag"></div>
+  <a class="tt-link" id="tt-link" href="#" target="_blank" rel="noopener">Ouvrir →</a>
 </div>
 
-<div class="badge" id="badge">// constellation · hover pour détails</div>
+<div class="hint">// hover · clic pour ouvrir</div>
 
 <script>
 const PRODUITS = {{ produits_json|safe }};
 
-/* ── Build category list ───────────────────────────────────── */
+/* ── Categories & filters ──────────────────────────────────── */
 const cats = [...new Set(PRODUITS.map(p => p.categorie))].sort();
 const filtersEl = document.getElementById('filters');
 cats.forEach(cat => {
-  const btn = document.createElement('button');
-  btn.className = 'filter-btn';
-  btn.dataset.cat = cat;
-  btn.textContent = cat;
-  filtersEl.appendChild(btn);
+  const b = document.createElement('button');
+  b.className = 'filter-btn'; b.dataset.cat = cat; b.textContent = cat;
+  filtersEl.appendChild(b);
 });
-
 let activeCat = 'all';
 filtersEl.addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
-  if (!btn) return;
-  activeCat = btn.dataset.cat;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === activeCat));
-  buildNodes();
+  const b = e.target.closest('.filter-btn');
+  if (!b) return;
+  activeCat = b.dataset.cat;
+  document.querySelectorAll('.filter-btn').forEach(x => x.classList.toggle('active', x.dataset.cat === activeCat));
+  buildNodes(); rebuildLines();
 });
 
-/* ── Canvas setup ──────────────────────────────────────────── */
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-let W, H, nodes = [], driftX = 0, driftY = 0, driftSpeedX = .06, driftSpeedY = .04;
+/* ── Canvas ────────────────────────────────────────────────── */
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+let W, H, nodes = [], lines = [];
+let mx = -9999, my = -9999;
 
-function resize() {
-  W = canvas.width = window.innerWidth;
-  H = canvas.height = window.innerHeight;
-  buildNodes();
-}
-window.addEventListener('resize', resize);
+/* ── Card dimensions ───────────────────────────────────────── */
+const CW = 126, CH = 54, CR = 7;  // width, height, corner radius
 
-/* ── Category cluster centers (normalized 0–1) ─────────────── */
+/* ── Seeded PRNG ───────────────────────────────────────────── */
+const prng = seed => { let s = seed; return () => { s=(s*16807)%2147483647; return(s-1)/2147483646; }; };
+
+/* ── Category cluster centers (stable) ────────────────────── */
 const CAT_CENTERS = {};
-const angleStep = (Math.PI * 2) / cats.length;
-cats.forEach((cat, i) => {
-  const angle = i * angleStep;
-  const r = 0.28 + Math.random() * 0.08;
-  CAT_CENTERS[cat] = { x: 0.5 + Math.cos(angle) * r, y: 0.5 + Math.sin(angle) * r * 0.7 };
-});
-
-/* ── Seed PRNG ─────────────────────────────────────────────── */
-function seededRand(seed) {
-  let s = seed;
-  return () => { s = (s * 16807 + 0) % 2147483647; return (s - 1) / 2147483646; };
+{
+  const r0 = prng(42);
+  cats.forEach((cat, i) => {
+    const angle = (i / cats.length) * Math.PI * 2 - Math.PI / 2;
+    const ri = 0.26 + r0() * 0.07;
+    CAT_CENTERS[cat] = { bx: .5 + Math.cos(angle) * ri, by: .5 + Math.sin(angle) * ri * .65 };
+  });
 }
 
 function buildNodes() {
   nodes = [];
-  const filtered = activeCat === 'all' ? PRODUITS : PRODUITS.filter(p => p.categorie === activeCat);
-  filtered.forEach((p, i) => {
-    const rand = seededRand(i * 127 + p.slug.charCodeAt(0));
-    const center = CAT_CENTERS[p.categorie] || { x: .5, y: .5 };
-    const spread = activeCat === 'all' ? 0.13 : 0.22;
-    const nx = Math.max(.08, Math.min(.92, center.x + (rand() - .5) * spread));
-    const ny = Math.max(.12, Math.min(.88, center.y + (rand() - .5) * spread * 1.3));
-    nodes.push({
-      ...p,
-      bx: nx, by: ny,   // base position (0-1)
-      x: 0, y: 0,        // actual px (updated in draw)
-      r: 5 + rand() * 3,
-      twinkle: rand() * Math.PI * 2,
-      twinkleSpeed: .4 + rand() * .6,
-      pulse: 0,
-      hovered: false,
-    });
+  const list = activeCat === 'all' ? PRODUITS : PRODUITS.filter(p => p.categorie === activeCat);
+  const spread = activeCat === 'all' ? 0.12 : 0.2;
+  list.forEach((p, i) => {
+    const r = prng(i * 137 + p.slug.charCodeAt(0) * 3);
+    const c = CAT_CENTERS[p.categorie] || { bx: .5, by: .5 };
+    const bx = Math.max(.06, Math.min(.94, c.bx + (r() - .5) * spread));
+    const by = Math.max(.14, Math.min(.86, c.by + (r() - .5) * spread * 1.2));
+    nodes.push({ ...p, bx, by, x: 0, y: 0,
+      phase: r() * Math.PI * 2, speed: .18 + r() * .22, amp: 6 + r() * 10,
+      ampY: 4 + r() * 7, hovered: false, alpha: 1 });
   });
+  document.getElementById('nav-count').textContent = `${list.length} projets`;
 }
 
-/* ── Constellation lines: connect same-category nodes ─────── */
-function getLines() {
-  const lines = [];
+function rebuildLines() {
+  lines = [];
   const bycat = {};
   nodes.forEach(n => { (bycat[n.categorie] = bycat[n.categorie] || []).push(n); });
-  Object.values(bycat).forEach(group => {
-    for (let i = 0; i < group.length - 1; i++) {
-      lines.push([group[i], group[i + 1]]);
-      if (i + 2 < group.length && Math.random() > .4) lines.push([group[i], group[i + 2]]);
+  Object.values(bycat).forEach(grp => {
+    for (let i = 0; i < grp.length - 1; i++) {
+      lines.push([grp[i], grp[i+1]]);
+      if (i + 2 < grp.length) lines.push([grp[i], grp[i+2]]);
     }
   });
-  // a few cross-category lines for richness
-  if (nodes.length > 4) {
-    for (let k = 0; k < Math.min(12, nodes.length); k++) {
-      const a = nodes[Math.floor(Math.random() * nodes.length)];
-      const b = nodes[Math.floor(Math.random() * nodes.length)];
-      if (a !== b) lines.push([a, b]);
-    }
+  // sparse cross-category links
+  for (let k = 0; k < Math.min(18, nodes.length); k++) {
+    const a = nodes[Math.floor(prng(k*7+1)()*nodes.length)];
+    const b = nodes[Math.floor(prng(k*7+3)()*nodes.length)];
+    if (a && b && a !== b) lines.push([a, b]);
   }
-  return lines;
 }
 
-let lines = [];
+/* ── Rounded rect helper ───────────────────────────────────── */
+function rr(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
+  ctx.arcTo(x+w, y, x+w, y+r, r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+  ctx.lineTo(x+r, y+h);
+  ctx.arcTo(x, y+h, x, y+h-r, r);
+  ctx.lineTo(x, y+r);
+  ctx.arcTo(x, y, x+r, y, r);
+  ctx.closePath();
+}
 
-/* ── Mouse tracking ─────────────────────────────────────────── */
-let mx = -999, my = -999;
-canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-canvas.addEventListener('mouseleave', () => { mx = -999; my = -999; });
-canvas.addEventListener('click', e => {
-  const hit = nodes.find(n => Math.hypot(n.x - e.clientX, n.y - e.clientY) < n.r + 8);
-  if (hit && hit.url) window.open(hit.url, '_blank', 'noopener');
+/* ── Draw a mini card ──────────────────────────────────────── */
+function drawCard(n, alpha) {
+  const x = n.x - CW/2, y = n.y - CH/2;
+  const hr = n.hovered;
+  const a = alpha * (hr ? 1 : .82);
+
+  // glow halo
+  if (hr) {
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, CW * .8);
+    g.addColorStop(0, n.couleur + '28');
+    g.addColorStop(1, 'transparent');
+    ctx.beginPath(); ctx.arc(n.x, n.y, CW * .8, 0, Math.PI*2);
+    ctx.fillStyle = g; ctx.fill();
+  }
+
+  // card bg
+  rr(x, y, CW, CH, CR);
+  ctx.fillStyle = `rgba(7,5,20,${.72 * a})`;
+  ctx.fill();
+
+  // border
+  rr(x, y, CW, CH, CR);
+  ctx.strokeStyle = hr
+    ? n.couleur + Math.round(.65 * a * 255).toString(16).padStart(2,'0')
+    : `rgba(255,255,255,${.07 * a})`;
+  ctx.lineWidth = hr ? 1.3 : .7;
+  ctx.stroke();
+
+  // left accent bar
+  rr(x, y+9, 3, CH-18, 1.5);
+  ctx.fillStyle = n.couleur + Math.round(.75 * a * 255).toString(16).padStart(2,'0');
+  ctx.fill();
+
+  // project name
+  ctx.save();
+  ctx.rect(x+10, y, CW-14, CH); ctx.clip();
+  ctx.font = `700 11.5px "Space Grotesk", Arial, sans-serif`;
+  ctx.fillStyle = `rgba(240,240,244,${.92 * a})`;
+  ctx.textAlign = 'left';
+  ctx.fillText(n.nom, x+11, y+19);
+
+  // tagline
+  ctx.font = `10px "Inter", Arial, sans-serif`;
+  ctx.fillStyle = `rgba(240,240,244,${.38 * a})`;
+  const tag = n.tagline.length > 21 ? n.tagline.slice(0,20)+'…' : n.tagline;
+  ctx.fillText(tag, x+11, y+32);
+
+  // category
+  ctx.font = `9px "Inter", Arial, sans-serif`;
+  ctx.fillStyle = n.couleur + Math.round(.6 * a * 255).toString(16).padStart(2,'0');
+  ctx.fillText(n.categorie.slice(0,18), x+11, y+44);
+  ctx.restore();
+}
+
+/* ── Tooltip ───────────────────────────────────────────────── */
+const tooltip = document.getElementById('tooltip');
+function updateTooltip(n) {
+  if (!n) { tooltip.classList.remove('on'); return; }
+  document.getElementById('tt-dot').style.background = n.couleur;
+  document.getElementById('tt-cat').textContent = n.categorie;
+  document.getElementById('tt-name').textContent = n.nom;
+  document.getElementById('tt-tag').textContent = n.tagline;
+  document.getElementById('tt-link').href = n.url || '#';
+  let tx = n.x + CW/2 + 12, ty = n.y - CH/2;
+  if (tx + 230 > W - 10) tx = n.x - CW/2 - 242;
+  if (ty + 130 > H - 10) ty = H - 140;
+  tooltip.style.left = tx + 'px'; tooltip.style.top = ty + 'px';
+  tooltip.classList.add('on');
+}
+
+/* ── Events ────────────────────────────────────────────────── */
+cv.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+cv.addEventListener('mouseleave', () => { mx = -9999; my = -9999; });
+cv.addEventListener('click', e => {
+  const n = nodes.find(n => n.hovered);
+  if (n?.url) window.open(n.url, '_blank', 'noopener');
 });
+window.addEventListener('resize', () => { W = cv.width = innerWidth; H = cv.height = innerHeight; });
 
-const card = document.getElementById('hover-card');
-let hoveredNode = null;
-
-/* ── Draw loop ──────────────────────────────────────────────── */
-let t = 0;
-function draw() {
-  t += .008;
+/* ── Background: deep violet glow ─────────────────────────── */
+function drawBg() {
   ctx.clearRect(0, 0, W, H);
-
-  // Update node positions with gentle drift
-  driftX += driftSpeedX * .003;
-  driftY += driftSpeedY * .003;
-  const ox = Math.sin(driftX) * 18;
-  const oy = Math.cos(driftY) * 10;
-
-  nodes.forEach(n => {
-    n.x = n.bx * W + ox;
-    n.y = n.by * H + oy;
-    n.hovered = Math.hypot(n.x - mx, n.y - my) < n.r + 10;
-  });
-
-  hoveredNode = nodes.find(n => n.hovered) || null;
-
-  // Lines
-  (lines.length ? lines : getLines()).forEach(([a, b]) => {
-    const d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (d > W * .45) return;
-    const alpha = Math.max(0, .08 - d / (W * 5));
-    if (alpha < .003) return;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.strokeStyle = `rgba(168,85,247,${alpha})`;
-    ctx.lineWidth = .8;
-    ctx.stroke();
-  });
-
-  // Nodes
-  nodes.forEach(n => {
-    const tw = .7 + .3 * Math.sin(t * n.twinkleSpeed + n.twinkle);
-    const hr = n.hovered;
-    const radius = hr ? n.r * 1.7 : n.r;
-
-    // Glow
-    if (hr || tw > .85) {
-      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, radius * 3.5);
-      g.addColorStop(0, n.couleur + (hr ? '55' : '22'));
-      g.addColorStop(1, 'transparent');
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, radius * 3.5, 0, Math.PI * 2);
-      ctx.fillStyle = g;
-      ctx.fill();
-    }
-
-    // Core
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = n.couleur + Math.round(tw * 255).toString(16).padStart(2, '0');
-    ctx.fill();
-
-    // Label (show on hover or if large enough)
-    if (hr) {
-      ctx.font = '11px Inter, sans-serif';
-      ctx.fillStyle = 'rgba(240,240,244,.9)';
-      ctx.textAlign = 'center';
-      ctx.fillText(n.nom, n.x, n.y - radius - 8);
-    }
-  });
-
-  // Hover card
-  if (hoveredNode) {
-    const n = hoveredNode;
-    document.getElementById('hc-dot').style.background = n.couleur;
-    document.getElementById('hc-cat').textContent = n.categorie;
-    document.getElementById('hc-name').textContent = n.nom;
-    document.getElementById('hc-tagline').textContent = n.tagline;
-    document.getElementById('hc-link').href = n.url || '#';
-    // Position card
-    let cx = n.x + 20, cy = n.y - 20;
-    const cw = 240, ch = 120;
-    if (cx + cw > W - 20) cx = n.x - cw - 20;
-    if (cy + ch > H - 20) cy = n.y - ch - 20;
-    card.style.left = cx + 'px';
-    card.style.top = cy + 'px';
-    card.classList.add('visible');
-    canvas.style.cursor = n.url ? 'pointer' : 'crosshair';
-  } else {
-    card.classList.remove('visible');
-    canvas.style.cursor = 'crosshair';
-  }
-
-  requestAnimationFrame(draw);
+  const g = ctx.createRadialGradient(W/2, H*.6, 0, W/2, H*.6, W*.65);
+  g.addColorStop(0, 'rgba(78,30,180,.09)');
+  g.addColorStop(1, 'rgba(4,4,13,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
-resize();
-lines = getLines();
-draw();
+/* ── Main loop ─────────────────────────────────────────────── */
+let t = 0, hovered = null;
+function frame() {
+  t += .007;
+  drawBg();
+
+  // Update positions
+  nodes.forEach(n => {
+    n.x = n.bx * W + Math.sin(t * n.speed + n.phase) * n.amp;
+    n.y = n.by * H + Math.cos(t * n.speed * .7 + n.phase) * n.ampY;
+    n.hovered = (mx >= n.x-CW/2-6 && mx <= n.x+CW/2+6 && my >= n.y-CH/2-6 && my <= n.y+CH/2+6);
+  });
+  hovered = nodes.find(n => n.hovered) || null;
+
+  // Constellation lines (draw under cards)
+  lines.forEach(([a, b]) => {
+    const d = Math.hypot(a.x-b.x, a.y-b.y);
+    if (d > W * .42) return;
+    const alpha = Math.max(0, .06 - d/(W*5));
+    if (alpha < .002) return;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.strokeStyle = `rgba(148,70,240,${alpha})`;
+    ctx.lineWidth = .7; ctx.stroke();
+  });
+
+  // Cards — draw back-to-front (no z-sort, just order)
+  nodes.forEach(n => { if (!n.hovered) drawCard(n, 1); });
+  if (hovered) drawCard(hovered, 1); // hovered on top
+
+  updateTooltip(hovered);
+  cv.style.cursor = hovered?.url ? 'pointer' : 'crosshair';
+  requestAnimationFrame(frame);
+}
+
+/* ── Init ──────────────────────────────────────────────────── */
+document.fonts.ready.then(() => {
+  W = cv.width = innerWidth; H = cv.height = innerHeight;
+  buildNodes(); rebuildLines();
+  frame();
+});
 </script>
 </body>
 </html>
