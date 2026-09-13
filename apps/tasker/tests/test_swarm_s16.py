@@ -168,13 +168,12 @@ def test_swarm_view_is_scoped_to_its_owner(client, mission):
 
 # ── Vue télé : plafond de lisibilité ──────────────────────────────────────────
 @pytest.mark.django_db
-def test_observer_caps_tiles_and_says_how_many_are_hidden(client, mission):
+def test_observer_caps_tiles_and_says_how_many_are_hidden(client, mission, settings):
     """Un mur de 16 agents n'est pas lisible à trois mètres."""
     from apps.observer.models import ObserverSettings
-    # Le plafond est configurable depuis le commit full-matrix
-    # (COCKPIT_OBSERVER_MAX_TILES) : on lit le réglage effectif au lieu
-    # d'une constante figée, volontairement supprimée.
     from apps.observer.views import _observer_max_tiles, _public_grid_context
+
+    settings.COCKPIT_OBSERVER_MAX_TILES = 9
 
     owner = mission.workspace.owner
     s = ObserverSettings.for_owner(owner)

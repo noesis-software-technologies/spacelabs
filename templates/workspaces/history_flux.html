@@ -189,7 +189,7 @@
     {% endfor %}
     <hr style="border-color:var(--border); margin: 12px 0;">
     <a href="{% url 'workspaces:obsidian_export' workspace.slug %}">⬇ Export Obsidian</a>
-    <a href="{% url 'workspaces:detail' workspace.slug %}">← Cockpit</a>
+    <a href="{% url 'workspaces:detail' workspace.slug %}">← Espace</a>
   </aside>
 
   <!-- ── Main ─────────────────────────────────────────────────────────── -->
@@ -201,7 +201,7 @@
         {% if pane_filter %}<input type="hidden" name="pane" value="{{ pane_filter }}">{% endif %}
         <input name="q" value="{{ q }}" placeholder="Rechercher dans l'historique…">
         <button type="submit" class="ds-btn ds-btn--primary ds-btn--sm">Chercher</button>
-        {% if q %}<a href="?">✕ Effacer</a>{% endif %}
+        {% if q %}<a href="?">x Effacer</a>{% endif %}
       </form>
       <span style="margin-left:auto; font-size:11px; color:var(--text-3)">
         {{ events|length }} événements · {{ workspace.name }}
