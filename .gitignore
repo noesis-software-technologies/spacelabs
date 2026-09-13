@@ -6,3 +6,9 @@ staticfiles/
 .pytest_cache/
 *.log
 var/
+
+# Docs internes — ne pas exposer
+ROADMAP.md
+AUDIT.md
+TOKENS.md
+CLAUDE.md
