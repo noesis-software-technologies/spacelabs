@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>spacelabs --init</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:#000;color:#00FF41;font-family:'Courier New',monospace;font-size:15px;line-height:1.7}
+a{color:#00FF41;text-decoration:none}
+.scan{position:fixed;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,255,65,.03) 0,rgba(0,255,65,.03) 1px,transparent 1px,transparent 3px)}
+.wrap{position:relative;z-index:1;max-width:840px;margin:0 auto;padding:32px 24px 60px}
+nav{display:flex;justify-content:space-between;color:#00FF41;padding-bottom:28px;border-bottom:1px solid #063;letter-spacing:.05em;flex-wrap:wrap}
+nav .dots{color:#0a5;overflow:hidden;white-space:nowrap}
+.term{margin:44px 0;padding:22px 24px;border:1px solid #0a5;border-radius:4px;background:rgba(0,255,65,.02)}
+.line{white-space:nowrap;overflow:hidden;border-right:2px solid #00FF41;width:0;animation:type .9s steps(30) forwards,blink .8s step-end infinite}
+.line:nth-child(1){animation-delay:.1s}
+.line:nth-child(2){animation-delay:1s}
+.line:nth-child(3){animation-delay:1.9s}
+.line:nth-child(4){animation-delay:2.8s}
+.line:nth-child(5){animation-delay:3.7s;border-right-color:transparent;animation:type .9s steps(30) forwards 3.7s,cursor 1s step-end infinite 4.6s}
+.line{opacity:0;animation-fill-mode:forwards}
+.line.on{opacity:1}
+@keyframes type{from{width:0;opacity:1}to{width:100%;opacity:1}}
+@keyframes blink{50%{border-right-color:transparent}}
+@keyframes cursor{50%{opacity:.3}}
+.dim{color:#0a7}
+.tagline{margin:36px 0;color:#0d9;font-size:14px}
+.tbl{margin:40px 0;white-space:pre;font-size:13px;line-height:1.5;color:#0c8;overflow-x:auto}
+.tbl b{color:#00FF41;font-weight:400}
+.cta{display:inline-block;margin-top:16px;border:1px solid #00FF41;padding:14px 26px;color:#00FF41;letter-spacing:.1em;transition:.2s;white-space:pre}
+.cta:hover{background:#00FF41;color:#000}
+.foot{margin-top:44px;color:#0a5;font-size:13px;border-top:1px solid #063;padding-top:20px}
+</style>
+</head>
+<body>
+<div class="scan"></div>
+<div class="wrap">
+<nav><span>[ SpaceLabs ]</span><span class="dots">...........................</span><a href="{% url 'comptes:login' %}">[ login ]</a></nav>
+<div class="term">
+<div class="line on">$ spacelabs --init</div>
+<div class="line on"><span class="dim">&gt;</span> Workspace créé : BrainGod Team</div>
+<div class="line on"><span class="dim">&gt;</span> Agents : 16 actifs</div>
+<div class="line on"><span class="dim">&gt;</span> Mission : en cours</div>
+<div class="line on"><span class="dim">&gt;</span> Statut : RUNNING ▋</div>
+</div>
+<div class="tagline">// Multi-agent Claude. Piloté à la voix. Diffusable en direct.</div>
+<div class="tbl"><b>+------------------+---------------------------------+</b>
+<b>|</b> CAPABILITY       <b>|</b> DESCRIPTION                     <b>|</b>
+<b>+------------------+---------------------------------+</b>
+<b>|</b> master-tasker    <b>|</b> découpe &amp; dispatch des missions  <b>|</b>
+<b>|</b> voix-native      <b>|</b> pilotage vocal sans clavier      <b>|</b>
+<b>|</b> 16-agents        <b>|</b> exécution parallèle Claude Code  <b>|</b>
+<b>|</b> live-stream      <b>|</b> diffusion directe du cockpit     <b>|</b>
+<b>|</b> self-hosted      <b>|</b> Django sur votre infrastructure  <b>|</b>
+<b>+------------------+---------------------------------+</b></div>
+<a class="cta" href="{% url 'workspaces:home' %}">[ ENTRER DANS LE COCKPIT ]</a>
+<div class="foot">$ _ powered by Django · Claude Code · SpaceLabs © 2026</div>
+</div>
+</body>
+</html>

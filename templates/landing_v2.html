@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SpaceLabs — Orchestrez l'intelligence</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#3B82F6;--violet:#7C3AED}
+html,body{height:100%}
+body{background:#050818;color:#E8ECF8;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+.wrap{position:relative;height:100vh;width:100vw}
+nav{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:32px 48px;z-index:10}
+.logo{font-weight:700;letter-spacing:.28em;font-size:14px}
+.logo span{color:var(--blue)}
+.pill-cta{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:11px 24px;font-size:13px;color:#E8ECF8;text-decoration:none;background:rgba(255,255,255,.03);backdrop-filter:blur(8px);transition:.3s}
+.pill-cta:hover{background:rgba(124,58,237,.25);border-color:var(--violet)}
+.spheres{position:absolute;inset:0;z-index:1;pointer-events:none}
+.sph{position:absolute;border-radius:50%;filter:blur(14px);opacity:.85}
+.s1{width:340px;height:340px;top:8%;right:14%;background:radial-gradient(circle at 30% 30%,#5B8CFF,#1E3A8A 70%);animation:float1 14s ease-in-out infinite}
+.s2{width:220px;height:220px;top:44%;right:34%;background:radial-gradient(circle at 35% 30%,#A855F7,#4C1D95 72%);animation:float2 11s ease-in-out infinite}
+.s3{width:150px;height:150px;top:60%;right:8%;background:radial-gradient(circle at 40% 35%,#60A5FA,#3B82F6 75%);animation:float3 9s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,40px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(35px,-30px)}}
+@keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,-35px)}}
+.hero{position:absolute;top:26%;left:48px;z-index:5;max-width:640px}
+h1{font-size:clamp(48px,7vw,104px);font-weight:800;line-height:.96;letter-spacing:-.03em}
+.sub{position:absolute;top:30%;right:48px;z-index:5;max-width:300px;text-align:right;font-size:15px;line-height:1.6;color:#95A0C0}
+.desc{position:absolute;bottom:40px;left:48px;z-index:5;max-width:340px;font-size:14px;line-height:1.6;color:#8792B0}
+.enter{display:inline-block;margin-top:20px;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:13px 30px;color:#fff;text-decoration:none;font-size:13px;letter-spacing:.14em;transition:.3s}
+.enter:hover{background:#fff;color:#050818}
+.badges{position:absolute;bottom:40px;right:48px;z-index:5;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;max-width:360px}
+.badge{border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:8px 16px;font-size:12px;background:rgba(255,255,255,.03);color:#B9C2E0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav>
+<div class="logo">SPACE<span>·</span>LABS</div>
+<a class="pill-cta" href="{% url 'comptes:login' %}">Se connecter →</a>
+</nav>
+<div class="spheres"><div class="sph s1"></div><div class="sph s2"></div><div class="sph s3"></div></div>
+<div class="hero"><h1>Orchestrez<br>l'intelligence.</h1></div>
+<div class="sub">Multi-agent Claude. Piloté à la voix. Diffusable en direct.</div>
+<div class="desc">Un cockpit Django qui pilote jusqu'à 16 agents Claude Code en parallèle, sous vos ordres.
+<br><a class="enter" href="{% url 'workspaces:home' %}">ENTRER →</a></div>
+<div class="badges">
+<span class="badge">Master Tasker</span>
+<span class="badge">Voix native</span>
+<span class="badge">16 agents</span>
+</div>
+</div>
+</body>
+</html>

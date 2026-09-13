@@ -11,6 +11,11 @@ def healthz(_request):
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
+    path("v2/", TemplateView.as_view(template_name="landing_v2.html"), name="landing_v2"),
+    path("v3/", TemplateView.as_view(template_name="landing_v3.html"), name="landing_v3"),
+    path("v4/", TemplateView.as_view(template_name="landing_v4.html"), name="landing_v4"),
+    path("v5/", TemplateView.as_view(template_name="landing_v5.html"), name="landing_v5"),
+    path("v6/", TemplateView.as_view(template_name="landing_v6.html"), name="landing_v6"),
     path("auth/", include("apps.comptes.urls")),
     path("cockpit/", include("apps.workspaces.urls")),
     path("observer/", include("apps.observer.urls")),

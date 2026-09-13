@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SpaceLabs — Construit pour opérer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:#080808;color:#EDEDED;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+.stage{position:relative;height:100vh;width:100vw}
+.bg{position:absolute;inset:0;z-index:0;opacity:.5}
+.bg svg{width:100%;height:100%}
+.grad{position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse at 70% 40%,rgba(124,58,237,.16),transparent 55%),linear-gradient(180deg,rgba(8,8,8,.2),#080808 88%)}
+nav{position:absolute;top:32px;left:40px;z-index:10}
+.navpill{display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 20px;font-size:13px;background:rgba(255,255,255,.03);text-decoration:none;color:#EDEDED;backdrop-filter:blur(10px)}
+.navpill b{font-weight:600}
+.navpill .sep{color:#555}
+.navpill .go{color:#A855F7}
+.title{position:absolute;bottom:44px;left:44px;z-index:5;font-size:clamp(56px,10vw,128px);font-weight:200;letter-spacing:-.04em;line-height:1}
+.ring{position:absolute;top:16%;right:18%;z-index:6;width:180px;height:180px;display:grid;place-items:center;text-align:center}
+.ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring .num{font-size:44px;font-weight:700}
+.ring .lbl{font-size:12px;letter-spacing:.2em;color:#9A9A9A;text-transform:uppercase}
+.card{position:absolute;bottom:44px;right:44px;z-index:6;width:340px;padding:32px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(20px)}
+.card h2{font-size:34px;font-weight:300;line-height:1.05;letter-spacing:-.02em;margin-bottom:16px}
+.card p{font-size:14px;line-height:1.6;color:#9A9A9A;margin-bottom:24px}
+.start{display:inline-block;background:#EDEDED;color:#080808;border-radius:999px;padding:12px 26px;font-size:13px;font-weight:600;text-decoration:none;transition:.3s}
+.start:hover{background:#A855F7;color:#fff}
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="bg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+<defs><linearGradient id="l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED" stop-opacity=".5"/><stop offset="1" stop-color="#222" stop-opacity=".2"/></linearGradient></defs>
+<g stroke="url(#l)" stroke-width="1" fill="none">
+<path d="M100 200 H400 V400 H700 V150 H1000"/>
+<path d="M150 600 H500 V450 H820 V650 H1100"/>
+<path d="M60 400 V700 H360"/>
+<path d="M1050 300 V550 H750"/>
+<path d="M400 100 V300 H600"/>
+</g>
+<g fill="#7C3AED">
+<circle cx="400" cy="200" r="4"/><circle cx="700" cy="400" r="4"/><circle cx="1000" cy="150" r="4"/>
+<circle cx="500" cy="600" r="4"/><circle cx="820" cy="450" r="4"/><circle cx="360" cy="700" r="4"/>
+<circle cx="750" cy="550" r="4"/><circle cx="600" cy="100" r="4"/>
+</g>
+</svg>
+</div>
+<div class="grad"></div>
+<nav><a class="navpill" href="{% url 'comptes:login' %}"><b>SpaceLabs</b><span class="sep">·</span><span class="go">Configure →</span></a></nav>
+<div class="ring">
+<svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="82" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/><circle cx="90" cy="90" r="82" fill="none" stroke="#A855F7" stroke-width="3" stroke-dasharray="515" stroke-dashoffset="150" stroke-linecap="round"/></svg>
+<div><div class="num">16</div><div class="lbl">agents</div></div>
+</div>
+<div class="title">SpaceLabs</div>
+<div class="card">
+<h2>Construit<br>pour opérer.</h2>
+<p>Multi-agent Claude, piloté à la voix, diffusable en direct. Un cockpit conçu pour la production, pas la démo.</p>
+<a class="start" href="{% url 'workspaces:home' %}">Start →</a>
+</div>
+</div>
+</body>
+</html>
