@@ -161,6 +161,32 @@ footer a:hover{color:var(--t1)}
 <div id="scan"></div>
 <canvas id="three-canvas"></canvas>
 
+<style>
+  #neural-focus{
+    position:fixed; right:5vw; bottom:11vh;
+    z-index:2; max-width:380px; text-align:right; display:none;
+    pointer-events:none; font-family:'General Sans',Inter,sans-serif;
+    opacity:0; transition:opacity .6s ease;
+  }
+  #neural-focus.on{display:block}
+  #neural-focus .nf-cat{
+    font:600 12px/1 'General Sans',monospace; letter-spacing:.22em;
+    text-transform:uppercase; color:#a855f7; margin-bottom:.6rem;
+  }
+  #neural-focus .nf-name{
+    font:800 clamp(28px,3.4vw,52px)/1.02 'Cabinet Grotesk','Space Grotesk',sans-serif;
+    color:#F5F3FF; letter-spacing:-.02em; margin-bottom:.5rem;
+  }
+  #neural-focus .nf-tag{ font:500 15px/1.5 Inter,sans-serif; color:rgba(240,240,244,.6); margin-bottom:.7rem; }
+  #neural-focus .nf-url{ font:12px/1 monospace; color:rgba(168,85,247,.7); letter-spacing:.05em; }
+</style>
+<div id="neural-focus" aria-hidden="true">
+  <div class="nf-cat"></div>
+  <div class="nf-name"></div>
+  <div class="nf-tag"></div>
+  <div class="nf-url"></div>
+</div>
+
 <div class="page">
 
   <nav>
@@ -245,6 +271,12 @@ import * as THREE from 'three';
 const PRODUITS = {{ produits_json|safe }};
 const canvas = document.getElementById('three-canvas');
 let W = innerWidth, H = innerHeight;
+
+/* ── Variantes (opt-in via ?hud=strong & ?orb=panel) ───────── */
+const VARIANT = new URLSearchParams(location.search);
+const HUD_STRONG = VARIANT.get('hud') === 'strong';
+const ORB_PANEL  = VARIANT.get('orb') === 'panel';
+const STYLE_NEURAL = VARIANT.get('style') !== 'classic';  // neural par défaut, ?style=classic pour l'ancienne
 
 /* ── Image / screenshot helpers ────────────────────────────── */
 function loadImage(url) {
@@ -370,8 +402,20 @@ const orbMat = new THREE.MeshStandardMaterial({
 const orb = new THREE.Mesh(new THREE.SphereGeometry(1.15, 64, 64), orbMat);
 orbGroup.add(orb);
 
+// Variante orbe = panneau screenshot plein (billboard devant le cœur)
+let orbPanel = null;
+if (ORB_PANEL) {
+  orbPanel = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.7, 1.68),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.97, side: THREE.DoubleSide, depthWrite: false }));
+  orbPanel.position.set(0, 0, 1.3);
+  scene.add(orbPanel);
+  orbMat.emissiveIntensity = 0.5;   // cœur reste une lueur derrière le panneau
+}
+
 // Le centre névralgique diffuse les screenshots des produits (cycle)
 (async () => {
+  if (STYLE_NEURAL) return;   // en mode neural, les screenshots vont sur le héros
   const shots = [];
   for (const p of PRODUITS) {
     const im = await loadShot(p);
@@ -386,13 +430,18 @@ orbGroup.add(orb);
   let k = 0;
   const apply = () => {
     const tx = shots[k % shots.length];
-    orbMat.map = tx;
-    orbMat.emissiveMap = tx;
-    orbMat.color.set(0xffffff);
-    orbMat.emissive.set(0x8b5cf6);
-    orbMat.emissiveIntensity = 0.55;
-    orbMat.roughness = 0.5;
-    orbMat.needsUpdate = true;
+    if (ORB_PANEL && orbPanel) {
+      orbPanel.material.map = tx;
+      orbPanel.material.needsUpdate = true;
+    } else {
+      orbMat.map = tx;
+      orbMat.emissiveMap = tx;
+      orbMat.color.set(0xffffff);
+      orbMat.emissive.set(0x8b5cf6);
+      orbMat.emissiveIntensity = 0.55;
+      orbMat.roughness = 0.5;
+      orbMat.needsUpdate = true;
+    }
     k++;
   };
   apply();
@@ -446,6 +495,18 @@ const hudB = new THREE.Mesh(
   new THREE.MeshBasicMaterial({ map: makeHudTexture(768, { color: 'rgba(124,58,237,' }),
     transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
 hudGroup.add(hudA, hudB);
+
+// Variante HUD marqué : anneau gradué net autour du cœur
+let hudC = null;
+if (HUD_STRONG) {
+  hudA.material.opacity = 0.85;
+  hudB.material.opacity = 0.90;
+  hudC = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 3.4),
+    new THREE.MeshBasicMaterial({ map: makeHudTexture(640, { color: 'rgba(196,181,253,' }),
+      transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  hudGroup.add(hudC);
+}
 
 /* ── Stars ─────────────────────────────────────────────────── */
 {
@@ -558,6 +619,95 @@ featured.forEach((p, i) => {
   });
 });
 
+/* ── Mode Neural Focus Reel (?style=neural) ────────────────── */
+let neuralHero = null, neuralNodes = [], neuralLines = null, neuralActive = -1;
+let neuralPending = null, neuralFadeDir = 0;
+const neuralFocusEl = document.getElementById('neural-focus');
+const hexToNum = h => parseInt(h.replace('#', ''), 16);
+function updateFocusText(p) {
+  if (!neuralFocusEl) return;
+  neuralFocusEl.querySelector('.nf-cat').textContent  = p.categorie;
+  neuralFocusEl.querySelector('.nf-name').textContent = p.nom;
+  neuralFocusEl.querySelector('.nf-tag').textContent  = p.tagline;
+  neuralFocusEl.querySelector('.nf-url').textContent  = (p.url || '').replace(/^https?:\/\//, '');
+  neuralFocusEl.style.opacity = '1';
+}
+
+if (STYLE_NEURAL) {
+  planeGroup.visible = false;                       // exit les grosses cartes
+  ringMeshes.forEach(r => r.material.opacity = 0.10);
+  if (neuralFocusEl) neuralFocusEl.classList.add('on');
+
+  // Cœur = cerveau (wireframe additif par-dessus la sphère)
+  orbGroup.add(new THREE.Mesh(
+    new THREE.IcosahedronGeometry(1.3, 2),
+    new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true, transparent: true,
+      opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false })));
+
+  // Nœuds-synapses : 1 orbe/produit réparti en sphère (angle d'or) + lignes vers le cœur
+  const nodeGroup = new THREE.Group(); scene.add(nodeGroup);
+  const linePos = [];
+  const N = PRODUITS.length;
+  PRODUITS.forEach((p, i) => {
+    const y = N > 1 ? 1 - (i / (N - 1)) * 2 : 0;
+    const rad = Math.sqrt(Math.max(0, 1 - y * y));
+    const theta = i * 2.399963;
+    const R = 3.7;
+    const pos = new THREE.Vector3(Math.cos(theta) * rad * R, y * R * 0.7, Math.sin(theta) * rad * R);
+    const col = hexToNum(p.couleur || '#a855f7');
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 16),
+      new THREE.MeshBasicMaterial({ color: col }));
+    dot.position.copy(pos);
+    dot.userData = { i };
+    nodeGroup.add(dot);
+    neuralNodes.push(dot);
+    linePos.push(0, 0, 0, pos.x, pos.y, pos.z);
+  });
+  const lgeo = new THREE.BufferGeometry();
+  lgeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+  neuralLines = new THREE.LineSegments(lgeo, new THREE.LineBasicMaterial({
+    color: 0x7c3aed, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false }));
+  scene.add(neuralLines);
+
+  // Héros : grand panneau screenshot (centre-droit) + cadre HUD
+  neuralHero = new THREE.Mesh(new THREE.PlaneGeometry(3.1, 1.94),
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false }));
+  neuralHero.position.set(2.35, 0.55, 1.3);
+  scene.add(neuralHero);
+  neuralHero.add(new THREE.Mesh(new THREE.PlaneGeometry(4.1, 4.1),
+    new THREE.MeshBasicMaterial({ map: makeHudTexture(640, { color: 'rgba(168,85,247,' }),
+      transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })));
+
+  // Reel : cycle des screenshots + typo synchronisée
+  (async () => {
+    const items = [];
+    for (let i = 0; i < PRODUITS.length; i++) {
+      const p = PRODUITS[i];
+      const img = await loadShot(p);
+      if (img) { const tx = new THREE.CanvasTexture(img); tx.colorSpace = THREE.SRGBColorSpace; items.push({ p, tx, i }); }
+      if (items.length >= 20) break;
+    }
+    if (!items.length) return;
+    let k = 0;
+    const show = (first) => {
+      const it = items[k % items.length];
+      if (first) {
+        neuralHero.material.map = it.tx;
+        neuralHero.material.needsUpdate = true;
+        neuralActive = it.i;
+        updateFocusText(it.p);
+        neuralFadeDir = 1;             // fondu d'apparition
+      } else {
+        neuralPending = it;            // swap au creux du fondu (crossfade)
+        neuralFadeDir = -1;
+      }
+      k++;
+    };
+    show(true);
+    setInterval(() => show(false), 5000);
+  })();
+}
+
 /* ── Mouse parallax ────────────────────────────────────────── */
 let targetX = 0, targetY = 0;
 window.addEventListener('mousemove', e => {
@@ -594,7 +744,8 @@ function animate() {
   // HUD Jarvis : arcs qui tournent en sens opposés
   hudA.rotation.z += dt * 0.06;
   hudB.rotation.z -= dt * 0.09;
-  hudA.material.opacity = 0.42 + Math.sin(t * 1.6) * 0.10;
+  hudA.material.opacity = (HUD_STRONG ? 0.8 : 0.42) + Math.sin(t * 1.6) * 0.10;
+  if (hudC) hudC.rotation.z -= dt * 0.16;
 
   // Project planes orbit on tilted ellipse
   const orbitR = 4.1, orbitTilt = 0.35;
@@ -613,10 +764,36 @@ function animate() {
   });
 
   // Gentle scene auto-rotation
-  scene.rotation.y = t * 0.03;
+  scene.rotation.y = t * (STYLE_NEURAL ? 0.01 : 0.03);
 
   // Le HUD reste face caméra (annule la rotation de scène)
   hudGroup.rotation.y = -scene.rotation.y;
+  if (orbPanel) orbPanel.lookAt(camera.position);
+
+  // Neural Focus Reel : héros face caméra, nœud actif mis en avant
+  if (STYLE_NEURAL) {
+    if (neuralHero) {
+      neuralHero.lookAt(camera.position);
+      const m = neuralHero.material;
+      if (neuralFadeDir === -1) {
+        m.opacity = Math.max(0, m.opacity - dt * 2.4);
+        if (m.opacity <= 0.02 && neuralPending) {
+          m.map = neuralPending.tx; m.needsUpdate = true;
+          neuralActive = neuralPending.i;
+          updateFocusText(neuralPending.p);
+          neuralPending = null; neuralFadeDir = 1;
+        }
+      } else if (neuralFadeDir === 1) {
+        m.opacity = Math.min(1, m.opacity + dt * 2.4);
+        if (m.opacity >= 1) neuralFadeDir = 0;
+      }
+    }
+    for (const d of neuralNodes) {
+      const on = d.userData.i === neuralActive;
+      d.scale.setScalar((on ? 3.2 : 1) + Math.sin(t * 3 + d.userData.i) * 0.12);
+    }
+    if (neuralLines) neuralLines.material.opacity = 0.12 + Math.sin(t * 1.5) * 0.05;
+  }
 
   // Mouse parallax on camera
   camera.position.x += (targetX - camera.position.x) * 0.025;
