@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SpaceLabs — Multi-agent Claude</title>
-<meta name="description" content="Orchestrez n instances Claude Code en parallèle depuis un cockpit unique. Piloté à la voix, diffusable en direct.">
+<meta name="description" content="Orchestrez n instances Claude Code en parallèle depuis un espace unique. Piloté à la voix, diffusable en direct.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
@@ -151,6 +151,51 @@ nav{
 }
 .btn-secondary:hover{background:rgba(124,58,237,.1);border-color:var(--term)}
 
+/* ── Orbital ring ──────────────────────────────────────────── */
+.orbital-wrap{
+  position:relative;width:100%;max-width:1200px;
+  height:clamp(320px,42vw,520px);
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:16px;
+}
+.orbital-zone{
+  position:relative;
+  width:clamp(240px,26vw,360px);
+  height:clamp(240px,26vw,360px);
+  flex-shrink:0;
+}
+.hero-orb2{
+  position:absolute;top:50%;left:50%;
+  width:120px;height:120px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#A855F7 0%,#7C3AED 45%,#3B0764 85%,transparent 100%);
+  box-shadow:0 0 55px rgba(124,58,237,.45),0 0 110px rgba(124,58,237,.15);
+  animation:pulse 4s ease-in-out infinite;z-index:2;
+}
+.hero-orb2::after{
+  content:'';position:absolute;inset:-12px;border-radius:50%;
+  border:1px solid rgba(168,85,247,.2);
+  animation:ring 4s ease-in-out infinite;
+}
+.orbital-card{
+  position:absolute;
+  width:140px;padding:10px 12px;
+  background:rgba(10,8,24,.68);
+  backdrop-filter:blur(16px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:10px;
+  box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 0 1px rgba(168,85,247,.06);
+  pointer-events:none;
+  transition:opacity .3s;
+  z-index:3;
+}
+.oc-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;flex-shrink:0}
+.oc-header{display:flex;align-items:center;margin-bottom:4px}
+.oc-nom{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;color:#F0F0F4;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-tag{font-size:9px;color:rgba(240,240,244,.38);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.oc-cat{font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(168,85,247,.55);margin-top:5px}
+
 /* ── Stats bar ─────────────────────────────────────────────── */
 .stats{
   display:flex;justify-content:center;
@@ -216,14 +261,15 @@ footer a:hover{color:var(--t1)}
   <section class="hero">
     <div class="hero-eyebrow">$ spacelabs --init &nbsp;·&nbsp; v2026.9</div>
 
-    <div class="hero-split">
+    <div class="orbital-wrap" id="orbital-wrap">
       <span class="hero-word">SPACE</span>
-      <div class="hero-center">
-        <div class="hero-orb"></div>
-        <div class="hero-sub">by Noesis</div>
+      <div class="orbital-zone" id="orbital-zone">
+        <div class="hero-orb2" id="hero-orb"></div>
+        <!-- orbital cards injected by JS -->
       </div>
       <span class="hero-word hero-word--r">LABS</span>
     </div>
+    <div class="hero-sub" style="margin-top:8px;font-size:11px;color:var(--term-dim);letter-spacing:.1em;text-transform:uppercase">by Noesis · <a href="{% url 'vitrine:index' %}" style="color:var(--acc2);text-decoration:none">{{ produits_count }} projets →</a></div>
 
     <div class="term-block">
       <div class="t-line"><span class="t-dim">$</span> <span class="t-acc">spacelabs</span> --init --workspace "BrainGod Team"</div>
@@ -234,7 +280,7 @@ footer a:hover{color:var(--t1)}
     </div>
 
     <div class="hero-actions">
-      <a class="btn-primary" href="{% url 'comptes:login' %}">Entrer dans le cockpit</a>
+      <a class="btn-primary" href="{% url 'comptes:login' %}">Entrer dans l'espace</a>
       <a class="btn-secondary" href="#features">[ voir les fonctionnalités ]</a>
     </div>
   </section>
@@ -285,6 +331,59 @@ footer a:hover{color:var(--t1)}
 </div>
 
 <script>
+/* ── Orbital glassmorphism cards ───────────────────────────── */
+(function(){
+  const PRODUITS = {{ produits_json|safe }};
+  const zone = document.getElementById('orbital-zone');
+  const orb  = document.getElementById('hero-orb');
+  if (!zone || !PRODUITS.length) return;
+
+  // Pick 8 spread-out products
+  const step = Math.floor(PRODUITS.length / 8);
+  const featured = Array.from({length:8}, (_,i) => PRODUITS[(i * step) % PRODUITS.length]);
+
+  const cards = featured.map((p, i) => {
+    const el = document.createElement('div');
+    el.className = 'orbital-card';
+    el.innerHTML = `
+      <div class="oc-header">
+        <span class="oc-dot" style="background:${p.couleur}"></span>
+        <span class="oc-nom">${p.nom}</span>
+      </div>
+      <div class="oc-tag">${p.tagline}</div>
+      <div class="oc-cat">${p.categorie}</div>`;
+    zone.appendChild(el);
+    return el;
+  });
+
+  let t = 0;
+  const baseAngles = featured.map((_, i) => (i / featured.length) * Math.PI * 2);
+
+  function tick() {
+    t += 0.004;
+    const zw = zone.offsetWidth / 2;
+    const zh = zone.offsetHeight / 2;
+    const rx = zw * 0.82;  // ellipse x radius
+    const ry = zh * 0.72;  // ellipse y radius
+
+    cards.forEach((card, i) => {
+      const angle = baseAngles[i] + t;
+      const x = zw + Math.cos(angle) * rx - 70;  // 70 = half card width
+      const y = zh + Math.sin(angle) * ry - 30;  // 30 = half card height
+      card.style.left = x + 'px';
+      card.style.top  = y + 'px';
+      // Depth: cards behind orb are slightly transparent
+      const depth = Math.sin(angle);
+      card.style.opacity = (0.45 + (depth + 1) / 2 * 0.55).toFixed(2);
+      card.style.zIndex  = depth > 0 ? 4 : 1;
+      card.style.transform = `scale(${0.88 + (depth + 1) / 2 * 0.12})`;
+    });
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
+
+/* ── Background canvas ─────────────────────────────────────── */
 (function(){
   const c=document.getElementById('bg-canvas'),ctx=c.getContext('2d');
   function resize(){c.width=window.innerWidth;c.height=window.innerHeight}

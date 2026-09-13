@@ -4,13 +4,15 @@ from django.http import JsonResponse
 from django.urls import include, path
 from django.views.generic import TemplateView
 
+from apps.vitrine.views import landing
+
 
 def healthz(_request):
     return JsonResponse({"status": "ok"})
 
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
+    path("", landing, name="landing"),
     path("v2/", TemplateView.as_view(template_name="landing_v2.html"), name="landing_v2"),
     path("v3/", TemplateView.as_view(template_name="landing_v3.html"), name="landing_v3"),
     path("v4/", TemplateView.as_view(template_name="landing_v4.html"), name="landing_v4"),

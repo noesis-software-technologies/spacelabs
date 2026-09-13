@@ -6,4 +6,5 @@ app_name = "vitrine"
 
 urlpatterns = [
     path("", views.vitrine, name="index"),
+    path("constellation/", views.vitrine_v2, name="v2"),
 ]
