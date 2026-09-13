@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpaceLabs — Multi-agent Claude</title>
+<meta name="description" content="Orchestrez n instances Claude Code en parallèle depuis un cockpit unique. Piloté à la voix, diffusable en direct.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:      #06060E;
+  --surface: rgba(255,255,255,0.04);
+  --border:  rgba(255,255,255,0.08);
+  --text-1:  #F0F0F4;
+  --text-2:  rgba(240,240,244,0.45);
+  --text-3:  rgba(240,240,244,0.22);
+  --accent:  #7C3AED;
+  --accent2: #A855F7;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text-1); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+/* ── Canvas fond ─────────────────────────────────────────────────── */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Wrapper global ──────────────────────────────────────────────── */
+.page { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Nav ─────────────────────────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 40px;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  background: rgba(6,6,14,0.6);
+}
+.nav-logo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text-1); text-decoration: none;
+}
+.nav-logo span { color: var(--accent2); }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-size: 13px; color: var(--text-2); text-decoration: none;
+  letter-spacing: 0.02em; transition: color 150ms;
+}
+.nav-links a:hover { color: var(--text-1); }
+.nav-cta {
+  font-size: 13px; font-weight: 500;
+  color: var(--text-1); text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 8px 18px; border-radius: 6px;
+  transition: background 150ms, border-color 150ms;
+}
+.nav-cta:hover { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.5); }
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.hero {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 120px 40px 80px;
+  text-align: center; position: relative;
+}
+
+.hero-eyebrow {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent2); margin-bottom: 32px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before, .hero-eyebrow::after {
+  content: ''; flex: 1; max-width: 48px; height: 1px;
+  background: linear-gradient(to right, transparent, var(--accent2));
+}
+.hero-eyebrow::after { background: linear-gradient(to left, transparent, var(--accent2)); }
+
+.hero-split {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; max-width: 1200px; gap: 0;
+  margin-bottom: 8px;
+}
+.hero-word {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(80px, 12vw, 180px);
+  font-weight: 700; letter-spacing: -0.04em; line-height: 0.9;
+  color: var(--text-1);
+  user-select: none;
+}
+.hero-word--right { color: transparent; -webkit-text-stroke: 1px rgba(240,240,244,0.3); }
+
+.hero-center {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; flex-shrink: 0; padding: 0 20px;
+}
+.hero-orb {
+  width: 120px; height: 120px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #A855F7 0%, #7C3AED 40%, #3B0764 80%, transparent 100%);
+  box-shadow: 0 0 60px rgba(124,58,237,0.4), 0 0 120px rgba(124,58,237,0.15);
+  animation: pulse 4s ease-in-out infinite;
+  position: relative;
+}
+.hero-orb::after {
+  content: ''; position: absolute; inset: -8px; border-radius: 50%;
+  border: 1px solid rgba(168,85,247,0.25);
+  animation: ring 4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(124,58,237,0.4),0 0 120px rgba(124,58,237,0.15)} 50%{transform:scale(1.06);box-shadow:0 0 80px rgba(168,85,247,0.6),0 0 160px rgba(124,58,237,0.25)} }
+@keyframes ring { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:0.4} }
+
+.hero-sub {
+  font-size: 13px; color: var(--text-2); letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.hero-desc {
+  max-width: 520px; margin: 40px auto 0;
+  font-size: 17px; line-height: 1.7; color: var(--text-2); font-weight: 300;
+}
+.hero-desc strong { color: var(--text-1); font-weight: 500; }
+
+.hero-actions {
+  display: flex; gap: 14px; margin-top: 44px; justify-content: center;
+}
+.btn-primary {
+  font-size: 14px; font-weight: 500;
+  background: var(--accent); color: #fff;
+  padding: 12px 28px; border-radius: 8px; text-decoration: none;
+  border: none; cursor: pointer;
+  transition: background 150ms, transform 120ms, box-shadow 150ms;
+  box-shadow: 0 0 24px rgba(124,58,237,0.4);
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 0 40px rgba(168,85,247,0.5); }
+.btn-secondary {
+  font-size: 14px; font-weight: 400;
+  background: var(--surface); color: var(--text-2);
+  padding: 12px 28px; border-radius: 8px; text-decoration: none;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+.btn-secondary:hover { color: var(--text-1); border-color: rgba(255,255,255,0.2); }
+
+/* ── Stats bar ───────────────────────────────────────────────────── */
+.stats {
+  display: flex; justify-content: center; gap: 0;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  margin-top: 80px;
+}
+.stat {
+  flex: 1; max-width: 220px; padding: 28px 20px;
+  text-align: center; border-right: 1px solid var(--border);
+  position: relative;
+}
+.stat:last-child { border-right: none; }
+.stat-num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 36px; font-weight: 700; letter-spacing: -0.03em;
+  color: var(--text-1); line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-num span { color: var(--accent2); }
+.stat-label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+
+/* ── Features ─────────────────────────────────────────────────────── */
+.features {
+  padding: 100px 40px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  max-width: 1200px; margin: 0 auto; width: 100%;
+  border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+}
+.feature {
+  padding: 40px 36px;
+  background: var(--surface);
+  transition: background 200ms;
+}
+.feature:hover { background: rgba(124,58,237,0.06); }
+.feature-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(124,58,237,0.15); border: 1px solid rgba(124,58,237,0.3);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px; font-size: 18px;
+}
+.feature h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px; font-weight: 700; margin-bottom: 10px; letter-spacing: -0.01em;
+}
+.feature p { font-size: 13px; line-height: 1.7; color: var(--text-2); }
+
+/* ── Bottom nav stage ────────────────────────────────────────────── */
+.stage-bar {
+  display: flex; justify-content: center; gap: 0;
+  padding: 32px 40px; border-top: 1px solid var(--border);
+  margin-top: 80px;
+}
+.stage {
+  flex: 1; max-width: 200px; padding: 0 20px; text-align: left;
+  border-left: 1px solid var(--border);
+}
+.stage:first-child { border-left: none; }
+.stage-num { font-size: 10px; color: var(--text-3); letter-spacing: 0.1em; margin-bottom: 6px; }
+.stage-name { font-size: 12px; color: var(--text-2); letter-spacing: 0.05em; text-transform: uppercase; }
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+footer {
+  text-align: center; padding: 24px 40px;
+  font-size: 11px; color: var(--text-3); letter-spacing: 0.06em;
+  border-top: 1px solid var(--border);
+}
+footer a { color: var(--text-2); text-decoration: none; }
+footer a:hover { color: var(--text-1); }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="page">
+
+  <!-- Nav -->
+  <nav>
+    <a class="nav-logo" href="/">Space<span>Labs</span></a>
+    <div class="nav-links">
+      <a href="#features">Fonctionnalités</a>
+      <a href="#features">Agents</a>
+      <a href="{% url 'workspaces:home' %}">Cockpit</a>
+    </div>
+    <a class="nav-cta" href="{% url 'comptes:login' %}">Connexion</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-eyebrow">Orchestration multi-agents</div>
+
+    <div class="hero-split">
+      <span class="hero-word hero-word--left">SPACE</span>
+      <div class="hero-center">
+        <div class="hero-orb"></div>
+        <div class="hero-sub">by Noesis</div>
+      </div>
+      <span class="hero-word hero-word--right">LABS</span>
+    </div>
+
+    <p class="hero-desc">
+      Lancez <strong>n instances Claude Code</strong> en parallèle depuis un cockpit unique.
+      Piloté à la voix, diffusable en direct, planifié par un Master Tasker.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn-primary" href="{% url 'comptes:login' %}">Entrer dans le cockpit</a>
+      <a class="btn-secondary" href="#features">Voir les fonctionnalités</a>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">16<span>+</span></div>
+      <div class="stat-label">Agents simultanés</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>&lt;</span>50ms</div>
+      <div class="stat-label">Latence stream</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">100<span>%</span></div>
+      <div class="stat-label">Open source</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0<span>$</span></div>
+      <div class="stat-label">Par mois (self-host)</div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div id="features" style="padding: 100px 40px 0; max-width:1200px; margin:0 auto; width:100%;">
+    <div class="hero-eyebrow" style="justify-content:flex-start; margin-bottom:48px;">Fonctionnalités</div>
+  </div>
+  <div style="padding: 0 40px 0; max-width:1200px; margin:0 auto; width:100%;">
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">⬡</div>
+      <h3>Multi-agents en parallèle</h3>
+      <p>Jusqu'à 16 instances Claude Code par workspace — PTY interactives et sessions headless, toutes plafonnées et jaugées.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">◈</div>
+      <h3>Master Tasker</h3>
+      <p>Un planner IA décompose votre objectif en DAG de tâches. Le dispatcher les assigne aux agents libres sous contrainte de budget et de priorité.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">◎</div>
+      <h3>Voix native</h3>
+      <p>Push-to-talk ou streaming ASR (CrisperWhisper). Les intentions sont routées vers les agents ou le Tasker par un routeur déterministe.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">▣</div>
+      <h3>Observateur SSE</h3>
+      <p>Diffusez votre cockpit en lecture seule — sur grand écran ou en live stream. Confidentialité par pane, aucune installation requise.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">◧</div>
+      <h3>Historique & RAG</h3>
+      <p>Chaque événement stream-json est persisté dans EventLog. Exportez un vault Obsidian en un clic. Recherche plein texte intégrée.</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">⬡</div>
+      <h3>Design system dense</h3>
+      <p>Quatre paliers de densité (cozy → micro). L'interface s'adapte de l'écran unique au mur de 16 agents lisible à 3 mètres.</p>
+    </div>
+  </div>
+  </div>
+
+  <!-- Stage bar -->
+  <div class="stage-bar">
+    <div class="stage"><div class="stage-num">01</div><div class="stage-name">Spawn</div></div>
+    <div class="stage"><div class="stage-num">02</div><div class="stage-name">Dispatch</div></div>
+    <div class="stage"><div class="stage-num">03</div><div class="stage-name">Orchestrate</div></div>
+    <div class="stage"><div class="stage-num">04</div><div class="stage-name">Monitor</div></div>
+    <div class="stage"><div class="stage-num">05</div><div class="stage-name">Stream</div></div>
+  </div>
+
+  <footer>
+    &copy; 2026 <a href="/">SpaceLabs</a> · par <a href="#">Noesis Software Technologies</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* Particles */
+  const PARTICLE_COUNT = 80;
+  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random() - 0.5) * 0.18,
+    vy: (Math.random() - 0.5) * 0.18,
+    r: Math.random() * 1.4 + 0.3,
+    alpha: Math.random() * 0.4 + 0.05,
+  }));
+
+  /* Grid lines */
+  const GRID = 80;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    /* Radial vignette */
+    const grad = ctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, 0,
+      canvas.width / 2, canvas.height / 2, canvas.width * 0.75
+    );
+    grad.addColorStop(0, 'rgba(124,58,237,0.07)');
+    grad.addColorStop(1, 'rgba(6,6,14,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    /* Grid */
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += GRID) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += GRID) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    /* Particles */
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(168,85,247,${p.alpha})`;
+      ctx.fill();
+    });
+
+    /* Connexions proches */
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          ctx.strokeStyle = `rgba(124,58,237,${0.12 * (1 - d / 120)})`;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

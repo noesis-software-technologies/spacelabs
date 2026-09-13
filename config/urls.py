@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 
 def healthz(_request):
@@ -9,6 +10,7 @@ def healthz(_request):
 
 
 urlpatterns = [
+    path("", TemplateView.as_view(template_name="landing.html"), name="landing"),
     path("auth/", include("apps.comptes.urls")),
     path("cockpit/", include("apps.workspaces.urls")),
     path("observer/", include("apps.observer.urls")),
