@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpaceLabs — Savoir-faire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04040D;--bg2:rgba(8,6,22,.7);
+  --t1:#F0F0F4;--t2:rgba(240,240,244,.5);--t3:rgba(240,240,244,.22);
+  --acc:#7C3AED;--acc2:#A855F7;--border:rgba(255,255,255,.07);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+
+canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+#scan{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(124,58,237,.014) 0,rgba(124,58,237,.014) 1px,transparent 1px,transparent 4px)}
+
+/* ── Wrapper ───────────────────────────────────────────────── */
+.wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:0 32px 120px}
+
+/* ── Nav ───────────────────────────────────────────────────── */
+nav{position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;margin:0 -32px;
+  background:rgba(4,4,13,.8);backdrop-filter:blur(18px);
+  border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;
+  color:var(--t1);text-decoration:none;letter-spacing:-.02em}
+.nav-logo span{color:var(--acc2)}
+.nav-links{display:flex;gap:20px;font-size:11px;letter-spacing:.04em}
+.nav-links a{color:var(--t2);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--t1)}
+.nav-links a.active{color:var(--acc2)}
+
+/* ── Page hero ─────────────────────────────────────────────── */
+.page-hero{
+  padding:100px 0 64px;text-align:center;
+}
+.page-hero .eyebrow{
+  font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(168,85,247,.6);margin-bottom:22px;
+  font-family:'Space Grotesk',sans-serif;
+}
+.page-hero h1{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(40px,6vw,82px);font-weight:700;
+  letter-spacing:-.04em;line-height:.95;
+  color:var(--t1);margin-bottom:22px;
+}
+.page-hero h1 em{color:transparent;-webkit-text-stroke:1px rgba(168,85,247,.45);font-style:normal}
+.page-hero .sub{
+  font-size:15px;color:var(--t2);line-height:1.7;max-width:560px;margin:0 auto;
+}
+{% if has_private %}<style>/* mode local */</style>
+.local-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  margin-top:20px;padding:6px 14px;
+  background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.25);
+  border-radius:20px;font-size:10px;letter-spacing:.1em;color:var(--acc2);
+  text-transform:uppercase;
+}
+.local-badge::before{content:'●';animation:blink 1.2s step-end infinite;color:#7ece4e}
+@keyframes blink{50%{opacity:0}}
+{% endif %}
+
+/* ── Section header ────────────────────────────────────────── */
+.sec{margin-top:90px}
+.sec-head{
+  display:flex;align-items:baseline;gap:14px;
+  margin-bottom:36px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.sec-label{font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--acc2)}
+.sec-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;
+  color:var(--t1);letter-spacing:-.02em}
+.sec-count{font-size:11px;color:var(--t3);letter-spacing:.06em;margin-left:auto}
+
+/* ── Metrics ───────────────────────────────────────────────── */
+.metrics{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1px;
+  border:1px solid var(--border);
+}
+.metric{
+  padding:24px 20px;
+  background:rgba(8,6,22,.5);
+  backdrop-filter:blur(8px);
+  border-right:1px solid var(--border);
+  transition:background .15s;
+}
+.metric:hover{background:rgba(124,58,237,.06)}
+.metric-val{
+  font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;
+  letter-spacing:-.04em;line-height:1;margin-bottom:6px;
+}
+.metric-val .unit{font-size:18px;color:var(--acc2)}
+.metric-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+
+/* ── Domains grid ──────────────────────────────────────────── */
+.domains{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+}
+.domain-card{
+  padding:24px;
+  background:rgba(8,6,22,.55);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:12px;
+  transition:border-color .2s,background .2s;
+}
+.domain-card:hover{border-color:rgba(168,85,247,.3);background:rgba(124,58,237,.06)}
+.domain-icon{font-size:22px;margin-bottom:12px}
+.domain-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;
+  color:var(--t1);margin-bottom:8px;letter-spacing:-.01em}
+.domain-desc{font-size:12px;color:var(--t2);line-height:1.65}
+
+/* ── Stack ─────────────────────────────────────────────────── */
+.stack-cats{display:flex;flex-direction:column;gap:28px}
+.stack-cat-label{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--t3);margin-bottom:12px;font-family:'Space Grotesk',sans-serif;
+}
+.stack-items{display:flex;flex-wrap:wrap;gap:8px}
+.stack-chip{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 12px;
+  background:rgba(8,6,22,.6);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:6px;font-size:11px;color:var(--t2);
+  transition:border-color .15s,color .15s,background .15s;
+  cursor:default;white-space:nowrap;
+}
+.stack-chip:hover{border-color:rgba(168,85,247,.35);color:var(--t1);background:rgba(124,58,237,.07)}
+.stack-chip .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.stack-bars{display:flex;flex-direction:column;gap:10px;max-width:480px}
+.stack-row{display:flex;align-items:center;gap:12px}
+.stack-row-name{font-size:12px;color:var(--t2);flex:0 0 200px;text-align:right}
+.stack-bar-bg{flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.stack-bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+
+/* ── Portfolio mini-grid ───────────────────────────────────── */
+.portfolio-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;
+}
+.port-card{
+  padding:14px 16px;
+  background:rgba(8,6,22,.55);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:8px;
+  transition:border-color .15s,background .15s;
+  text-decoration:none;display:block;
+}
+.port-card:hover{border-color:rgba(168,85,247,.3);background:rgba(124,58,237,.07)}
+.port-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+.port-name{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;color:var(--t1)}
+.port-tag{font-size:10px;color:var(--t2);margin-top:3px;line-height:1.4}
+.port-cat{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--t3);margin-top:5px}
+
+/* ── Private section ───────────────────────────────────────── */
+.private-section{
+  margin-top:90px;
+  padding:32px;
+  border:1px solid rgba(168,85,247,.2);
+  border-radius:14px;
+  background:rgba(124,58,237,.04);
+}
+.private-section h2{
+  font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;
+  color:var(--acc2);margin-bottom:6px;letter-spacing:-.01em;
+}
+.private-section .priv-note{font-size:11px;color:var(--t3);margin-bottom:24px}
+.priv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.priv-card{
+  padding:16px;background:rgba(8,6,22,.6);
+  border:1px solid rgba(255,255,255,.07);border-radius:8px;
+}
+.priv-card h3{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;
+  color:var(--t1);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+.priv-card p{font-size:11px;color:var(--t2);line-height:1.6}
+.priv-empty{font-size:12px;color:var(--t3);font-style:italic}
+
+/* ── Footer ────────────────────────────────────────────────── */
+footer{
+  margin-top:80px;padding-top:24px;border-top:1px solid var(--border);
+  text-align:center;font-size:11px;color:var(--t3);letter-spacing:.06em;
+}
+footer a{color:var(--t2);text-decoration:none}
+
+/* ── Constellation canvas mini (background) ────────────────── */
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="scan"></div>
+
+<div class="wrap">
+  <nav>
+    <a class="nav-logo" href="/">Space<span>Labs</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="{% url 'vitrine:index' %}">Projets</a>
+      <a href="{% url 'vitrine:v2' %}">Constellation</a>
+      <a href="{% url 'vitrine:savoir_faire' %}" class="active">Savoir-faire</a>
+      <a href="{% url 'workspaces:home' %}">Espace</a>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <section class="page-hero">
+    <div class="eyebrow">Noesis Software Technologies</div>
+    <h1>Savoir-<em>faire</em></h1>
+    <p class="sub">
+      Stack, domaines, métriques — ce que SpaceLabs maîtrise et construit.<br>
+      {{ produits_count }} produits livrés. Architecture production. IA native.
+    </p>
+    {% if has_private %}
+    <div class="local-badge">Session locale · données complètes</div>
+    {% endif %}
+  </section>
+
+  <!-- ── Métriques ────────────────────────────────────────── -->
+  <section class="sec" id="metriques">
+    <div class="sec-head">
+      <span class="sec-label">01</span>
+      <span class="sec-title">Chiffres clés</span>
+    </div>
+    <div class="metrics">
+      {% for m in metriques %}
+      <div class="metric">
+        <div class="metric-val" style="color:{{ m.couleur }}">
+          {{ m.valeur }}<span class="unit">{{ m.unite }}</span>
+        </div>
+        <div class="metric-label">{{ m.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Domaines ─────────────────────────────────────────── -->
+  <section class="sec" id="domaines">
+    <div class="sec-head">
+      <span class="sec-label">02</span>
+      <span class="sec-title">Domaines d'expertise</span>
+      <span class="sec-count">{{ domaines|length }} domaines</span>
+    </div>
+    <div class="domains">
+      {% for d in domaines %}
+      <div class="domain-card" style="border-top:2px solid {{ d.couleur }}22">
+        <div class="domain-icon" style="color:{{ d.couleur }}">{{ d.icone }}</div>
+        <div class="domain-title">{{ d.titre }}</div>
+        <div class="domain-desc">{{ d.desc }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Stack ────────────────────────────────────────────── -->
+  <section class="sec" id="stack">
+    <div class="sec-head">
+      <span class="sec-label">03</span>
+      <span class="sec-title">Stack technologique</span>
+      <span class="sec-count">{{ stack|length }} technologies</span>
+    </div>
+    <div class="stack-cats">
+      {% for cat, items in stack_by_cat.items %}
+      <div>
+        <div class="stack-cat-label">{{ cat }}</div>
+        <div class="stack-items">
+          {% for s in items %}
+          <div class="stack-chip">
+            <span class="dot" style="background:{{ s.couleur }}"></span>
+            {{ s.nom }}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Portfolio ────────────────────────────────────────── -->
+  <section class="sec" id="portfolio">
+    <div class="sec-head">
+      <span class="sec-label">04</span>
+      <span class="sec-title">Portfolio — {{ produits_count }} produits</span>
+      <span class="sec-count">{{ categories|length }} verticaux</span>
+    </div>
+    <div class="portfolio-grid">
+      {% for p in produits %}
+      <a class="port-card" href="{{ p.url }}" target="_blank" rel="noopener">
+        <div>
+          <span class="port-dot" style="background:{{ p.couleur }}"></span>
+          <span class="port-name">{{ p.nom }}</span>
+        </div>
+        <div class="port-tag">{{ p.tagline }}</div>
+        <div class="port-cat">{{ p.categorie }}</div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ── Section privée (locale uniquement) ───────────────── -->
+  {% if has_private %}
+  <section class="private-section" id="confidentiel">
+    <h2>[CONFIDENTIEL] Données privées — local uniquement</h2>
+    <p class="priv-note">Ce bloc n'est visible que sur votre instance locale. Il n'est jamais committé ni déployé.</p>
+
+    {% if private.equipe %}
+    <div style="margin-bottom:24px">
+      <div class="stack-cat-label" style="margin-bottom:12px">Équipe</div>
+      <div class="priv-grid">
+        {% for m in private.equipe %}
+        <div class="priv-card">
+          <h3>{{ m.nom }}</h3>
+          <p>{{ m.role }}<br>
+          {% if m.disponibilite %}<span style="color:var(--acc2)">{{ m.disponibilite }}</span>{% endif %}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if private.tarifs %}
+    <div style="margin-bottom:24px">
+      <div class="stack-cat-label" style="margin-bottom:12px">Tarification</div>
+      <div class="priv-card" style="max-width:360px">
+        <h3>Grille tarifaire</h3>
+        <p>
+          {% if private.tarifs.journalier_tjm %}TJM : <strong>{{ private.tarifs.journalier_tjm }}</strong><br>{% endif %}
+          {% if private.tarifs.forfait_mvp %}Forfait MVP : <strong>{{ private.tarifs.forfait_mvp }}</strong><br>{% endif %}
+          {% if private.tarifs.abonnement_mensuel %}Abonnement : <strong>{{ private.tarifs.abonnement_mensuel }}</strong>{% endif %}
+          {% if not private.tarifs.journalier_tjm and not private.tarifs.forfait_mvp %}
+          <span class="priv-empty">À remplir dans SAVOIR_FAIRE_PRIVATE.json</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if private.kpis_internes %}
+    <div>
+      <div class="stack-cat-label" style="margin-bottom:12px">KPIs internes</div>
+      <div class="priv-grid">
+        {% for key, val in private.kpis_internes.items %}
+        {% if val %}
+        <div class="priv-card">
+          <h3>{{ key|upper }}</h3>
+          <p style="font-size:20px;font-weight:700;color:var(--t1)">{{ val }}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <footer>
+    <a href="/">SpaceLabs</a> · Noesis Software Technologies · 2026
+    &nbsp;·&nbsp; <a href="{% url 'vitrine:index' %}">{{ produits_count }} projets</a>
+    &nbsp;·&nbsp; <a href="{% url 'vitrine:v2' %}">Constellation</a>
+  </footer>
+</div>
+
+<!-- ── Background canvas ─────────────────────────────────── -->
+<script>
+(function(){
+  const cv = document.getElementById('bg');
+  const ctx = cv.getContext('2d');
+  let W, H;
+  function resize(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const PRODUITS = {{ produits_json|safe }};
+  const pts = PRODUITS.map((p, i) => {
+    const r = () => { let s = i * 127 + 13; return () => { s=(s*16807)%2147483647; return(s-1)/2147483646; }; };
+    const rng = r();
+    return {
+      x: rng() * 1, y: rng() * 1,
+      vx: (rng() - .5) * .0003, vy: (rng() - .5) * .0002,
+      couleur: p.couleur, size: 1.5 + rng() * 2.5,
+      alpha: .15 + rng() * .25,
+    };
+  });
+
+  // Add extra ambient stars
+  for (let i = 0; i < 120; i++) {
+    pts.push({ x: Math.random(), y: Math.random(),
+      vx: (Math.random()-.5)*.0002, vy: (Math.random()-.5)*.0001,
+      couleur: '#a78bfa', size: .5 + Math.random(), alpha: .06 + Math.random()*.1 });
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, W, H);
+    // Background glow
+    const g = ctx.createRadialGradient(W/2, H*.7, 0, W/2, H*.7, W*.55);
+    g.addColorStop(0, 'rgba(70,28,160,.07)'); g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = 1; if (p.x > 1) p.x = 0;
+      if (p.y < 0) p.y = 1; if (p.y > 1) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x * W, p.y * H, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.couleur + Math.round(p.alpha * 255).toString(16).padStart(2,'0');
+      ctx.fill();
+    });
+    requestAnimationFrame(frame);
+  }
+  frame();
+
+  // Animate stack bars on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.stack-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.w;
+        });
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: .2 });
+  document.querySelectorAll('.stack-bars').forEach(el => observer.observe(el));
+})();
+</script>
+</body>
+</html>
