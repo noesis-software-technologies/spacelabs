@@ -1,28 +1,42 @@
-"""Catégorisation heuristique des communiqués de presse (mots-clés du sujet)."""
+"""Catégorisation heuristique des communiqués de presse (mots-clés sujet + corps).
+
+9 catégories principales (= sous-marques de la constellation 13 Atmosphère).
+"""
 
 KEYWORDS = {
     "hotellerie": ["hotel", "hôtel", "palace", "resort", "four seasons", "crillon",
                    "monte-carlo", "croisi", "hospitality", "best hotels", "voyage",
-                   "itinér", "astir", "milano"],
+                   "itinér", "astir", "milano", "delphina", "séjour", "sejour"],
+    "beaute": ["beauté", "beaute", "bien-être", "bien être", "wellness", "spa",
+               "cosmétique", "cosmetique", "soin", "athletics", "santé mentale",
+               "sante mentale", "parfum", "maquillage"],
+    "food": ["mocktail", "sans alcool", "aikan", "gastronom", "cuisine", "restaurant",
+             "food", "boisson", "blender", "robot multifonction", "nomo", "collinet",
+             "amarines", "bar ", "chef", "vin", "café", "cafe", "botran", "jpo fort et clair"],
+    "habitat": ["batimat", "architect", "btp", "construction", "urbanisme", "immobilier",
+                "habitat", "ville", "dalle", "défense", "quartier", "logement", "cosentino",
+                "dekton", "villeroy", "boch", "ideal standard", "carrelage"],
+    "culture": ["expo", "exposition", "galerie", "rankin", "chambord", "patrimoine",
+                "musée", "musee", "festin", "fresque", "moretti", "ombromane",
+                "philippe beau", "art)", "vernissage", "collection permanente"],
+    "events": ["salon", "rendez-vous", "rdv", "foire", "journées du patrimoine",
+               "journees du patrimoine", "invitation presse", "visite presse",
+               "visite de presse", "jpo", "inscription", "last call", "vente usine",
+               "mondial de l", "gally", "invitation /"],
     "design": ["design", "mobilier", "canapé", "canape", "dining table", "table",
                "fermob", "tolix", "jieldé", "jielde", "luminaire", "gautier", "dolce",
-               "décor", "decor"],
-    "food": ["mocktail", "sans alcool", "aikan", "gastronom", "cuisine", "restaurant",
-             "food", "boisson", "blender", "robot multifonction"],
-    "mode": ["mode", "fashion", "collina", "layered", "wellness", "athletics",
-             "lifestyle", "télescope", "telescope", "unistellar", "cadeau", "noel", "noël"],
-    "culture": ["expo", "exposition", "galerie", "rankin", "chambord", "patrimoine",
-                "musée", "musee", "festin", "art de vivre", "art)"],
-    "archi": ["batimat", "architect", "btp", "construction", "urbanisme"],
-    "salons": ["salon", "rendez-vous", "rdv", "foire", "journées du patrimoine",
-               "journees du patrimoine"],
-    "societe": ["étude", "etude", "% des français", "% des francais", "santé mentale",
-                "sante mentale", "sondage", "pape", "geneanet", "enseigne", "français prêts",
-                "francais prets"],
+               "décor", "decor", "vaisselle", "textile", "aiper", "artik nodes"],
+    "mode": ["mode", "fashion", "collina", "layered", "vestiaire", "madame rêve",
+             "madame reve", "tom meyer", "style", "prêt-à-porter", "pret-a-porter",
+             "sneaker", "accessoire", "télescope", "telescope", "unistellar", "noël", "noel"],
+    "societe": ["étude", "etude", "% des français", "% des francais", "sondage", "pape",
+                "geneanet", "enseigne", "fraude", "mario kart", "tendance", "français prêts",
+                "francais prets", "insolite"],
 }
 
-# Ordre de priorité (le plus spécifique d'abord)
-ORDER = ["hotellerie", "food", "design", "culture", "archi", "salons", "mode", "societe"]
+# Ordre de priorité (catégorie la plus spécifique d'abord)
+ORDER = ["hotellerie", "beaute", "food", "habitat", "culture",
+         "events", "design", "mode", "societe"]
 
 
 def categorize(subject: str, body: str = "") -> str:

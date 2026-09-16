@@ -1,15 +1,16 @@
 from django.db import models
 
-# Catégories thématiques (constellation de blogs)
+# 9 catégories principales (chacune = une sous-marque / blog de la constellation)
 CATEGORIES = [
     ("hotellerie", "Hôtellerie & voyage"),
     ("design", "Design & art de vivre"),
     ("mode", "Mode & lifestyle"),
-    ("food", "Food & boissons"),
+    ("food", "Gastronomie & boissons"),
     ("culture", "Art, culture & patrimoine"),
-    ("archi", "Architecture & BTP"),
-    ("societe", "Études & société"),
-    ("salons", "Salons & événements"),
+    ("habitat", "Architecture & habitat"),
+    ("beaute", "Beauté & bien-être"),
+    ("societe", "Société & tendances"),
+    ("events", "Salons & événements"),
     ("autre", "Autre / à trier"),
 ]
 

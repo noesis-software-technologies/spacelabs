@@ -7,7 +7,14 @@ from apps.veille.models import Blog, CATEGORIES
 class Command(BaseCommand):
     help = "Initialise les blogs (principal + un par catégorie)"
 
+    def add_arguments(self, parser):
+        parser.add_argument("--reset", action="store_true",
+                            help="Supprime les blogs de catégorie avant de recréer")
+
     def handle(self, *args, **options):
+        if options["reset"]:
+            n = Blog.objects.filter(is_principal=False).delete()[0]
+            self.stdout.write(self.style.WARNING(f"reset: {n} blog(s) de catégorie supprimé(s)"))
         principal, _ = Blog.objects.update_or_create(
             categorie="",
             defaults=dict(nom="13 Atmosphère", domaine="13-atmosphere.com",
