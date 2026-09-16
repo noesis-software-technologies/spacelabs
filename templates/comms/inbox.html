@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inbox unifié — SpaceLabs Comms</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#0a0a12;color:#e8e8f0;padding:2rem;line-height:1.45}
+    h1{font-size:1.5rem;letter-spacing:-.02em}
+    .sub{color:#8a8aa0;font-size:.85rem;margin:.2rem 0 1.4rem}
+    .stats{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem}
+    .stat{background:#12121c;border:1px solid #23233a;border-radius:10px;padding:.6rem 1rem;font-size:.82rem}
+    .stat b{font-size:1.2rem;color:#a855f7}
+    .cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1rem}
+    .col{background:#12121c;border:1px solid #23233a;border-radius:12px;overflow:hidden}
+    .col h2{font-size:.95rem;padding:.7rem 1rem;border-bottom:1px solid #23233a;display:flex;justify-content:space-between}
+    .col.hot h2{color:#ff8f8f}
+    .col.rep h2{color:#ffd479}
+    .msg{padding:.6rem 1rem;border-bottom:1px solid #1a1a2a;font-size:.82rem}
+    .msg:last-child{border-bottom:none}
+    .msg .top{display:flex;gap:.5rem;align-items:center;margin-bottom:.15rem}
+    .chip{font:.58rem monospace;padding:.1rem .4rem;border-radius:999px;border:1px solid #333;color:#aaa}
+    .chip.email{color:#7ec7ff;border-color:#274a66}
+    .chip.telegram{color:#7ee0a0;border-color:#166534}
+    .chip.p-haute{color:#ff8f8f;border-color:#7f1d1d}
+    .from{color:#c9c9de;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+    .subj{color:#e8e8f0}
+    .empty{padding:1rem;color:#66667e;font-style:italic;font-size:.8rem}
+  </style>
+</head>
+<body>
+  <h1>Inbox unifié — <span style="color:#a855f7">Comms</span></h1>
+  <div class="sub">Centre névralgique : tous les messages entrants, triés par l'IA (priorité · à répondre).</div>
+
+  <div class="stats">
+    <div class="stat"><b>{{ stats.total }}</b> messages</div>
+    <div class="stat"><b>{{ stats.a_repondre }}</b> à répondre</div>
+    <div class="stat"><b>{{ stats.haute }}</b> priorité haute</div>
+    {% for c, n in stats.par_canal.items %}<div class="stat"><b>{{ n }}</b> {{ c }}</div>{% endfor %}
+  </div>
+
+  <div class="cols">
+    <div class="col hot">
+      <h2>🔴 Prioritaire <span>{{ prioritaires|length }}</span></h2>
+      {% for m in prioritaires %}
+      <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="chip p-haute">haute</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+      {% empty %}<div class="empty">Rien d'urgent.</div>{% endfor %}
+    </div>
+
+    <div class="col rep">
+      <h2>✍️ À répondre <span>{{ a_traiter|length }}</span></h2>
+      {% for m in a_traiter %}
+      <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+      {% empty %}<div class="empty">Rien en attente de réponse.</div>{% endfor %}
+    </div>
+
+    <div class="col">
+      <h2>📥 Reste <span>{{ reste|length }}</span></h2>
+      {% for m in reste %}
+      <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+      {% empty %}<div class="empty">Vide.</div>{% endfor %}
+    </div>
+  </div>
+</body>
+</html>

@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "apps.voice",
     "apps.vitrine",
     "apps.veille",
+    "apps.comms",
 ]
 
 MIDDLEWARE = [
