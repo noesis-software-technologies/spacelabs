@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "apps.models_routing",
     "apps.voice",
     "apps.vitrine",
+    "apps.veille",
 ]
 
 MIDDLEWARE = [

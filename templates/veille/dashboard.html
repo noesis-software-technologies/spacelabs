@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Veille éditoriale — Constellation 13 Atmosphère</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#0a0a12;color:#e8e8f0;padding:2rem;line-height:1.5}
+    h1{font-size:1.5rem;letter-spacing:-.02em;margin-bottom:.3rem}
+    .sub{color:#8a8aa0;font-size:.85rem;margin-bottom:1.5rem}
+    .stats{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem}
+    .stat{background:#12121c;border:1px solid #23233a;border-radius:10px;padding:.7rem 1.1rem}
+    .stat b{font-size:1.3rem;color:#a855f7}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+    .blog{background:#12121c;border:1px solid #23233a;border-radius:12px;overflow:hidden}
+    .blog h2{font-size:1rem;padding:.8rem 1rem;border-bottom:1px solid #23233a;display:flex;justify-content:space-between;align-items:center}
+    .blog h2 .dom{font:.7rem monospace;color:#7c7c95}
+    .badge{font:.6rem monospace;padding:.15rem .5rem;border-radius:999px;background:#2a1a4a;color:#c4b5fd;border:1px solid #4c1d95}
+    .badge.actif{background:#0f3d24;color:#7ee0a0;border-color:#166534}
+    .item{padding:.55rem 1rem;border-bottom:1px solid #1a1a2a;font-size:.82rem;display:flex;gap:.5rem}
+    .item:last-child{border-bottom:none}
+    .item .st{font:.6rem monospace;color:#8a8aa0;flex-shrink:0}
+    .empty{padding:1rem;color:#66667e;font-size:.8rem;font-style:italic}
+  </style>
+</head>
+<body>
+  <h1>Veille éditoriale — Constellation <span style="color:#a855f7">13 Atmosphère</span></h1>
+  <div class="sub">Flux RP (Thérèse) → catégorisé → dispatché vers les blogs. Blog principal : 13-atmosphere.com</div>
+
+  <div class="stats">
+    <div class="stat"><b>{{ stats.total }}</b> communiqués</div>
+    {% for st, n in stats.par_statut.items %}<div class="stat"><b>{{ n }}</b> {{ st }}</div>{% endfor %}
+  </div>
+
+  <div class="grid">
+    {% for b in blogs %}
+    <div class="blog">
+      <h2>
+        <span>{{ b.nom }}{% if b.is_principal %} ★{% endif %}<br><span class="dom">{{ b.domaine|default:"— à ouvrir —" }}</span></span>
+        <span class="badge {% if b.statut == 'actif' %}actif{% endif %}">{{ b.get_statut_display }} · {{ b.items_list|length }}</span>
+      </h2>
+      {% for it in b.items_list %}
+      <div class="item"><span class="st">{{ it.statut }}</span><span>{{ it.sujet }}</span></div>
+      {% empty %}<div class="empty">Aucun communiqué assigné.</div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>
