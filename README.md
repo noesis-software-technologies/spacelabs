@@ -38,6 +38,44 @@ l'interface est un cadre et s'efface.
 
 ![Guillaume Studio — second workspace, sessions indépendantes](docs/screenshots/guillaume_studio.png)
 
+## Surfaces web
+
+| URL | Rôle |
+|---|---|
+| `/dashboard/` | **Cockpit central** — sidebar + tuiles KPI live, thème clair/sombre |
+| `/` | Landing publique — constellation neurale (Three.js) |
+| `/vitrine/` | Vitrine produits — portfolio animé, focus desktop |
+| `/veille/` | **Veille éditoriale** — RP triées → constellation de blogs *13 Atmosphère* |
+| `/comms/` | **Inbox unifié** — Email + Telegram, tri IA (priorité / à répondre) |
+| `/observer/` | Vue spectateur live | 
+| `/cockpit/` | Workspaces multi-agents |
+| `/django-admin/` | Admin |
+
+### Veille éditoriale (`apps/veille`)
+Ingestion des communiqués de presse (IMAP), catégorisation en 9 verticales, dispatch vers le blog cible.
+```bash
+python manage.py veille_seed    # crée les blogs (principal 13-atmosphere.com + catégories)
+python manage.py veille_sync    # ingère + catégorise + dispatche
+```
+
+### Communication unifiée (`apps/comms`)
+Boîte de réception névralgique multi-canal + tri automatique (priorité, besoin de réponse).
+```bash
+python manage.py comms_sync_email     # ingestion IMAP de la boîte
+python manage.py comms_sync_telegram  # ingestion DM Telegram (getUpdates)
+bash deploy/comms_poll.sh             # suivi constant (boucle détachée)
+```
+Omnicanal complet (WhatsApp / Instagram DM / SMS) via **Chatwoot** :
+`bash deploy/chatwoot/setup.sh` (nécessite Docker).
+
+### Secrets locaux
+Jamais commités. Copie `.env.example` → `.env`, et mets les identifiants IMAP/Telegram
+dans **`.env.local`** (gitignoré) :
+```bash
+VEILLE_IMAP_USER=…   VEILLE_IMAP_PASS=…
+COMMS_IMAP_USER=…    COMMS_IMAP_PASS=…    COMMS_TG_TOKEN=…
+```
+
 ## Aucune clé API
 
 SpaceLabs spawne les binaires CLI déjà authentifiés sur **votre** machine
@@ -54,6 +92,16 @@ make setup    # dépendances + migrations + utilisateur local « pilote »
 make redis    # (optionnel en dev) Redis via docker compose
 make run      # daphne sur http://127.0.0.1:8000
 ```
+
+Installation simplifiée (sans `make`) :
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py bootstrap_demo        # crée l'utilisateur « pilote »
+python manage.py runserver 0.0.0.0:8000 --settings=config.settings.dev
+```
+Puis ouvre **http://localhost:8000/dashboard/**.
 
 Connexion : `pilote` / `cockpit-local` (change-le). La page cockpit ouvre un
 pane terminal qui lance `COCKPIT_DEFAULT_CMD` dans un vrai PTY — ferme l'onglet,
