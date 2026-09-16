@@ -25,8 +25,19 @@ def spacelabs_dashboard(request):
         ctx["kpi"]["msg_total"] = Message.objects.count()
         ctx["kpi"]["msg_reply"] = base.filter(needs_reply=True).count()
         ctx["kpi"]["msg_haute"] = base.filter(priorite="haute").count()
+        # aperçu embarqué : prioritaires puis à répondre
+        ctx["inbox_preview"] = list(
+            base.filter(priorite="haute")[:6]
+        ) or list(base.filter(needs_reply=True)[:6])
     except Exception:
         ctx["kpi"].update(msg_total="—", msg_reply="—", msg_haute="—")
+        ctx["inbox_preview"] = []
+    # Veille : derniers communiqués
+    try:
+        from apps.veille.models import PressItem as _PI
+        ctx["veille_preview"] = list(_PI.objects.select_related("blog_cible")[:6])
+    except Exception:
+        ctx["veille_preview"] = []
     # Workspaces / agents
     try:
         from apps.workspaces.models import Workspace
