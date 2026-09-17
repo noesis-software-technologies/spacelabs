@@ -1,7 +1,9 @@
 """Dashboard central SpaceLabs (hub) — KPIs live + accès modules."""
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 
+@login_required
 def spacelabs_dashboard(request):
     ctx = {"kpi": {}, "modules": [], "active_nav": "dashboard"}
     # Vitrine

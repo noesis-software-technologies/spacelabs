@@ -1,5 +1,6 @@
 import json
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -10,6 +11,7 @@ from .models import Message
 from .triage import triage
 
 
+@login_required
 def inbox(request):
     qs = Message.objects.exclude(statut="archive")
     prioritaires = list(qs.filter(priorite="haute")[:40])

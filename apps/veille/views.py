@@ -1,9 +1,11 @@
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.shortcuts import render
 
 from .models import Blog, PressItem
 
 
+@login_required
 def dashboard(request):
     blogs = list(Blog.objects.all())
     for b in blogs:
