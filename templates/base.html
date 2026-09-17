@@ -40,6 +40,11 @@
       <span>Workspaces</span>
     </div>
     {% workspaces_sidebar %}
+    <div class="ds-sidebar-section"><span>SpaceLabs</span></div>
+    <a class="ds-sidebar-link" href="/dashboard/" style="display:block;padding:.4rem .9rem;text-decoration:none;color:inherit;opacity:.82;font-size:.85rem">Dashboard</a>
+    <a class="ds-sidebar-link" href="/veille/" style="display:block;padding:.4rem .9rem;text-decoration:none;color:inherit;opacity:.82;font-size:.85rem">Veille — 13 Atmosphère</a>
+    <a class="ds-sidebar-link" href="/comms/" style="display:block;padding:.4rem .9rem;text-decoration:none;color:inherit;opacity:.82;font-size:.85rem">Inbox unifié</a>
+    <a class="ds-sidebar-link" href="/vitrine/" style="display:block;padding:.4rem .9rem;text-decoration:none;color:inherit;opacity:.82;font-size:.85rem">Vitrine produits</a>
     {% if user.is_authenticated %}
       <div class="ds-sidebar-section"><span>Usage</span></div>
       <div class="ds-sidebar-gauges"

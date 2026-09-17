@@ -103,6 +103,13 @@
       Space<b>Labs</b>
     </div>
 
+    {% if workspaces_list %}
+    <div class="sb-sec">Workspaces</div>
+    {% for w in workspaces_list %}
+    <a class="nav" href="/cockpit/{{ w.slug }}/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>{{ w.name }}</a>
+    {% endfor %}
+    {% endif %}
+
     <div class="sb-sec">Pilotage</div>
     <a class="nav active" href="/dashboard/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
 

@@ -42,6 +42,8 @@ def spacelabs_dashboard(request):
     try:
         from apps.workspaces.models import Workspace
         ctx["kpi"]["workspaces"] = Workspace.objects.count()
+        ctx["workspaces_list"] = list(Workspace.objects.values("name", "slug")[:25])
     except Exception:
         ctx["kpi"]["workspaces"] = "—"
+        ctx["workspaces_list"] = []
     return render(request, "dashboard/index.html", ctx)
