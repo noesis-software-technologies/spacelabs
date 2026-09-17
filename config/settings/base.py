@@ -37,6 +37,7 @@ env = environ.Env(
     LANDING_DEFAULT=(str, "clean"),  # "clean" (thème clair) | "showroom" (animée)
     ATMOSPHERE_MCP_URL=(str, "https://13-atmosphere.com/mcp/"),
     ATMOSPHERE_MCP_TOKEN=(str, ""),  # secret → .env.local
+    PEXELS_API_KEY=(str, ""),  # secret → .env.local (fallback images libres de droit)
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -126,6 +127,9 @@ LANDING_DEFAULT = env("LANDING_DEFAULT")
 # MCP de publication 13 Atmosphère (token dans .env.local).
 ATMOSPHERE_MCP_URL = env("ATMOSPHERE_MCP_URL")
 ATMOSPHERE_MCP_TOKEN = env("ATMOSPHERE_MCP_TOKEN")
+
+# Pexels — fallback images libres de droit (clé dans .env.local).
+PEXELS_API_KEY = env("PEXELS_API_KEY")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
