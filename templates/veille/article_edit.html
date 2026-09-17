@@ -1,0 +1,123 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Revue — {{ item.draft_titre|default:item.sujet }}{% endblock %}
+{% block h1 %}Revue avant publication{% endblock %}
+{% block crumb %}$ veille --review {{ item.pk }}{% endblock %}
+
+{% block extra_css %}
+    .layout{display:grid;grid-template-columns:1fr 340px;gap:1.6rem;align-items:start}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}}
+    .back{display:inline-block;margin-bottom:1rem;font-size:.82rem;color:var(--muted);text-decoration:none}
+    .back:hover{color:var(--accent)}
+    .art h2{font-size:1.5rem;letter-spacing:-.02em;line-height:1.15;margin-bottom:.7rem}
+    .art .chapo{font-size:1.02rem;color:var(--muted);font-style:italic;margin-bottom:1rem}
+    .art .corps{font-size:.92rem;line-height:1.7;white-space:pre-wrap}
+    .cover-preview{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:1rem;background:var(--surface2)}
+    .panel{position:sticky;top:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem}
+    .panel h3{font:600 .66rem/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:1.2rem 0 .6rem}
+    .panel h3:first-child{margin-top:0}
+    .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+    .thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb.cover{border-color:var(--accent)}
+    .thumb.cover::after{content:"principale";position:absolute;bottom:0;left:0;right:0;font:.5rem var(--mono);text-align:center;background:var(--accent);color:#fff;padding:1px}
+    .glist{list-style:none;margin:.2rem 0 0;padding:0;display:flex;flex-direction:column;gap:.35rem}
+    .gitem{display:flex;align-items:center;gap:.5rem;padding:.3rem;border:1px solid var(--border);border-radius:8px;background:var(--surface2);cursor:grab;font-size:.75rem}
+    .gitem.drag{opacity:.4} .gitem img{width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0}
+    .gitem .h{color:var(--faint);font:.62rem var(--mono)}
+    .fld{margin:.3rem 0 .2rem} .fld label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem}
+    .fld input,.fld select{width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);font-family:var(--font);font-size:.85rem}
+    .lien{display:flex;align-items:center;gap:.5rem;font-size:.78rem;padding:.25rem 0;border-bottom:1px solid var(--surface2)}
+    .lien .st{width:16px;text-align:center;flex-shrink:0}
+    .lien .ok{color:var(--good)} .lien .ko{color:var(--crit)}
+    .lien .sg{color:var(--faint);font:.62rem var(--mono);margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+    .saved{font-size:.7rem;color:var(--good);min-height:1em;margin-top:.4rem}
+{% endblock %}
+
+{% block content %}
+    <a class="back" href="{% url 'veille:article_detail' item.pk %}">‹ Retour à la fiche</a>
+    <div class="layout">
+      <div class="art">
+        <img id="coverPrev" class="cover-preview" src="{{ cover }}" alt="{{ item.image_alt }}"{% if not cover %} style="display:none"{% endif %}>
+        <h2>{{ item.draft_titre|default:item.sujet }}</h2>
+        {% if item.draft_chapo %}<p class="chapo">{{ item.draft_chapo }}</p>{% endif %}
+        <div class="corps">{{ item.draft_corps }}</div>
+      </div>
+
+      <aside class="panel" data-pk="{{ item.pk }}">
+        <h3>Photo principale</h3>
+        <div class="thumbs" id="thumbs">
+          {% for u in galerie %}
+          <div class="thumb {% if u == cover %}cover{% endif %}" data-url="{{ u }}"><img src="{{ u }}" alt=""></div>
+          {% empty %}<div class="h" style="grid-column:1/-1;color:var(--faint);font-size:.75rem">Aucune image. (fallback Pexels à venir)</div>{% endfor %}
+        </div>
+
+        <h3>Ordre de la galerie</h3>
+        <ul class="glist" id="glist">
+          {% for u in galerie %}
+          <li class="gitem" draggable="true" data-url="{{ u }}"><img src="{{ u }}" alt=""><span class="h">glisser pour réordonner</span></li>
+          {% endfor %}
+        </ul>
+
+        <h3>Date de publication</h3>
+        <div class="fld">
+          <input type="date" id="pubdate" value="{{ item.publier_le|date:'Y-m-d' }}">
+          <label>Ajoutée au calendrier (même si antidatée).</label>
+        </div>
+
+        <h3>Statut</h3>
+        <div class="fld">
+          <select id="statut">
+            {% for k, v in item.DRAFT_STATUT %}<option value="{{ k }}" {% if item.draft_statut == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+          </select>
+        </div>
+
+        <h3>Inter-maillage (slugs)</h3>
+        {% for l in liens %}
+        <div class="lien"><span class="st {% if l.ok %}ok{% else %}ko{% endif %}">{% if l.ok %}OK{% else %}!{% endif %}</span><span>{{ l.titre|truncatechars:34 }}</span><span class="sg">{{ l.slug|default:'— slug manquant —' }}</span></div>
+        {% empty %}<div class="h" style="color:var(--faint);font-size:.75rem">Aucun lien interne.</div>{% endfor %}
+
+        <div class="saved" id="saved"></div>
+      </aside>
+    </div>
+
+    <script>
+    (function(){
+      const panel=document.querySelector('.panel'), pk=panel.dataset.pk;
+      const saved=document.getElementById('saved');
+      function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      function save(payload){
+        return fetch(`/veille/articles/${pk}/save/`,{method:'POST',
+          headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},
+          body:JSON.stringify(payload)}).then(r=>r.json()).then(d=>{
+            if(d.ok){saved.textContent='Enregistré '+new Date().toLocaleTimeString();}
+            else{saved.textContent='échec ('+(d.err||'')+')';}
+            return d;});
+      }
+      // cover
+      document.getElementById('thumbs').addEventListener('click',e=>{
+        const t=e.target.closest('.thumb'); if(!t)return;
+        document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('cover'));
+        t.classList.add('cover');
+        const prev=document.getElementById('coverPrev'); prev.src=t.dataset.url; prev.style.display='';
+        save({action:'cover',url:t.dataset.url});
+      });
+      // pubdate + statut
+      document.getElementById('pubdate').addEventListener('change',e=>save({action:'pubdate',date:e.target.value}));
+      document.getElementById('statut').addEventListener('change',e=>save({action:'statut',statut:e.target.value}));
+      // drag-n-drop reorder (async)
+      const list=document.getElementById('glist'); let dragEl=null;
+      list.addEventListener('dragstart',e=>{dragEl=e.target.closest('.gitem');dragEl.classList.add('drag');});
+      list.addEventListener('dragend',()=>{if(dragEl){dragEl.classList.remove('drag');dragEl=null;}});
+      list.addEventListener('dragover',e=>{
+        e.preventDefault(); const after=[...list.querySelectorAll('.gitem:not(.drag)')].find(el=>{
+          const r=el.getBoundingClientRect(); return e.clientY < r.top + r.height/2;});
+        if(after) list.insertBefore(dragEl,after); else list.appendChild(dragEl);
+      });
+      list.addEventListener('drop',e=>{
+        e.preventDefault();
+        const order=[...list.querySelectorAll('.gitem')].map(el=>el.dataset.url);
+        save({action:'reorder',order});
+      });
+    })();
+    </script>
+{% endblock %}

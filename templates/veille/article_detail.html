@@ -51,6 +51,7 @@
 {% block content %}
     <div class="wrap">
       <a class="back" href="{% url 'veille:articles' %}">‹ Tous les articles</a>
+      <a class="back" style="margin-left:1rem;color:var(--accent)" href="{% url 'veille:article_edit' item.pk %}">Réviser / valider →</a>
 
       <div class="meta">
         <span class="badge">{{ item.get_categorie_display }}</span>

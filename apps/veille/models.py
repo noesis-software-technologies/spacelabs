@@ -88,24 +88,51 @@ class PressItem(models.Model):
     liens_internes = models.JSONField(default=list, blank=True,
                                       help_text="Articles liés : [{pk, titre, slug}]")
 
+    # ── Revue éditoriale (panneau de validation) ──
+    cover_url = models.CharField(max_length=1000, blank=True,
+                                 help_text="Image principale retenue (parmi galerie / proposée)")
+    galerie = models.JSONField(default=list, blank=True,
+                               help_text="Ordre choisi de la galerie (drag-n-drop) ; 1re = après la cover")
+
     # ── Publication MCP 13 Atmosphère ──
     mcp_article_id = models.CharField(max_length=64, blank=True,
                                       help_text="article_id renvoyé par le MCP après draft_article")
 
     @property
+    def toutes_images(self):
+        """Toutes les images connues, dédupliquées (locales prioritaires)."""
+        seen, out = set(), []
+        for u in list(self.images_local or []) + ([self.image_url] if self.image_url else []) \
+                + list(self.images or []):
+            if u and u not in seen:
+                seen.add(u)
+                out.append(u)
+        return out
+
+    @property
     def image_ref(self):
-        """Vignette : local si téléchargé, sinon image_url, sinon 1re du carrousel."""
+        """Vignette : cover choisie > 1re galerie ordonnée > local > image_url > images."""
+        if self.cover_url:
+            return self.cover_url
+        if self.galerie:
+            return self.galerie[0]
         if self.images_local:
             return self.images_local[0]
         return self.image_url or (self.images[0] if self.images else "")
 
     @property
     def carrousel(self):
-        """Liste dédupliquée des images (local prioritaire ; ref en tête)."""
-        if self.images_local:
-            return list(self.images_local)
+        """Ordre d'affichage : cover en tête, puis la galerie ordonnée choisie
+        (ou l'ordre par défaut si aucune revue n'a été faite)."""
+        base = list(self.galerie) if self.galerie else self.toutes_images
+        cover = self.cover_url
+        if cover:
+            base = [cover] + [u for u in base if u != cover]
+        elif cover is None:
+            pass
+        # garantir unicité + non vide
         seen, out = set(), []
-        for u in ([self.image_url] if self.image_url else []) + list(self.images or []):
+        for u in base:
             if u and u not in seen:
                 seen.add(u)
                 out.append(u)
