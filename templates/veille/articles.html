@@ -47,6 +47,13 @@
     .mbtn.primary{background:var(--accent);color:#fff;border-color:transparent} .mbtn.primary:hover{background:var(--accent-ink)}
     .mbtn.good{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good)}
     .mmsg{font-size:.8rem;margin-top:.6rem;min-height:1em;color:var(--muted)}
+    .liens-c{margin-top:1rem;border-top:1px solid var(--border);padding-top:.8rem}
+    .liens-c h4{font:600 .64rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem}
+    .lrow{display:flex;align-items:center;gap:.5rem;font-size:.8rem;padding:.2rem 0}
+    .ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .ldot.pub{background:var(--good)} .ldot.miss{background:var(--warn)} .ldot.no{background:var(--faint)}
+    .lrow .lt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lrow .ls{margin-left:auto;font:.6rem var(--mono);color:var(--faint)}
 {% endblock %}
 
 {% block content %}
@@ -105,14 +112,28 @@
             <button class="mbtn primary" id="mPublish" type="button">Pousser en brouillon sur le blog</button>
           </div>
           <div class="mmsg" id="mMsg"></div>
+          <div class="liens-c" id="mLiens" style="display:none"></div>
         </div>
       </div>
     </div>
 
     <script>
     (function(){
-      const ov=document.getElementById('ov'), msg=document.getElementById('mMsg');
+      const ov=document.getElementById('ov'), msg=document.getElementById('mMsg'), mLiens=document.getElementById('mLiens');
       let pk=null;
+      function renderLiens(liens){
+        liens=liens||[];
+        if(!liens.length){mLiens.style.display='none';mLiens.innerHTML='';return;}
+        const miss=liens.filter(l=>l.redige&&!l.published);
+        let h='<h4>Constellation liée (inter-maillage)</h4>';
+        liens.forEach(l=>{
+          const cls=l.published?'pub':(l.redige?'miss':'no');
+          const st=l.published?'sur le blog':(l.redige?'à pousser':'pas rédigé');
+          h+='<div class="lrow"><span class="ldot '+cls+'"></span><span class="lt">'+(l.titre||'')+'</span><span class="ls">'+st+'</span></div>';
+        });
+        if(miss.length){h+='<div class="acts"><button class="mbtn primary" id="mRelated" type="button">Pousser les '+miss.length+' liés manquants (brouillons)</button></div>';}
+        mLiens.innerHTML=h; mLiens.style.display='';
+      }
       function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
       function post(url,body){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},body:JSON.stringify(body||{})}).then(r=>r.json().then(d=>({s:r.status,d})));}
       function open(id){
@@ -128,8 +149,18 @@
           document.getElementById('mDate').textContent=d.publier_le?('publication '+d.publier_le):'non planifié';
           document.getElementById('mEdit').href=`/veille/articles/${id}/edit/`;
           msg.textContent=d.mcp_article_id?('Déjà sur le blog : article_id '+d.mcp_article_id):'';
+          renderLiens(d.liens);
         });
       }
+      mLiens.addEventListener('click',e=>{
+        if(!e.target.closest('#mRelated'))return;
+        msg.textContent='Envoi des articles liés au blog…';
+        post(`/veille/articles/${pk}/publish-related/`,{}).then(({d})=>{
+          if(d.ok){msg.textContent=d.pousses+'/'+d.total+' article(s) lié(s) poussé(s) en brouillon.';
+            fetch(`/veille/articles/${pk}/quick/`).then(r=>r.json()).then(dd=>renderLiens(dd.liens));
+          }else{msg.textContent='Échec cascade des liés.';}
+        });
+      });
       function close(){ov.classList.remove('on');}
       document.querySelectorAll('.quickbtn').forEach(b=>b.addEventListener('click',e=>{
         e.preventDefault(); e.stopPropagation(); open(b.dataset.pk);
@@ -143,7 +174,7 @@
       document.getElementById('mPublish').addEventListener('click',()=>{
         msg.textContent='Envoi du brouillon au blog (MCP)…';
         post(`/veille/articles/${pk}/publish/`,{}).then(({s,d})=>{
-          if(d.ok){msg.innerHTML='Brouillon créé sur le blog — article_id <b>'+d.article_id+'</b>, '+(d.images||0)+' image(s). À valider/publier au calendrier 13-atmosphère.';}
+          if(d.ok){var n=(d.lies_manquants||[]).length; msg.innerHTML='Brouillon créé sur le blog — article_id <b>'+d.article_id+'</b>, '+(d.images||0)+' image(s).'+(n?' <b>'+n+'</b> article(s) lié(s) pas encore sur le blog → « Pousser les liés manquants » ci-dessous pour une constellation cohérente.':' Constellation cohérente.');}
           else{msg.textContent='Échec MCP : '+(d.error||('HTTP '+s));}
         });
       });

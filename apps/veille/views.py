@@ -139,6 +139,27 @@ def article_save(request, pk):
     return JsonResponse({"ok": True, "image_ref": item.image_ref})
 
 
+def _liens_constellation(it):
+    """Articles liés (inter-maillage) + leur état de publication sur le blog."""
+    pks = [lk.get("pk") for lk in (it.liens_internes or []) if lk.get("pk")]
+    if not pks:
+        return []
+    par_pk = {p.pk: p for p in PressItem.objects.filter(pk__in=pks)}
+    out = []
+    for lk in it.liens_internes:
+        cible = par_pk.get(lk.get("pk"))
+        if not cible:
+            continue
+        out.append({
+            "pk": cible.pk,
+            "titre": lk.get("titre") or cible.draft_titre or cible.sujet,
+            "slug": cible.slug,
+            "redige": cible.draft_statut in ("brouillon", "valide", "publie"),
+            "published": bool(cible.mcp_article_id),
+        })
+    return out
+
+
 @login_required
 def article_quick(request, pk):
     """Aperçu JSON pour la pop-up quick view de la liste."""
@@ -154,14 +175,44 @@ def article_quick(request, pk):
         "publier_le": it.publier_le.isoformat() if it.publier_le else "",
         "mcp_article_id": it.mcp_article_id,
         "images": len(it.carrousel),
+        "liens": _liens_constellation(it),
     })
 
 
 @login_required
 @require_POST
 def article_publish(request, pk):
-    """Pousse l'article comme BROUILLON sur le MCP 13 Atmosphère (jamais publié)."""
+    """Pousse l'article comme BROUILLON sur le MCP 13 Atmosphère (jamais publié).
+
+    Renvoie aussi les articles liés (inter-maillage) encore absents du blog, pour
+    suggérer de les pousser et garder la constellation cohérente (backlinks vivants).
+    """
     from apps.veille import mcp
     it = get_object_or_404(PressItem, pk=pk)
     res = mcp.publish_item(it)
+    if res.get("ok"):
+        manquants = [lk for lk in _liens_constellation(it)
+                     if lk["redige"] and not lk["published"]]
+        res["lies_manquants"] = manquants
     return JsonResponse(res, status=200 if res.get("ok") else 502)
+
+
+@login_required
+@require_POST
+def article_publish_related(request, pk):
+    """Pousse en BROUILLON tous les articles liés (rédigés) encore absents du blog."""
+    from apps.veille import mcp
+    it = get_object_or_404(PressItem, pk=pk)
+    cibles = [lk["pk"] for lk in _liens_constellation(it)
+              if lk["redige"] and not lk["published"]]
+    resultats = []
+    for cpk in cibles:
+        cible = PressItem.objects.filter(pk=cpk).first()
+        if not cible:
+            continue
+        r = mcp.publish_item(cible)
+        resultats.append({"pk": cpk, "titre": (cible.draft_titre or cible.sujet)[:80],
+                          "ok": r.get("ok"), "article_id": r.get("article_id"),
+                          "error": r.get("error")})
+    ok = sum(1 for r in resultats if r["ok"])
+    return JsonResponse({"ok": True, "pousses": ok, "total": len(resultats), "resultats": resultats})
