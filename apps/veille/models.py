@@ -48,6 +48,9 @@ class PressItem(models.Model):
     categorie = models.CharField(max_length=40, choices=CATEGORIES, default="autre")
     resume = models.TextField(blank=True)
     corps = models.TextField(blank=True)
+    corps_html = models.TextField(blank=True, help_text="Corps HTML brut conservé (ré-extractible)")
+    liens_sources = models.JSONField(default=list, blank=True,
+                                     help_text="Liens trouvés dans le mail : [{url, texte, kind}]")
     blog_cible = models.ForeignKey(
         Blog, null=True, blank=True, on_delete=models.SET_NULL, related_name="items"
     )

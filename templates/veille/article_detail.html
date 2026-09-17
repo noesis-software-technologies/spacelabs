@@ -109,6 +109,15 @@
         </div>
         {% endif %}
 
+        {% if item.liens_sources %}
+        <div class="liens">
+          <h3>Liens du communiqué</h3>
+          {% for l in item.liens_sources %}
+          <a href="{{ l.url }}" target="_blank" rel="noopener">› {{ l.texte|default:l.url }}{% if l.kind == 'kit' %} <span class="tag">kit presse</span>{% elif l.kind == 'image' %} <span class="tag">image</span>{% endif %}</a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
         {% if item.corps %}
         <div class="src">
           <h3>Communiqué source</h3>

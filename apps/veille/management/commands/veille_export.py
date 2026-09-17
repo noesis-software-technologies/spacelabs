@@ -37,6 +37,7 @@ def _payload(it):
         "image_alt": it.image_alt,
         "galerie": galerie,
         "liens_internes": it.liens_internes or [],
+        "liens_sources": it.liens_sources or [],
         "publier_le": it.publier_le.isoformat() if it.publier_le else None,
         "statut": it.draft_statut,
     }

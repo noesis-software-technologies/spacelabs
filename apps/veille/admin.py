@@ -21,7 +21,8 @@ class PressItemAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Communiqué", {
             "fields": ("message_id", "expediteur", "sujet", "recu_le",
-                       "categorie", "blog_cible", "statut", "resume", "corps"),
+                       "categorie", "blog_cible", "statut", "resume", "corps",
+                       "corps_html", "liens_sources"),
         }),
         ("Brouillon (plume de Thérèse)", {
             "fields": ("draft_statut", "publier_le", "draft_genere_le",

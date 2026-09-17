@@ -71,9 +71,15 @@ python manage.py veille_calendar --per-week 3   # planifie les dates de publicat
 python manage.py veille_export --status valide  # exporte les articles en JSON (prêt pour publication via MCP)
 ```
 `veille_draft` génère aussi le **SEO** (titre optimisé, meta description, tags, alt).
-`veille_sync` est **idempotent** (dédup par `Message-ID`) : le relancer ne crée pas de doublon
-et complète les images manquantes. Export MCP : un JSON autonome par article dans `exports/veille/`
-(titre, slug, meta, tags, image de référence locale, galerie, corps, liens internes).
+`veille_sync` est **idempotent** (dédup par `Message-ID`) et **robuste** : fallback **HTML→texte**
+(les communiqués sont souvent HTML-only), extraction des **images** (`<img>`, liens image,
+**pièces jointes** sauvées en local) et des **liens** du mail (kit presse we.tl/Dropbox/Drive
+détectés), HTML brut conservé (`corps_html`, ré-extractible). Relancer le sync **complète** les
+communiqués existants sans doublon. Export MCP : un JSON autonome par article dans `exports/veille/`
+(titre, slug, meta, tags, image de référence locale, galerie, corps, liens internes + liens sources).
+
+> Les images/contenus proviennent des mails : il faut **relancer `veille_sync`** (creds IMAP dans
+> `.env.local`) pour rapatrier le contenu — les items ingérés avant cette version n'ont pas de corps.
 Pré-rédaction humanisée : la voix éditoriale est décrite dans `apps/veille/plume_therese.md`
 et injectée dans le prompt ; la génération s'appuie sur le binaire `claude` local (aucune clé API).
 Les brouillons (`draft_statut` : brouillon → validé → publié) et le **calendrier de publication**
