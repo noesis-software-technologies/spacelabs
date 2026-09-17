@@ -55,10 +55,14 @@ class Command(BaseCommand):
             return
 
         ok = fail = 0
+        tot_cost = tot_in = tot_out = 0
         for it in items:
             self.stdout.write(f"→ [{it.categorie}] {it.sujet[:60]} … ", ending="")
             self.stdout.flush()
-            draft = generer_draft(it.sujet, it.corps, it.categorie, timeout=o["timeout"])
+            draft, meta = generer_draft(it.sujet, it.corps, it.categorie, timeout=o["timeout"])
+            tot_cost += meta.get("cost_usd", 0.0)
+            tot_in += meta.get("input_tokens", 0)
+            tot_out += meta.get("output_tokens", 0)
             if not draft:
                 fail += 1
                 self.stdout.write(self.style.ERROR("échec (claude indispo / sortie non parsable)"))
@@ -80,3 +84,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"OK « {draft['titre'][:50]} »"))
 
         self.stdout.write(self.style.SUCCESS(f"\nTerminé : {ok} brouillon(s), {fail} échec(s)."))
+        self.stdout.write(self.style.NOTICE(
+            f"Usage claude — coût cumulé ~${tot_cost:.4f} · "
+            f"{tot_in} tokens in · {tot_out} tokens out "
+            f"(abonnement Claude Code, pas de facturation API au token)."))

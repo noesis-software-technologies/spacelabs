@@ -127,17 +127,37 @@ def corps_to_html(chapo: str, corps: str) -> str:
     return "\n".join(out)
 
 
-def generer_draft(sujet: str, corps: str, categorie: str, timeout: int = 180) -> dict | None:
-    """Appelle le `claude` local et renvoie {titre, chapo, corps} ou None."""
+def generer_draft(sujet: str, corps: str, categorie: str, timeout: int = 180):
+    """Appelle le `claude` local. Renvoie (draft|None, meta).
+
+    meta = {cost_usd, input_tokens, output_tokens, duration_ms} (usage renvoyé
+    par le CLI, `--output-format json`). Sur abonnement Claude Code : pas de
+    facturation API au token, `cost_usd` reflète l'équivalent rapporté par le CLI.
+    """
     claude = getattr(settings, "COCKPIT_CLAUDE_BIN", "claude")
     prompt = build_prompt(sujet, corps, categorie)
+    meta = {"cost_usd": 0.0, "input_tokens": 0, "output_tokens": 0, "duration_ms": 0}
     try:
         proc = subprocess.run(
-            [claude, "-p", prompt],
+            [claude, "-p", prompt, "--output-format", "json"],
             capture_output=True, text=True, timeout=timeout,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        return None
+        return None, meta
     if proc.returncode != 0:
-        return None
-    return _parse_json(proc.stdout)
+        return None, meta
+    text = proc.stdout
+    try:
+        env = json.loads(proc.stdout)
+        if isinstance(env, dict):
+            text = env.get("result", "") or ""
+            u = env.get("usage") or {}
+            meta = {
+                "cost_usd": float(env.get("total_cost_usd") or 0.0),
+                "input_tokens": int(u.get("input_tokens") or 0),
+                "output_tokens": int(u.get("output_tokens") or 0),
+                "duration_ms": int(env.get("duration_ms") or 0),
+            }
+    except (json.JSONDecodeError, ValueError, TypeError):
+        pass
+    return _parse_json(text), meta
