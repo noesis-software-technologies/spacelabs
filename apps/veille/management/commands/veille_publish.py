@@ -75,7 +75,7 @@ class Command(BaseCommand):
             "title": it.seo_title or it.draft_titre or it.sujet,
             "body_html": corps_to_html(it.draft_chapo, it.draft_corps),
             "meta_description": it.meta_description,
-            "meta_keywords": it.tags or [],
+            "meta_keywords": ", ".join(it.tags or []),
             "category_slugs": [it.categorie],
             "internal_links": internal,
             "external_backlinks": external,
