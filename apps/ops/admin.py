@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import MCPAlert, RuntimeHeartbeat, UsageSnapshot
+from .models import MCPAlert, RuntimeHeartbeat, SessionTrace, UsageSnapshot
+
+
+@admin.register(SessionTrace)
+class SessionTraceAdmin(admin.ModelAdmin):
+    list_display = ["date", "projet", "source", "workspace", "sessions",
+                    "conversations", "tokens_out", "cost_usd"]
+    list_filter = ["projet", "source", "workspace"]
+    search_fields = ["projet", "resume"]
+    list_editable = ["cost_usd"]
+    date_hierarchy = "date"
 
 
 @admin.register(UsageSnapshot)

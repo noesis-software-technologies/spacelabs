@@ -29,6 +29,37 @@ def spacelabs_workspaces(request):
 
 
 @login_required
+def spacelabs_usage(request):
+    """Journal « Sessions & consommation » : tokens/coûts/sessions par projet."""
+    from decimal import Decimal
+
+    from django.db.models import Count, Sum
+
+    from apps.ops.models import SessionTrace
+    traces = list(SessionTrace.objects.select_related("workspace"))
+    # Agrégat par projet
+    projets = {}
+    for t in traces:
+        p = projets.setdefault(t.projet, {
+            "projet": t.projet, "cost": Decimal("0"), "tin": 0, "tout": 0,
+            "sessions": 0, "conversations": 0, "lignes": [],
+        })
+        p["cost"] += t.cost_usd or 0
+        p["tin"] += t.tokens_in
+        p["tout"] += t.tokens_out
+        p["sessions"] += t.sessions
+        p["conversations"] += t.conversations
+        p["lignes"].append(t)
+    projets = sorted(projets.values(), key=lambda x: -x["cost"])
+    agg = SessionTrace.objects.aggregate(
+        cost=Sum("cost_usd"), tin=Sum("tokens_in"), tout=Sum("tokens_out"),
+        sessions=Sum("sessions"), conversations=Sum("conversations"), n=Count("id"))
+    return render(request, "dashboard/usage.html", {
+        "active_nav": "usage", "projets": projets, "agg": agg,
+    })
+
+
+@login_required
 def spacelabs_dashboard(request):
     ctx = {"kpi": {}, "modules": [], "active_nav": "dashboard"}
     # Vitrine

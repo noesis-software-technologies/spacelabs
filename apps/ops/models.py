@@ -84,3 +84,37 @@ class MCPAlert(models.Model):
 
     def __str__(self):
         return f"pane={self.pane_id} MCP {'résolu' if self.resolved else 'à traiter'}"
+
+
+class SessionTrace(models.Model):
+    """Trace quantifiable d'un travail mené (session/conversation) attribuée à un
+    projet et/ou un workspace : sessions, conversations, tokens, coût. Alimente la
+    vue « Sessions & consommation » (visibilité superuser sur tous les projets)."""
+    SOURCES = [
+        ("telegram", "Telegram (chat)"),
+        ("cockpit", "Cockpit (agents)"),
+        ("veille", "Veille éditoriale"),
+        ("comms", "Inbox / comms"),
+        ("scraping", "Scraping / prospection"),
+        ("autre", "Autre"),
+    ]
+    ref = models.SlugField(max_length=120, blank=True, help_text="Clé idempotente (seed)")
+    projet = models.CharField(max_length=120)
+    workspace = models.ForeignKey("workspaces.Workspace", null=True, blank=True,
+                                  on_delete=models.SET_NULL, related_name="traces")
+    source = models.CharField(max_length=20, choices=SOURCES, default="autre")
+    sessions = models.PositiveIntegerField(default=0)
+    conversations = models.PositiveIntegerField(default=0)
+    tokens_in = models.PositiveIntegerField(default=0)
+    tokens_out = models.PositiveIntegerField(default=0)
+    cost_usd = models.DecimalField(max_digits=10, decimal_places=4, default=0)
+    resume = models.TextField(blank=True)
+    date = models.DateField(default=timezone.localdate)
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date", "-id"]
+        indexes = [models.Index(fields=["projet"]), models.Index(fields=["source"])]
+
+    def __str__(self):
+        return f"{self.projet} · {self.source} · ${self.cost_usd}"

@@ -5,7 +5,11 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 
 from apps.vitrine.views import landing
-from config.dashboard_view import spacelabs_dashboard, spacelabs_workspaces
+from config.dashboard_view import (
+    spacelabs_dashboard,
+    spacelabs_usage,
+    spacelabs_workspaces,
+)
 
 
 def healthz(_request):
@@ -32,6 +36,7 @@ urlpatterns = [
     path("comms/", include("apps.comms.urls")),
     path("dashboard/", spacelabs_dashboard, name="dashboard"),
     path("dashboard/workspaces/", spacelabs_workspaces, name="dashboard_workspaces"),
+    path("dashboard/usage/", spacelabs_usage, name="dashboard_usage"),
     path("django-admin/", admin.site.urls),
     path("healthz", healthz, name="healthz"),
 ]

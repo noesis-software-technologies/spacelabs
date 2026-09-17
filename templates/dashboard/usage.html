@@ -1,0 +1,58 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Sessions & consommation{% endblock %}
+{% block h1 %}Sessions & consommation{% endblock %}
+{% block crumb %}$ usage --par-projet{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.7rem 1.1rem;min-width:120px}
+    .kpi b{display:block;font-size:1.35rem;letter-spacing:-.02em}
+    .kpi span{font:.62rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
+    .proj{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden}
+    .proj > h2{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;border-bottom:1px solid var(--border);font-size:1rem}
+    .proj > h2 .tot{margin-left:auto;font:.72rem var(--mono);color:var(--muted)}
+    .proj > h2 .cost{color:var(--ink);font-weight:700}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    th{text-align:left;font:.6rem var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:.5rem 1rem;border-bottom:1px solid var(--surface2)}
+    td{padding:.5rem 1rem;border-bottom:1px solid var(--surface2);color:var(--muted)}
+    tr:last-child td{border-bottom:none}
+    td.n{font-family:var(--mono);color:var(--ink);text-align:right;white-space:nowrap}
+    .src{font:.58rem var(--mono);padding:.1rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .rz{color:var(--ink)}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="kpi"><b>${{ agg.cost|default:0|floatformat:2 }}</b><span>Coût cumulé</span></div>
+      <div class="kpi"><b>{{ agg.tout|default:0 }}</b><span>Tokens out</span></div>
+      <div class="kpi"><b>{{ agg.sessions|default:0 }}</b><span>Sessions</span></div>
+      <div class="kpi"><b>{{ agg.conversations|default:0 }}</b><span>Conversations</span></div>
+      <div class="kpi"><b>{{ agg.n|default:0 }}</b><span>Entrées</span></div>
+    </div>
+
+    {% for p in projets %}
+    <div class="proj">
+      <h2>{{ p.projet }}<span class="tot"><span class="cost">${{ p.cost|floatformat:2 }}</span> · {{ p.tout }} tok · {{ p.sessions }} sessions</span></h2>
+      <table>
+        <thead><tr><th>Date</th><th>Source</th><th>Workspace</th><th>Résumé</th><th style="text-align:right">Sess.</th><th style="text-align:right">Tok. out</th><th style="text-align:right">Coût $</th></tr></thead>
+        <tbody>
+        {% for t in p.lignes %}
+          <tr>
+            <td class="n">{{ t.date|date:"d/m/Y" }}</td>
+            <td><span class="src">{{ t.get_source_display }}</span></td>
+            <td>{{ t.workspace.name|default:"—" }}</td>
+            <td class="rz">{{ t.resume|default:"—" }}</td>
+            <td class="n">{{ t.sessions }}</td>
+            <td class="n">{{ t.tokens_out }}</td>
+            <td class="n">{{ t.cost_usd|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% empty %}
+    <p style="color:var(--faint)">Aucune trace enregistrée. Lance <code>python manage.py usage_seed</code> ou ajoute via l'admin.</p>
+    {% endfor %}
+
+    <p style="color:var(--faint);font-size:.78rem;margin-top:1rem">Ajout / édition : <a href="/django-admin/ops/sessiontrace/" style="color:var(--accent-ink)">admin → Session traces</a>.</p>
+{% endblock %}
