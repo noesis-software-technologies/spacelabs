@@ -38,6 +38,8 @@ env = environ.Env(
     ATMOSPHERE_MCP_URL=(str, "https://13-atmosphere.com/mcp/"),
     ATMOSPHERE_MCP_TOKEN=(str, ""),  # secret → .env.local
     PEXELS_API_KEY=(str, ""),  # secret → .env.local (fallback images libres de droit)
+    META_MCP_URL=(str, "https://mcp.facebook.com"),
+    META_MCP_TOKEN=(str, ""),  # secret → .env.local (Meta Business : WhatsApp / Instagram)
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -130,6 +132,10 @@ ATMOSPHERE_MCP_TOKEN = env("ATMOSPHERE_MCP_TOKEN")
 
 # Pexels — fallback images libres de droit (clé dans .env.local).
 PEXELS_API_KEY = env("PEXELS_API_KEY")
+
+# Meta Business MCP (WhatsApp / Instagram) — endpoint + token dans .env.local.
+META_MCP_URL = env("META_MCP_URL")
+META_MCP_TOKEN = env("META_MCP_TOKEN")
 
 # Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
 VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})
