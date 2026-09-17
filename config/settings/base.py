@@ -38,7 +38,7 @@ env = environ.Env(
     ATMOSPHERE_MCP_URL=(str, "https://13-atmosphere.com/mcp/"),
     ATMOSPHERE_MCP_TOKEN=(str, ""),  # secret → .env.local
     PEXELS_API_KEY=(str, ""),  # secret → .env.local (fallback images libres de droit)
-    META_MCP_URL=(str, "https://mcp.facebook.com"),
+    META_MCP_URL=(str, "https://mcp.facebook.com/devtools"),  # Meta Social Technologies MCP
     META_MCP_TOKEN=(str, ""),  # secret → .env.local (Meta Business : WhatsApp / Instagram)
 )
 environ.Env.read_env(BASE_DIR / ".env")
