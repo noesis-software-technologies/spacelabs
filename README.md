@@ -59,31 +59,46 @@ l'interface est un cadre et s'efface.
 | `/cockpit/` | Workspaces multi-agents |
 | `/django-admin/` | Admin |
 
-### Veille éditoriale (`apps/veille`)
-Ingestion des communiqués de presse (IMAP), catégorisation en 9 verticales, dispatch vers le blog cible.
-```bash
-python manage.py veille_seed    # crée les blogs (principal 13-atmosphere.com + catégories)
-python manage.py veille_sync    # ingère + catégorise + dispatche
-python manage.py veille_draft --limit 1   # pré-rédige un article dans la plume de Thérèse (via le claude local)
-python manage.py veille_media             # télécharge en local les images (ref + galerie) des communiqués
-python manage.py veille_link --all        # inter-maillage : articles liés (SEO + navigation)
-python manage.py veille_calendar --per-week 3   # planifie les dates de publication des brouillons prêts
-python manage.py veille_export --status valide  # exporte les articles en JSON (prêt pour publication via MCP)
-```
-`veille_draft` génère aussi le **SEO** (titre optimisé, meta description, tags, alt).
-`veille_sync` est **idempotent** (dédup par `Message-ID`) et **robuste** : fallback **HTML→texte**
-(les communiqués sont souvent HTML-only), extraction des **images** (`<img>`, liens image,
-**pièces jointes** sauvées en local) et des **liens** du mail (kit presse we.tl/Dropbox/Drive
-détectés), HTML brut conservé (`corps_html`, ré-extractible). Relancer le sync **complète** les
-communiqués existants sans doublon. Export MCP : un JSON autonome par article dans `exports/veille/`
-(titre, slug, meta, tags, image de référence locale, galerie, corps, liens internes + liens sources).
+### Veille éditoriale (`apps/veille`) — chaîne complète communiqué → blog
+Pipeline : ingestion IMAP → catégorisation (9 verticales) → **rédaction humanisée dans la plume de
+Thérèse** (via le `claude` local, sans clé API) → SEO → images → inter-maillage → calendrier →
+publication **en brouillon** vers le MCP de 13 Atmosphère (validation humaine côté blog).
 
-> Les images/contenus proviennent des mails : il faut **relancer `veille_sync`** (creds IMAP dans
-> `.env.local`) pour rapatrier le contenu — les items ingérés avant cette version n'ont pas de corps.
-Pré-rédaction humanisée : la voix éditoriale est décrite dans `apps/veille/plume_therese.md`
-et injectée dans le prompt ; la génération s'appuie sur le binaire `claude` local (aucune clé API).
-Les brouillons (`draft_statut` : brouillon → validé → publié) et le **calendrier de publication**
-apparaissent dans `/veille/` et l'admin.
+```bash
+python manage.py veille_seed              # crée les blogs (principal + catégories)
+python manage.py veille_pipeline          # ORCHESTRATION : sync→media→pexels→draft→link→calendar
+# …ou étape par étape :
+python manage.py veille_sync              # ingestion IMAP (idempotent, HTML→texte, images+PJ+liens)
+python manage.py veille_media             # télécharge les images des mails en local
+python manage.py veille_pexels            # fallback images libres de droit (Pexels) si visuel manquant
+python manage.py veille_draft --limit 10  # rédige (plume de Thérèse) + SEO ; rapporte le coût claude
+python manage.py veille_link --all        # inter-maillage : articles liés (backlinks SEO)
+python manage.py veille_calendar          # planifie (défaut : semaine +1)
+python manage.py veille_export            # export JSON autonome par article (exports/veille/)
+python manage.py veille_mcp_ping          # test connexion/sécurité du MCP
+python manage.py veille_publish --send    # pousse les brouillons validés vers le MCP (retry/backoff)
+```
+
+**Automatisation (cron)** : `*/30 * * * * cd /…/spacelabs && .venv/bin/python manage.py veille_pipeline`.
+
+**Surfaces** : `/veille/` (constellation + calendrier), `/veille/articles/` (list view, filtres,
+**pop-up quick view**, panneau **Suivi publication**), `/veille/articles/<id>/edit/` (revue :
+photo principale, galerie **drag-n-drop**, suppression d'image, date, contrôle des slugs).
+
+**Rédaction & SEO** : voix décrite dans `apps/veille/plume_therese.md` ; `veille_draft` produit
+titre, chapô, corps (rubriques), **seo_title / meta description / tags / alt**, et rapporte le
+**coût/tokens** (abonnement Claude Code, pas de facturation API au token).
+
+**Ingestion robuste** : `veille_sync` idempotent (dédup `Message-ID`), fallback **HTML→texte**,
+images (`<img>`, liens image, **pièces jointes** locales), liens du mail typés (kit presse
+we.tl/Dropbox/Drive), HTML brut conservé (`corps_html`).
+
+**Publication MCP** (draft only — 13-atmosphere seul publicateur) : `apps/veille/mcp.py` mappe nos
+articles sur `draft_article` + `set_cover_image` + `add_carousel_images`, avec **retry/backoff** sur
+503, **mapping des catégories** (`VEILLE_CATEGORY_MAP`) et **cascade récursive** de la constellation
+(pousser un article propose de pousser aussi les liés et les liés des liés). Suivi de l'état
+(brouillon/publié) via `list_drafts`. Secrets (`VEILLE_IMAP_*`, `ATMOSPHERE_MCP_TOKEN`,
+`PEXELS_API_KEY`) dans `.env.local` (gitignoré).
 
 ### Communication unifiée (`apps/comms`)
 Boîte de réception névralgique multi-canal + tri automatique (priorité, besoin de réponse).

@@ -5,12 +5,14 @@ liste veille. On ne crée que des **brouillons** (draft) : 13-atmosphere.com res
 le seul publicateur (validation humaine au calendrier).
 """
 import base64
+import time
 from pathlib import Path
 
 import requests
 from django.conf import settings
 from django.utils.timezone import now
 
+from .categories import blog_slugs
 from .redaction import corps_to_html
 
 
@@ -31,15 +33,25 @@ def image_arg(url: str, alt: str = "", name: str = "") -> dict:
     return arg
 
 
-def rpc(method: str, params: dict, rid: int = 1, timeout: int = 60) -> dict:
-    r = requests.post(
-        settings.ATMOSPHERE_MCP_URL, timeout=timeout,
-        headers={"Authorization": f"Bearer {settings.ATMOSPHERE_MCP_TOKEN}",
-                 "Content-Type": "application/json"},
-        json={"jsonrpc": "2.0", "id": rid, "method": method, "params": params},
-    )
-    r.raise_for_status()
-    return r.json()
+def rpc(method: str, params: dict, rid: int = 1, timeout: int = 60, retries: int = 3) -> dict:
+    """Appel JSON-RPC avec retry/backoff sur 503/502/504 (le blog flappe)."""
+    last = None
+    for attempt in range(retries):
+        r = requests.post(
+            settings.ATMOSPHERE_MCP_URL, timeout=timeout,
+            headers={"Authorization": f"Bearer {settings.ATMOSPHERE_MCP_TOKEN}",
+                     "Content-Type": "application/json"},
+            json={"jsonrpc": "2.0", "id": rid, "method": method, "params": params},
+        )
+        if r.status_code in (502, 503, 504) and attempt < retries - 1:
+            last = r
+            time.sleep(1.5 * (attempt + 1))  # backoff : 1.5s, 3s
+            continue
+        r.raise_for_status()
+        return r.json()
+    if last is not None:
+        last.raise_for_status()
+    return {}
 
 
 def payload(it) -> dict:
@@ -52,7 +64,7 @@ def payload(it) -> dict:
         "body_html": corps_to_html(it.draft_chapo, it.draft_corps),
         "meta_description": it.meta_description,
         "meta_keywords": ", ".join(it.tags or []),
-        "category_slugs": [it.categorie],
+        "category_slugs": blog_slugs(it.categorie),
         "internal_links": internal,
         "external_backlinks": external,
     }

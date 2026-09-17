@@ -131,6 +131,9 @@ ATMOSPHERE_MCP_TOKEN = env("ATMOSPHERE_MCP_TOKEN")
 # Pexels — fallback images libres de droit (clé dans .env.local).
 PEXELS_API_KEY = env("PEXELS_API_KEY")
 
+# Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
+VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
