@@ -3,7 +3,7 @@ from django.shortcuts import render
 
 
 def spacelabs_dashboard(request):
-    ctx = {"kpi": {}, "modules": []}
+    ctx = {"kpi": {}, "modules": [], "active_nav": "dashboard"}
     # Vitrine
     try:
         from apps.vitrine.catalogue import PRODUITS

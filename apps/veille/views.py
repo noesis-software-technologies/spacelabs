@@ -16,4 +16,5 @@ def dashboard(request):
     }
     return render(request, "veille/dashboard.html", {
         "blogs": blogs, "non_assignes": non_assignes, "stats": stats,
+        "active_nav": "veille",
     })

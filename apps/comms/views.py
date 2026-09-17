@@ -24,6 +24,7 @@ def inbox(request):
     }
     return render(request, "comms/inbox.html", {
         "prioritaires": prioritaires, "a_traiter": a_traiter, "reste": reste, "stats": stats,
+        "active_nav": "comms",
     })
 
 
