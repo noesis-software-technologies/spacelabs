@@ -45,12 +45,22 @@ Secrets dans `.env.local` (gitignoré) :
 | Images | `PEXELS_API_KEY` | fallback libre de droit |
 | WhatsApp / Instagram | via **Chatwoot** + **Meta Business** | inbox temps réel (voir ci-dessous) |
 
-**WhatsApp / Instagram (temps réel)** — nécessite Docker :
+**WhatsApp / Instagram (temps réel) — webhook natif** : SpaceLabs expose
+`POST /comms/meta/webhook/` (WhatsApp Cloud API + Instagram/Messenger). Config :
+```dotenv
+META_VERIFY_TOKEN=<chaîne choisie, à recopier dans l'app Meta>
+META_APP_SECRET=<app secret Meta>   # vérifie la signature X-Hub-Signature-256
+```
+Côté Meta (app → Webhooks) : URL de rappel = `https://<domaine-public>/comms/meta/webhook/`,
+verify token = `META_VERIFY_TOKEN`, abonner les champs `messages`. Les DM tombent
+alors dans `/comms/` (triage auto). L'app Meta se configure via le MCP
+`https://mcp.facebook.com/devtools` (`claude mcp add`) ou l'UI developers.facebook.com.
+
+Alternative clé en main (multi-canal) via Docker :
 ```bash
 bash deploy/chatwoot/setup.sh      # déploie Chatwoot (Docker)
 ```
-Puis brancher le **compte Meta Business** (WhatsApp Cloud API + Instagram) et un
-**endpoint HTTPS public** (serveur ou tunnel) pour recevoir les webhooks Meta.
+Dans les deux cas il faut un **endpoint HTTPS public** (serveur ou tunnel) pour recevoir les webhooks Meta.
 L'authentification des canaux Meta passe par **ton Meta Business** (OAuth), une fois
 par client. Email + Telegram fonctionnent sans Docker.
 

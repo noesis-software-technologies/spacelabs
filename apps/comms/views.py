@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
@@ -45,6 +45,77 @@ def inbox(request):
         "prioritaires": prioritaires, "a_traiter": a_traiter, "reste": reste, "stats": stats,
         "active_nav": "comms",
     })
+
+
+def _meta_ingest(payload):
+    """Parse un payload webhook Meta (WhatsApp + Instagram/Messenger) → Messages."""
+    created = 0
+    for entry in payload.get("entry", []):
+        # WhatsApp Cloud API : entry[].changes[].value.messages[]
+        for change in entry.get("changes", []):
+            value = change.get("value") or {}
+            noms = {c.get("wa_id"): (c.get("profile") or {}).get("name", "")
+                    for c in value.get("contacts", [])}
+            for m in value.get("messages", []):
+                frm = m.get("from", "")
+                text = (m.get("text") or {}).get("body", "") or m.get("type", "")
+                ext = f"wa-{m.get('id')}"
+                if Message.objects.filter(ext_id=ext).exists():
+                    continue
+                prio, needs, cat = triage(noms.get(frm) or frm, "", text)
+                Message.objects.create(
+                    channel="whatsapp", ext_id=ext, expediteur=noms.get(frm) or frm,
+                    sujet="", corps=text[:8000], recu_le=now(), categorie=cat,
+                    priorite=prio, needs_reply=needs, statut="nouveau")
+                created += 1
+        # Instagram / Messenger : entry[].messaging[]
+        for msg in entry.get("messaging", []):
+            message = msg.get("message") or {}
+            text = message.get("text", "")
+            if not text:
+                continue
+            sender = (msg.get("sender") or {}).get("id", "")
+            ext = f"ig-{message.get('mid') or msg.get('timestamp')}"
+            if Message.objects.filter(ext_id=ext).exists():
+                continue
+            prio, needs, cat = triage(sender, "", text)
+            Message.objects.create(
+                channel="instagram", ext_id=ext, expediteur=sender, sujet="",
+                corps=text[:8000], recu_le=now(), categorie=cat, priorite=prio,
+                needs_reply=needs, statut="nouveau")
+            created += 1
+    return created
+
+
+@csrf_exempt
+def meta_webhook(request):
+    """Webhook Meta (WhatsApp Cloud API + Instagram/Messenger).
+
+    GET  : vérification (hub.challenge) avec META_VERIFY_TOKEN.
+    POST : vérifie X-Hub-Signature-256 (HMAC-SHA256, META_APP_SECRET) puis ingère.
+    """
+    import hashlib
+    import hmac
+
+    from django.conf import settings
+    if request.method == "GET":
+        if (request.GET.get("hub.mode") == "subscribe"
+                and request.GET.get("hub.verify_token") == settings.META_VERIFY_TOKEN):
+            return HttpResponse(request.GET.get("hub.challenge", ""))
+        return HttpResponse("forbidden", status=403)
+
+    secret = settings.META_APP_SECRET
+    if secret:
+        sig = request.headers.get("X-Hub-Signature-256", "")
+        expected = "sha256=" + hmac.new(secret.encode(), request.body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return JsonResponse({"ok": False, "err": "signature"}, status=403)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        return JsonResponse({"ok": False}, status=400)
+    n = _meta_ingest(payload)
+    return JsonResponse({"ok": True, "ingested": n})
 
 
 @csrf_exempt

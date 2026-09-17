@@ -40,6 +40,8 @@ env = environ.Env(
     PEXELS_API_KEY=(str, ""),  # secret → .env.local (fallback images libres de droit)
     META_MCP_URL=(str, "https://mcp.facebook.com/devtools"),  # Meta Social Technologies MCP
     META_MCP_TOKEN=(str, ""),  # secret → .env.local (Meta Business : WhatsApp / Instagram)
+    META_VERIFY_TOKEN=(str, "spacelabs-verify"),  # webhook GET (à recopier dans l'app Meta)
+    META_APP_SECRET=(str, ""),  # secret → .env.local (vérif signature X-Hub-Signature-256)
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -136,6 +138,8 @@ PEXELS_API_KEY = env("PEXELS_API_KEY")
 # Meta Business MCP (WhatsApp / Instagram) — endpoint + token dans .env.local.
 META_MCP_URL = env("META_MCP_URL")
 META_MCP_TOKEN = env("META_MCP_TOKEN")
+META_VERIFY_TOKEN = env("META_VERIFY_TOKEN")
+META_APP_SECRET = env("META_APP_SECRET")
 
 # Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
 VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})
