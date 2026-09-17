@@ -1,0 +1,41 @@
+# Déploiement « vitrine » en un clic (Render) — https://render.com/deploy
+#
+# ⚠️ Portée : ce déploiement fait tourner les SURFACES WEB (landing, vitrine,
+# dashboard, observer vide) pour une DÉMO publique. Il NE lance PAS d'agents :
+# le cœur de SpaceLabs spawne le binaire `claude` local avec tes credentials
+# `~/.claude` — ça ne peut vivre que sur ta machine (cf. SECURITY.md). Pour le
+# vrai cockpit, installe en local (voir README « Démarrer »).
+services:
+  - type: web
+    name: spacelabs-demo
+    runtime: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py migrate --noinput
+      python manage.py collectstatic --noinput
+      python manage.py bootstrap_demo
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        sync: false          # mettre le host .onrender.com après création
+      - key: DEBUG
+        value: "False"
+      - key: LANGUAGE_CODE
+        value: en
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: REDIS_URL
+        fromService:
+          name: spacelabs-redis
+          type: redis
+          property: connectionString
+
+  - type: redis
+    name: spacelabs-redis
+    plan: free
+    ipAllowList: []          # interne uniquement

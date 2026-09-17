@@ -1,5 +1,13 @@
 # SpaceLabs
 
+🌍 **Français** · [English](README.en.md)
+
+[![CI](https://github.com/noesis/spacelabs/actions/workflows/ci.yml/badge.svg)](https://github.com/noesis/spacelabs/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
+[![Django 5.2](https://img.shields.io/badge/django-5.2-092E20.svg)](https://www.djangoproject.com/)
+[![Ruff](https://img.shields.io/badge/lint-ruff-orange.svg)](https://github.com/astral-sh/ruff)
+
 **Le cockpit web local-first pour piloter une flotte d'agents IA depuis votre navigateur.**
 
 Des dizaines d'agents qui codent, testent et livrent en parallèle sur votre machine.
@@ -150,7 +158,11 @@ Ce cockpit **exécute des process avec vos droits utilisateur** :
 
 Fonctionnalités détaillées dans [`CHANGELOG.md`](CHANGELOG.md), cap dans
 [`ROADMAP.md`](ROADMAP.md). Contributions bienvenues — lire
-[`CONTRIBUTING.md`](CONTRIBUTING.md) puis ouvrir une issue.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) et [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md),
+puis ouvrir une issue.
+
+Docs (MkDocs Material) : `pip install mkdocs-material && mkdocs serve`, ou voir
+[`docs/`](docs/).
 
 ## Licence
 

@@ -6,7 +6,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 
-from apps.models_routing.adapters import ChatEvent, ContextOverflow, OpenAIHttpAdapter, estimate_tokens
+from apps.models_routing.adapters import ContextOverflow, OpenAIHttpAdapter, estimate_tokens
 from apps.models_routing.models import MissionTokenBudget, ModelBackend, RoutingRule
 from apps.models_routing.router import NoBackendAvailable, record_usage, route
 from apps.tasker.models import Mission

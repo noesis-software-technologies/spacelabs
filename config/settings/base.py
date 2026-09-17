@@ -33,6 +33,7 @@ env = environ.Env(
     COCKPIT_STT_LANGUAGE=(str, "fr"),
     COCKPIT_STT_FAKE_TRANSCRIPT=(str, "ceci est une transcription de test"),
     TIME_ZONE=(str, "Europe/Paris"),
+    LANGUAGE_CODE=(str, "fr"),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -74,6 +75,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.common.middleware.LanTokenMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -119,7 +121,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "fr"
+# i18n : l'UI est francophone par défaut (public visé, cf. CONTRIBUTING) mais
+# l'infrastructure gettext est prête. Passe LANGUAGE_CODE=en pour l'anglais ;
+# les traductions vivent dans locale/ (django-admin makemessages -l en).
+LANGUAGE_CODE = env("LANGUAGE_CODE")
+LANGUAGES = [
+    ("fr", "Français"),
+    ("en", "English"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = env("TIME_ZONE")
 USE_I18N = True
 USE_TZ = True

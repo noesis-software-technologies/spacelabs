@@ -9,7 +9,7 @@ import urllib.request
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.timezone import now, make_aware
-from datetime import datetime, timezone as _tz
+from datetime import datetime
 
 from apps.comms.models import Message
 from apps.comms.triage import triage

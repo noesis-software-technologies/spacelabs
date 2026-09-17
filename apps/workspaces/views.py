@@ -1,8 +1,6 @@
 """Vues workspaces — orchestration seulement, Forms systématiques,
 double représentation via render_htmx, tenancy ``for_owner`` partout
 (l'objet d'un autre user ⇒ 404, jamais 403 bavard)."""
-import json
-import os
 from pathlib import Path
 
 from django.conf import settings as dj_settings
@@ -284,7 +282,6 @@ def obsidian_export(request, slug):
     vault_path.mkdir(parents=True, exist_ok=True)
 
     headless_panes = list(HeadlessPane.objects.filter(workspace=workspace))
-    pane_ids = [p.pk for p in headless_panes]
 
     # _workspace.md
     agent_links = "\n".join(f"- [[{p.title}]] `{p.model_id}`" for p in headless_panes)

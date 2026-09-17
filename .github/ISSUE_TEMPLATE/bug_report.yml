@@ -1,0 +1,49 @@
+name: 🐞 Bug report
+description: Signaler un dysfonctionnement / Report something broken
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de remonter un bug. Plus c'est reproductible, plus vite c'est corrigé.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Que s'est-il passé ? / What happened?
+      description: Décris le comportement observé et celui attendu.
+      placeholder: "Quand je fais X, j'obtiens Y ; j'attendais Z."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Étapes de reproduction / Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      placeholder: "git rev-parse --short HEAD"
+    validations:
+      required: false
+  - type: textarea
+    id: env
+    attributes:
+      label: Environnement / Environment
+      description: OS, version Python, navigateur, settings module (dev/prod).
+      placeholder: "WSL2 Ubuntu · Python 3.12 · Chrome · config.settings.dev"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Colle les logs pertinents (sans secrets !).
+      render: shell
+    validations:
+      required: false

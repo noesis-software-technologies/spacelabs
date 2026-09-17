@@ -31,19 +31,19 @@
 
     <div class="cols">
       <div class="col hot">
-        <h2>🔴 Prioritaire <span>{{ prioritaires|length }}</span></h2>
+        <h2>Prioritaire <span>{{ prioritaires|length }}</span></h2>
         {% for m in prioritaires %}
         <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
         {% empty %}<div class="empty">Rien d'urgent.</div>{% endfor %}
       </div>
       <div class="col rep">
-        <h2>✍️ À répondre <span>{{ a_traiter|length }}</span></h2>
+        <h2>À répondre <span>{{ a_traiter|length }}</span></h2>
         {% for m in a_traiter %}
         <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
         {% empty %}<div class="empty">Rien en attente.</div>{% endfor %}
       </div>
       <div class="col">
-        <h2>📥 Reste <span>{{ reste|length }}</span></h2>
+        <h2>Reste <span>{{ reste|length }}</span></h2>
         {% for m in reste %}
         <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
         {% empty %}<div class="empty">Vide.</div>{% endfor %}

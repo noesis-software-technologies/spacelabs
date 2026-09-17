@@ -1,0 +1,24 @@
+name: 💡 Feature request
+description: Proposer une idée ou une amélioration / Suggest an idea
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Le problème / The problem
+      description: Quel besoin ou frustration cette demande adresse-t-elle ?
+      placeholder: "En tant que pilote de flotte, je veux… pour…"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution envisagée / Proposed solution
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / Contexte
+    validations:
+      required: false

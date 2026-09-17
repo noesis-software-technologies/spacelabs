@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & discussions
+    url: https://github.com/noesis/spacelabs/discussions
+    about: Pour les questions d'usage, idées ouvertes et retours d'expérience.
+  - name: 🔐 Faille de sécurité / Security issue
+    url: https://github.com/noesis/spacelabs/security/advisories/new
+    about: Merci de signaler les failles en privé (voir SECURITY.md), pas en issue publique.

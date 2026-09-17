@@ -13,7 +13,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.utils import timezone
 
 logger = logging.getLogger("spacelabs.ops")

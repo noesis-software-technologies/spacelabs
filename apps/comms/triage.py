@@ -1,5 +1,4 @@
 """Tri automatique des messages entrants : priorité, besoin de réponse, catégorie."""
-import re
 
 URGENT = ["urgent", "asap", "au plus vite", "relance", "rappel", "deadline",
           "facture", "paiement", "impayé", "échéance", "aujourd'hui", "avant ce soir",
