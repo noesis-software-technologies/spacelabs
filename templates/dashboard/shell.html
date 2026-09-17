@@ -5,19 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block page_title %}SpaceLabs{% endblock %} — SpaceLabs</title>
   <style>
+    /* Design system « shadcn-like » — neutre zinc, quasi noir & blanc, sobre. */
     :root{
-      font-size:14px;
-      --bg:#0a0a12; --surface:#12121c; --surface2:#171728; --border:#24243a;
-      --ink:#ecebf5; --muted:#9a9ab5; --faint:#6b6b86;
-      --accent:#a855f7; --accent-ink:#c4a8ff;
-      --good:#4ade80; --warn:#fbbf24; --crit:#f87171;
-      --radius:14px; --sb:248px;
+      font-size:13.5px;
+      --bg:#09090b; --surface:#0c0c0f; --surface2:#18181b; --border:#27272a;
+      --ink:#fafafa; --muted:#a1a1aa; --faint:#71717a;
+      --accent:#fafafa; --accent-ink:#ffffff; --accent-fg:#09090b;
+      --accent-soft:#1c1c20; --ring:#3f3f46;
+      --good:#34d399; --warn:#fbbf24; --crit:#f87171;
+      --radius:8px; --sb:240px;
       --font:Inter,system-ui,-apple-system,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
     }
     [data-theme="light"]{
-      --bg:#f5f6fa; --surface:#ffffff; --surface2:#f0f1f7; --border:#e3e4ee;
-      --ink:#151522; --muted:#5c5c74; --faint:#8a8aa2;
-      --accent:#7c3aed; --accent-ink:#6d28d9;
+      --bg:#ffffff; --surface:#ffffff; --surface2:#f4f4f5; --border:#e4e4e7;
+      --ink:#09090b; --muted:#71717a; --faint:#a1a1aa;
+      --accent:#18181b; --accent-ink:#000000; --accent-fg:#ffffff;
+      --accent-soft:#f4f4f5; --ring:#d4d4d8;
       --good:#16a34a; --warn:#b45309; --crit:#dc2626;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -27,8 +30,9 @@
     .sb{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;
       padding:1.1rem .8rem;position:sticky;top:0;height:100vh;gap:.15rem;overflow-y:auto}
     .brand{display:flex;align-items:center;gap:.55rem;padding:.3rem .5rem 1.1rem;font-weight:800;font-size:1.05rem;letter-spacing:-.02em;text-decoration:none;color:inherit}
-    .brand svg{width:22px;height:22px;color:var(--accent)}
-    .brand b{background:linear-gradient(92deg,var(--accent),#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .brand svg{width:20px;height:20px;color:var(--ink)}
+    .brand b{color:var(--ink);font-weight:800}
+    :focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:6px}
     .sb-sec{font:600 .62rem/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--faint);padding:.9rem .6rem .35rem}
     .nav{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:9px;color:var(--muted);
       text-decoration:none;font-size:.86rem;font-weight:500;transition:background .15s,color .15s}
@@ -109,5 +113,9 @@
       btn.addEventListener('click',()=>apply(root.getAttribute('data-theme')==='dark'?'light':'dark'));
     })();
   </script>
+  {% load static %}
+  <script defer src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script defer src="{% static 'vendor/alpine/alpine.min.js' %}"></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>
