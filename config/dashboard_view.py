@@ -4,6 +4,31 @@ from django.shortcuts import render
 
 
 @login_required
+def spacelabs_workspaces(request):
+    """Liste des workspaces au design dashboard (extends dashboard/shell.html)."""
+    ctx = {"active_nav": "workspaces", "workspaces_rows": []}
+    try:
+        from apps.workspaces.models import Workspace
+        qs = Workspace.objects.all() if request.user.is_superuser \
+            else Workspace.objects.for_owner(request.user)
+        rows = []
+        for w in qs:
+            try:
+                n_panes = w.panes.filter(is_system=False).count()
+            except Exception:
+                n_panes = 0
+            rows.append({"name": w.name, "slug": w.slug,
+                         "cwd": getattr(w, "cwd", ""), "panes": n_panes,
+                         "owner": getattr(getattr(w, "owner", None), "username", "")})
+        ctx["workspaces_rows"] = rows
+        # workspaces_list alimente aussi la sidebar (prepend) du shell
+        ctx["workspaces_list"] = [{"name": r["name"], "slug": r["slug"]} for r in rows][:25]
+    except Exception:
+        pass
+    return render(request, "dashboard/workspaces.html", ctx)
+
+
+@login_required
 def spacelabs_dashboard(request):
     ctx = {"kpi": {}, "modules": [], "active_nav": "dashboard"}
     # Vitrine
