@@ -11,15 +11,25 @@ def spacelabs_workspaces(request):
         from apps.workspaces.models import Workspace
         qs = Workspace.objects.all() if request.user.is_superuser \
             else Workspace.objects.for_owner(request.user)
+        from decimal import Decimal
+
+        from django.db.models import Count, Sum
+
+        from apps.ops.models import SessionTrace
+        conso = {r["workspace"]: r for r in SessionTrace.objects.values("workspace").annotate(
+            cost=Sum("cost_usd"), tout=Sum("tokens_out"), sessions=Sum("sessions"), n=Count("id"))}
         rows = []
         for w in qs:
             try:
                 n_panes = w.panes.filter(is_system=False).count()
             except Exception:
                 n_panes = 0
+            c = conso.get(w.pk, {})
             rows.append({"name": w.name, "slug": w.slug,
                          "cwd": getattr(w, "cwd", ""), "panes": n_panes,
-                         "owner": getattr(getattr(w, "owner", None), "username", "")})
+                         "owner": getattr(getattr(w, "owner", None), "username", ""),
+                         "cost": c.get("cost") or Decimal("0"), "tokens": c.get("tout") or 0,
+                         "sessions": c.get("sessions") or 0, "traces": c.get("n") or 0})
         ctx["workspaces_rows"] = rows
         # workspaces_list alimente aussi la sidebar (prepend) du shell
         ctx["workspaces_list"] = [{"name": r["name"], "slug": r["slug"]} for r in rows][:25]

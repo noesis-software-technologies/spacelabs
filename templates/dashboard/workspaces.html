@@ -10,6 +10,12 @@
     .ws .cwd{font:.66rem var(--mono);color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .ws .meta{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;font-size:.72rem;color:var(--muted)}
     .pill{font:.6rem var(--mono);padding:.14rem .5rem;border-radius:999px;background:var(--surface2);color:var(--muted)}
+    .conso{display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:.2rem 0}
+    .conso .c{flex:1;padding:.5rem .6rem;text-align:center;border-right:1px solid var(--border)}
+    .conso .c:last-child{border-right:none}
+    .conso .c b{display:block;font-size:1rem;letter-spacing:-.01em;color:var(--ink)}
+    .conso .c span{font:.54rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+    .conso-link{font:.62rem var(--mono);color:var(--muted);text-decoration:none} .conso-link:hover{color:var(--accent-ink)}
     .ws .acts{display:flex;gap:.5rem;margin-top:auto;flex-wrap:wrap}
     .wbtn{padding:.45rem .8rem;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:.8rem;font-weight:600;text-decoration:none}
     .wbtn.primary{background:var(--accent);color:var(--accent-fg);border-color:transparent}
@@ -28,6 +34,12 @@
         <h2>{{ w.name }}</h2>
         <div class="cwd">{{ w.cwd|default:"~" }}</div>
         <div class="meta"><span class="pill">{{ w.panes }} agent{{ w.panes|pluralize }}</span>{% if w.owner %}<span class="pill">{{ w.owner }}</span>{% endif %}</div>
+        <div class="conso">
+          <div class="c"><b>${{ w.cost|floatformat:2 }}</b><span>coût</span></div>
+          <div class="c"><b>{{ w.tokens }}</b><span>tokens</span></div>
+          <div class="c"><b>{{ w.sessions }}</b><span>sessions</span></div>
+        </div>
+        <a class="conso-link" href="/dashboard/usage/">→ détail conso</a>
         <div class="acts">
           <a class="wbtn primary" href="/cockpit/{{ w.slug }}/">Ouvrir les agents</a>
           <a class="wbtn" href="/cockpit/{{ w.slug }}/fichiers/">Fichiers</a>
