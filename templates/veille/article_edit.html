@@ -24,6 +24,13 @@
     .gitem{display:flex;align-items:center;gap:.5rem;padding:.3rem;border:1px solid var(--border);border-radius:8px;background:var(--surface2);cursor:grab;font-size:.75rem}
     .gitem.drag{opacity:.4} .gitem img{width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0}
     .gitem .h{color:var(--faint);font:.62rem var(--mono)}
+    .gitem .del{margin-left:auto;border:1px solid var(--border);background:transparent;color:var(--crit);
+      border-radius:6px;padding:.15rem .45rem;font:.62rem var(--mono);cursor:pointer}
+    .gitem .del:hover{background:color-mix(in srgb,var(--crit) 14%,transparent);border-color:var(--crit)}
+    .thumb .del{position:absolute;top:2px;right:2px;border:none;background:color-mix(in srgb,var(--bg) 55%,transparent);
+      color:#fff;border-radius:6px;width:20px;height:20px;font:.7rem/1 var(--mono);cursor:pointer;display:none}
+    .thumb:hover .del{display:block}
+    .hint{font-size:.68rem;color:var(--faint);margin:.2rem 0 .4rem}
     .fld{margin:.3rem 0 .2rem} .fld label{display:block;font-size:.72rem;color:var(--muted);margin-bottom:.25rem}
     .fld input,.fld select{width:100%;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);font-family:var(--font);font-size:.85rem}
     .lien{display:flex;align-items:center;gap:.5rem;font-size:.78rem;padding:.25rem 0;border-bottom:1px solid var(--surface2)}
@@ -45,16 +52,17 @@
 
       <aside class="panel" data-pk="{{ item.pk }}">
         <h3>Photo principale</h3>
+        <p class="hint">Clique une vignette = photo principale. La croix = retirer l'image.</p>
         <div class="thumbs" id="thumbs">
           {% for u in galerie %}
-          <div class="thumb {% if u == cover %}cover{% endif %}" data-url="{{ u }}"><img src="{{ u }}" alt=""></div>
-          {% empty %}<div class="h" style="grid-column:1/-1;color:var(--faint);font-size:.75rem">Aucune image. (fallback Pexels à venir)</div>{% endfor %}
+          <div class="thumb {% if u == cover %}cover{% endif %}" data-url="{{ u }}"><img src="{{ u }}" alt=""><button class="del" data-url="{{ u }}" title="Retirer">×</button></div>
+          {% empty %}<div class="h" style="grid-column:1/-1;color:var(--faint);font-size:.75rem">Aucune image (lance veille_pexels pour un fallback libre de droit).</div>{% endfor %}
         </div>
 
-        <h3>Ordre de la galerie</h3>
+        <h3>Ordre de la galerie <span class="hint">— glisser-déposer</span></h3>
         <ul class="glist" id="glist">
           {% for u in galerie %}
-          <li class="gitem" draggable="true" data-url="{{ u }}"><img src="{{ u }}" alt=""><span class="h">glisser pour réordonner</span></li>
+          <li class="gitem" draggable="true" data-url="{{ u }}"><img src="{{ u }}" alt=""><span class="h">☰ glisser</span><button class="del" data-url="{{ u }}" title="Retirer">retirer</button></li>
           {% endfor %}
         </ul>
 
@@ -93,14 +101,34 @@
             else{saved.textContent='échec ('+(d.err||'')+')';}
             return d;});
       }
-      // cover
+      // cover (ignore le clic sur le bouton retirer)
       document.getElementById('thumbs').addEventListener('click',e=>{
+        if(e.target.closest('.del'))return;
         const t=e.target.closest('.thumb'); if(!t)return;
         document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('cover'));
         t.classList.add('cover');
         const prev=document.getElementById('coverPrev'); prev.src=t.dataset.url; prev.style.display='';
         save({action:'cover',url:t.dataset.url});
       });
+      // supprimer une image (thumbs + liste galerie)
+      function wireDelete(container){
+        container.addEventListener('click',e=>{
+          const b=e.target.closest('.del'); if(!b)return;
+          e.stopPropagation();
+          const url=b.dataset.url;
+          save({action:'delete_image',url}).then(d=>{
+            document.querySelectorAll('[data-url="'+CSS.escape(url)+'"]').forEach(el=>{
+              if(el.classList.contains('thumb')||el.classList.contains('gitem'))el.remove();
+            });
+            if(d&&d.image_ref!==undefined){
+              const prev=document.getElementById('coverPrev');
+              if(d.image_ref){prev.src=d.image_ref;prev.style.display='';}else{prev.style.display='none';}
+            }
+          });
+        });
+      }
+      wireDelete(document.getElementById('thumbs'));
+      wireDelete(document.getElementById('glist'));
       // pubdate + statut
       document.getElementById('pubdate').addEventListener('change',e=>save({action:'pubdate',date:e.target.value}));
       document.getElementById('statut').addEventListener('change',e=>save({action:'statut',statut:e.target.value}));

@@ -30,6 +30,23 @@
     .card p{font-size:.8rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
     .card .date{font:.62rem var(--mono);color:var(--faint);margin-top:auto}
     .count{color:var(--faint);font-size:.8rem;margin-left:auto}
+    .thumb{position:relative}
+    .quickbtn{position:absolute;top:6px;right:6px;z-index:2;border:none;color:#fff;cursor:pointer;
+      background:color-mix(in srgb,var(--accent) 88%,#000);font:.6rem var(--mono);padding:.28rem .55rem;border-radius:999px}
+    .quickbtn:hover{background:var(--accent)}
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:1.2rem}
+    .ov.on{display:flex}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:640px;width:100%;max-height:88vh;overflow:auto}
+    .mh{position:relative} .mh img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--surface2)}
+    .mclose{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:1rem;cursor:pointer}
+    .mb{padding:1.2rem} .mb h2{font-size:1.25rem;margin:.3rem 0 .5rem;letter-spacing:-.01em}
+    .mb .chapo{color:var(--muted);font-style:italic;margin-bottom:.7rem;font-size:.92rem}
+    .mb .exc{font-size:.84rem;color:var(--ink);line-height:1.6;max-height:170px;overflow:auto;white-space:pre-wrap}
+    .acts{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem;align-items:center}
+    .mbtn{padding:.55rem .9rem;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:.85rem;font-weight:600;cursor:pointer;text-decoration:none}
+    .mbtn.primary{background:var(--accent);color:#fff;border-color:transparent} .mbtn.primary:hover{background:var(--accent-ink)}
+    .mbtn.good{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good)}
+    .mmsg{font-size:.8rem;margin-top:.6rem;min-height:1em;color:var(--muted)}
 {% endblock %}
 
 {% block content %}
@@ -49,6 +66,7 @@
       {% for it in items %}
       <a class="card" href="{% url 'veille:article_detail' it.pk %}">
         <div class="thumb">
+          {% if it.draft_statut != 'vide' %}<button class="quickbtn" type="button" data-pk="{{ it.pk }}">Quick view</button>{% endif %}
           {% if it.image_ref %}<img src="{{ it.image_ref }}" alt="" loading="lazy">
           {% else %}<div class="ph">{{ it.get_categorie_display }}</div>{% endif %}
         </div>
@@ -68,4 +86,67 @@
       <p style="color:var(--faint)">Aucun article pour ce filtre.</p>
       {% endfor %}
     </div>
+
+    <div class="ov" id="ov">
+      <div class="modal">
+        <div class="mh"><img id="mCover" src="" alt=""><button class="mclose" id="mClose" type="button">×</button></div>
+        <div class="mb">
+          <div class="meta">
+            <span class="badge" id="mCat"></span>
+            <span class="badge" id="mStatut"></span>
+            <span class="badge" id="mDate"></span>
+          </div>
+          <h2 id="mTitle"></h2>
+          <div class="chapo" id="mChapo"></div>
+          <div class="exc" id="mCorps"></div>
+          <div class="acts">
+            <a class="mbtn" id="mEdit" href="#">Réviser en détail →</a>
+            <button class="mbtn good" id="mValidate" type="button">Valider</button>
+            <button class="mbtn primary" id="mPublish" type="button">Pousser en brouillon sur le blog</button>
+          </div>
+          <div class="mmsg" id="mMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      const ov=document.getElementById('ov'), msg=document.getElementById('mMsg');
+      let pk=null;
+      function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      function post(url,body){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},body:JSON.stringify(body||{})}).then(r=>r.json().then(d=>({s:r.status,d})));}
+      function open(id){
+        pk=id; msg.textContent='Chargement…'; ov.classList.add('on');
+        fetch(`/veille/articles/${id}/quick/`).then(r=>r.json()).then(d=>{
+          const c=document.getElementById('mCover');
+          if(d.cover){c.src=d.cover;c.style.display='';}else{c.style.display='none';}
+          document.getElementById('mTitle').textContent=d.titre||'';
+          document.getElementById('mChapo').textContent=d.chapo||'';
+          document.getElementById('mCorps').textContent=d.corps||'';
+          document.getElementById('mCat').textContent=d.categorie||'';
+          document.getElementById('mStatut').textContent=d.statut||'';
+          document.getElementById('mDate').textContent=d.publier_le?('publication '+d.publier_le):'non planifié';
+          document.getElementById('mEdit').href=`/veille/articles/${id}/edit/`;
+          msg.textContent=d.mcp_article_id?('Déjà sur le blog : article_id '+d.mcp_article_id):'';
+        });
+      }
+      function close(){ov.classList.remove('on');}
+      document.querySelectorAll('.quickbtn').forEach(b=>b.addEventListener('click',e=>{
+        e.preventDefault(); e.stopPropagation(); open(b.dataset.pk);
+      }));
+      document.getElementById('mClose').addEventListener('click',close);
+      ov.addEventListener('click',e=>{if(e.target===ov)close();});
+      document.getElementById('mValidate').addEventListener('click',()=>{
+        msg.textContent='…'; post(`/veille/articles/${pk}/save/`,{action:'statut',statut:'valide'})
+          .then(({d})=>{msg.textContent=d.ok?'Validé (statut « validé »).':'Échec validation.';});
+      });
+      document.getElementById('mPublish').addEventListener('click',()=>{
+        msg.textContent='Envoi du brouillon au blog (MCP)…';
+        post(`/veille/articles/${pk}/publish/`,{}).then(({s,d})=>{
+          if(d.ok){msg.innerHTML='Brouillon créé sur le blog — article_id <b>'+d.article_id+'</b>, '+(d.images||0)+' image(s). À valider/publier au calendrier 13-atmosphère.';}
+          else{msg.textContent='Échec MCP : '+(d.error||('HTTP '+s));}
+        });
+      });
+    })();
+    </script>
 {% endblock %}

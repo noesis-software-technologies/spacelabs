@@ -39,6 +39,7 @@ def dashboard(request):
 
 
 @login_required
+@ensure_csrf_cookie
 def articles(request):
     """List view des articles (communiqués + brouillons) avec image de référence."""
     cat = request.GET.get("cat", "")
@@ -122,6 +123,45 @@ def article_save(request, pk):
         if st in dict(PressItem.DRAFT_STATUT):
             item.draft_statut = st
             item.save(update_fields=["draft_statut"])
+    elif action == "delete_image":
+        url = str(data.get("url", ""))
+        item.images_local = [u for u in (item.images_local or []) if u != url]
+        item.images = [u for u in (item.images or []) if u != url]
+        item.galerie = [u for u in (item.galerie or []) if u != url]
+        if item.image_url == url:
+            item.image_url = ""
+        if item.cover_url == url:
+            item.cover_url = ""
+        item.save(update_fields=["images_local", "images", "galerie", "image_url", "cover_url"])
+        return JsonResponse({"ok": True, "image_ref": item.image_ref, "gallery": item.carrousel})
     else:
         return JsonResponse({"ok": False, "err": "action"}, status=400)
     return JsonResponse({"ok": True, "image_ref": item.image_ref})
+
+
+@login_required
+def article_quick(request, pk):
+    """Aperçu JSON pour la pop-up quick view de la liste."""
+    it = get_object_or_404(PressItem, pk=pk)
+    return JsonResponse({
+        "pk": it.pk,
+        "titre": it.draft_titre or it.sujet,
+        "chapo": it.draft_chapo,
+        "corps": (it.draft_corps or "")[:900],
+        "cover": it.image_ref,
+        "categorie": it.get_categorie_display(),
+        "statut": it.draft_statut,
+        "publier_le": it.publier_le.isoformat() if it.publier_le else "",
+        "mcp_article_id": it.mcp_article_id,
+        "images": len(it.carrousel),
+    })
+
+
+@login_required
+@require_POST
+def article_publish(request, pk):
+    """Pousse l'article comme BROUILLON sur le MCP 13 Atmosphère (jamais publié)."""
+    from apps.veille import mcp
+    it = get_object_or_404(PressItem, pk=pk)
+    res = mcp.publish_item(it)
+    return JsonResponse(res, status=200 if res.get("ok") else 502)

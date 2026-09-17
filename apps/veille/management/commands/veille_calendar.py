@@ -57,8 +57,12 @@ class Command(BaseCommand):
         if not weekdays:
             raise CommandError("Aucun jour de parution valide.")
 
-        start = (dt.date.fromisoformat(o["start"]) if o["start"]
-                 else timezone.localdate())
+        if o["start"]:
+            start = dt.date.fromisoformat(o["start"])
+        else:
+            # Par défaut : lundi de la semaine PROCHAINE (visibilité + réédition manuelle).
+            today = timezone.localdate()
+            start = today + dt.timedelta(days=(7 - today.weekday()))
         statuses = [s.strip() for s in o["status"].split(",") if s.strip()]
 
         qs = PressItem.objects.filter(draft_statut__in=statuses)
