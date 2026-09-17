@@ -37,6 +37,9 @@ env = environ.Env(
     LANDING_DEFAULT=(str, "clean"),  # "clean" (thème clair) | "showroom" (animée)
 )
 environ.Env.read_env(BASE_DIR / ".env")
+# Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
+if (BASE_DIR / ".env.local").exists():
+    environ.Env.read_env(BASE_DIR / ".env.local")
 
 SECRET_KEY = env("SECRET_KEY", default="dev-only-insecure-key-change-me")
 DEBUG = env("DEBUG")
