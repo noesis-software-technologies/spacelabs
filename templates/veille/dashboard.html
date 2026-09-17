@@ -18,12 +18,38 @@
     .item .st{font:.58rem var(--mono);color:var(--faint);flex-shrink:0}
     .item .sj{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+    .cal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.6rem}
+    .cal h2{font:600 .8rem/1 var(--font);padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+    .cal .row{display:flex;gap:.8rem;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
+    .cal .row:last-child{border-bottom:none}
+    .cal .date{font:.7rem var(--mono);color:var(--accent-ink);white-space:nowrap;min-width:96px}
+    .cal .cat{font:.58rem var(--mono);padding:.1rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+    .cal .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .dpill{display:inline-block;font:.6rem var(--mono);padding:.14rem .5rem;border-radius:999px;margin-right:.4rem;border:1px solid var(--border);color:var(--muted)}
+    .dpill b{color:var(--accent)}
 {% endblock %}
 
 {% block content %}
     <div class="vstats">
       <div class="vstat"><b>{{ stats.total }}</b> communiqués</div>
       {% for st, n in stats.par_statut.items %}<div class="vstat"><b>{{ n }}</b> {{ st }}</div>{% endfor %}
+    </div>
+
+    <div style="margin-bottom:1.4rem">
+      <span class="dpill">Brouillons — <b>{{ draft_stats.brouillon|default:0 }}</b> générés · <b>{{ draft_stats.valide|default:0 }}</b> validés · <b>{{ draft_stats.publie|default:0 }}</b> publiés</span>
+    </div>
+
+    <div class="cal">
+      <h2>Calendrier de publication <span>{{ calendrier|length }} à venir</span></h2>
+      {% for it in calendrier %}
+      <div class="row">
+        <span class="date">{{ it.publier_le|date:"D d/m/Y" }}</span>
+        <span class="cat">{{ it.get_categorie_display }}</span>
+        <span class="tt">{{ it.draft_titre|default:it.sujet }}</span>
+      </div>
+      {% empty %}
+      <div class="empty">Aucune publication planifiée. Génère des brouillons (<code>veille_draft</code>) puis planifie (<code>veille_calendar</code>).</div>
+      {% endfor %}
     </div>
 
     <div class="grid">

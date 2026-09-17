@@ -54,6 +54,20 @@ class PressItem(models.Model):
     statut = models.CharField(max_length=20, choices=STATUT, default="nouveau")
     cree_le = models.DateTimeField(auto_now_add=True)
 
+    # ── Pré-rédaction (plume de Thérèse) ──
+    DRAFT_STATUT = [
+        ("vide", "Pas de brouillon"),
+        ("brouillon", "Brouillon généré"),
+        ("valide", "Validé"),
+        ("publie", "Publié"),
+    ]
+    draft_titre = models.CharField(max_length=300, blank=True)
+    draft_chapo = models.TextField(blank=True)
+    draft_corps = models.TextField(blank=True)
+    draft_statut = models.CharField(max_length=20, choices=DRAFT_STATUT, default="vide")
+    draft_genere_le = models.DateTimeField(null=True, blank=True)
+    publier_le = models.DateField(null=True, blank=True, help_text="Date de publication planifiée")
+
     class Meta:
         ordering = ["-recu_le", "-id"]
 

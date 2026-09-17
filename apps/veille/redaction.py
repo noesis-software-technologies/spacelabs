@@ -1,0 +1,97 @@
+"""Pré-rédaction humanisée dans la plume de Thérèse via le `claude` local.
+
+Cohérent avec la philosophie du projet (aucune clé API) : on spawn le binaire
+`claude` déjà authentifié sur la machine, en one-shot (`claude -p`), et on parse
+sa sortie JSON. Aucune info n'est inventée : le communiqué est la matière première.
+"""
+import json
+import re
+import subprocess
+from functools import lru_cache
+from pathlib import Path
+
+from django.conf import settings
+
+_PLUME_PATH = Path(__file__).parent / "plume_therese.md"
+
+CATEGORIE_ANGLE = {
+    "hotellerie": "le voyage, l'art de recevoir, l'échappée",
+    "design": "l'objet comme geste, la matière, l'atelier",
+    "mode": "la silhouette comme récit, la saison",
+    "food": "la table comme lieu de partage, le producteur",
+    "culture": "l'œuvre, le patrimoine, la rencontre",
+    "habitat": "l'espace habité, la lumière, l'architecture vécue",
+    "beaute": "le rituel, le soin comme attention à soi",
+    "societe": "la tendance vue de biais, avec recul",
+    "events": "l'événement comme rendez-vous, l'ambiance des lieux",
+    "autre": "l'angle atmosphère : ce que l'objet évoque, au-delà de la fiche",
+}
+
+
+@lru_cache(maxsize=1)
+def plume() -> str:
+    return _PLUME_PATH.read_text(encoding="utf-8")
+
+
+def build_prompt(sujet: str, corps: str, categorie: str) -> str:
+    angle = CATEGORIE_ANGLE.get(categorie, CATEGORIE_ANGLE["autre"])
+    matiere = (corps or "").strip()[:6000] or "(communiqué sans corps ; s'appuyer sur le sujet)"
+    return f"""Tu es Thérèse, la plume du blog déco & lifestyle 13 Atmosphère.
+Écris un article ORIGINAL à partir du communiqué de presse ci-dessous, dans TA voix.
+
+=== GUIDE DE PLUME (à respecter absolument) ===
+{plume()}
+
+=== ANGLE POUR CETTE CATÉGORIE ({categorie}) ===
+{angle}
+
+=== COMMUNIQUÉ (matière première — NE PAS recopier, réécrire à 100 %) ===
+Sujet : {sujet}
+Contenu :
+{matiere}
+
+=== CONSIGNE DE SORTIE ===
+Rends UNIQUEMENT un objet JSON valide, sans texte autour, sans balises de code,
+de la forme :
+{{"titre": "...", "chapo": "...", "corps": "..."}}
+- "titre" : évocateur, imagé (pas "Communiqué", pas la marque en premier mot).
+- "chapo" : 2 à 3 phrases qui posent l'atmosphère.
+- "corps" : 350 à 600 mots, paragraphes courts, rubriques en CAPITALES si pertinent,
+  ponctuation vivante, aucune donnée inventée (ni prix, ni date, ni citation absente).
+"""
+
+
+def _parse_json(out: str) -> dict | None:
+    out = out.strip()
+    # retire d'éventuelles clôtures ```json ... ```
+    out = re.sub(r"^```(?:json)?\s*|\s*```$", "", out, flags=re.S).strip()
+    m = re.search(r"\{.*\}", out, flags=re.S)
+    if not m:
+        return None
+    try:
+        data = json.loads(m.group(0))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict) or not data.get("corps"):
+        return None
+    return {
+        "titre": str(data.get("titre", "")).strip()[:300],
+        "chapo": str(data.get("chapo", "")).strip(),
+        "corps": str(data.get("corps", "")).strip(),
+    }
+
+
+def generer_draft(sujet: str, corps: str, categorie: str, timeout: int = 180) -> dict | None:
+    """Appelle le `claude` local et renvoie {titre, chapo, corps} ou None."""
+    claude = getattr(settings, "COCKPIT_CLAUDE_BIN", "claude")
+    prompt = build_prompt(sujet, corps, categorie)
+    try:
+        proc = subprocess.run(
+            [claude, "-p", prompt],
+            capture_output=True, text=True, timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    return _parse_json(proc.stdout)

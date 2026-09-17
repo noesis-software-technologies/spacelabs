@@ -64,7 +64,13 @@ Ingestion des communiqués de presse (IMAP), catégorisation en 9 verticales, di
 ```bash
 python manage.py veille_seed    # crée les blogs (principal 13-atmosphere.com + catégories)
 python manage.py veille_sync    # ingère + catégorise + dispatche
+python manage.py veille_draft --limit 1   # pré-rédige un article dans la plume de Thérèse (via le claude local)
+python manage.py veille_calendar --per-week 3   # planifie les dates de publication des brouillons prêts
 ```
+Pré-rédaction humanisée : la voix éditoriale est décrite dans `apps/veille/plume_therese.md`
+et injectée dans le prompt ; la génération s'appuie sur le binaire `claude` local (aucune clé API).
+Les brouillons (`draft_statut` : brouillon → validé → publié) et le **calendrier de publication**
+apparaissent dans `/veille/` et l'admin.
 
 ### Communication unifiée (`apps/comms`)
 Boîte de réception névralgique multi-canal + tri automatique (priorité, besoin de réponse).
