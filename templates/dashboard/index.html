@@ -92,6 +92,11 @@
     .wg-row .tag{font:.58rem var(--mono);color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
       border-radius:999px;padding:.08rem .45rem;flex-shrink:0;text-transform:uppercase}
     .wg-empty{padding:1rem;color:var(--faint);font-style:italic;font-size:.8rem}
+
+    /* ── CRUD ── */
+    .crud .cd a{color:var(--accent-ink);text-decoration:none;font-weight:600}
+    .crud .cd a:hover{text-decoration:underline}
+    .crud .cd .sep{color:var(--faint);margin:0 .35rem}
     @media(max-width:720px){body{grid-template-columns:1fr}.sb{position:fixed;z-index:50;transform:translateX(-100%)}}
   </style>
 </head>
@@ -170,6 +175,22 @@
         <a class="wg-row" href="/veille/"><span class="tag">{{ p.categorie }}</span><span class="wg-sub">{{ p.sujet|truncatechars:66 }}</span></a>
         {% empty %}<div class="wg-empty">Aucun communiqué.</div>{% endfor %}
       </section>
+    </div>
+
+    <div class="h2">Gestion (CRUD)</div>
+    <div class="cards crud">
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Workspaces</div>
+        <div class="cd"><a href="/django-admin/workspaces/workspace/">Liste</a><span class="sep">·</span><a href="/django-admin/workspaces/workspace/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Veille — Blogs</div>
+        <div class="cd"><a href="/django-admin/veille/blog/">Liste</a><span class="sep">·</span><a href="/django-admin/veille/blog/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v4H4zM4 12h16v8H4z"/></svg>Veille — Communiqués</div>
+        <div class="cd"><a href="/django-admin/veille/pressitem/">Liste / trier</a><span class="sep">·</span><a href="/django-admin/veille/pressitem/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Comms — Messages</div>
+        <div class="cd"><a href="/django-admin/comms/message/">Liste</a><span class="sep">·</span><a href="/django-admin/comms/message/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Missions</div>
+        <div class="cd"><a href="/django-admin/tasker/mission/">Liste</a><span class="sep">·</span><a href="/django-admin/tasker/mission/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Utilisateurs</div>
+        <div class="cd"><a href="/django-admin/comptes/user/">Liste</a><span class="sep">·</span><a href="/django-admin/comptes/user/add/">+ Ajouter</a></div></div>
     </div>
 
     <div class="h2">Accès rapide</div>
