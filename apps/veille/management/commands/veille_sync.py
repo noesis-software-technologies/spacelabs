@@ -47,6 +47,24 @@ def _plain(msg):
     return re.sub(r"\s+", " ", txt).strip()
 
 
+def _images(msg):
+    """Extrait les URLs d'images des parties HTML (hors pixels de tracking)."""
+    urls = []
+    parts = msg.walk() if msg.is_multipart() else [msg]
+    for part in parts:
+        if part.get_content_type() != "text/html":
+            continue
+        try:
+            html = part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8", "replace")
+        except Exception:
+            continue
+        for u in re.findall(r'<img[^>]+src=["\']?(https?://[^"\'>\s]+)', html, flags=re.I):
+            if u not in urls:
+                urls.append(u)
+    urls = [u for u in urls if not re.search(r"(pixel|track|/open|beacon|spacer|1x1)", u, re.I)]
+    return urls[:12]
+
+
 class Command(BaseCommand):
     help = "Ingestion IMAP des communiqués de Thérèse → PressItem catégorisés"
 
@@ -78,6 +96,7 @@ class Command(BaseCommand):
             mid = (msg.get("Message-ID") or f"uid-{i.decode()}").strip()
             sujet = _dec(msg.get("Subject")).replace("Fwd:", "").replace("Fwd :", "").strip()
             corps = _plain(msg)
+            imgs = _images(msg)
             cat = categorize(sujet, corps)
             recu = None
             try:
@@ -97,6 +116,11 @@ class Command(BaseCommand):
                     corps=corps[:5000],
                 ),
             )
+            # images : ne pas écraser un choix manuel
+            if imgs and not obj.images:
+                obj.image_url = obj.image_url or imgs[0]
+                obj.images = imgs
+                obj.save(update_fields=["image_url", "images"])
             # n'écrase pas un dispatch manuel déjà fait
             if is_new or obj.blog_cible is None:
                 obj.blog_cible = cible

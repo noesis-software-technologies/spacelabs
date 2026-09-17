@@ -68,6 +68,25 @@ class PressItem(models.Model):
     draft_genere_le = models.DateTimeField(null=True, blank=True)
     publier_le = models.DateField(null=True, blank=True, help_text="Date de publication planifiée")
 
+    # ── Visuels (image de référence + carrousel) ──
+    image_url = models.URLField(max_length=1000, blank=True, help_text="Image de référence (vignette)")
+    images = models.JSONField(default=list, blank=True, help_text="URLs d'images pour le carrousel")
+
+    @property
+    def image_ref(self):
+        """Vignette : image_url si posée, sinon la 1re image du carrousel."""
+        return self.image_url or (self.images[0] if self.images else "")
+
+    @property
+    def carrousel(self):
+        """Liste dédupliquée des images (ref en tête)."""
+        seen, out = set(), []
+        for u in ([self.image_url] if self.image_url else []) + list(self.images or []):
+            if u and u not in seen:
+                seen.add(u)
+                out.append(u)
+        return out
+
     class Meta:
         ordering = ["-recu_le", "-id"]
 
