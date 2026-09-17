@@ -34,6 +34,7 @@ env = environ.Env(
     COCKPIT_STT_FAKE_TRANSCRIPT=(str, "ceci est une transcription de test"),
     TIME_ZONE=(str, "Europe/Paris"),
     LANGUAGE_CODE=(str, "fr"),
+    LANDING_DEFAULT=(str, "clean"),  # "clean" (thème clair) | "showroom" (animée)
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -113,6 +114,9 @@ AUTH_USER_MODEL = "comptes.User"
 LOGIN_URL = "comptes:login"
 LOGIN_REDIRECT_URL = "workspaces:home"
 LOGOUT_REDIRECT_URL = "comptes:login"
+
+# Landing publique : "clean" (thème clair, défaut) ou "showroom" (animée).
+LANDING_DEFAULT = env("LANDING_DEFAULT")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

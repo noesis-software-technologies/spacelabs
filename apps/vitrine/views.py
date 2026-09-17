@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from django.conf import settings
 from django.shortcuts import render
 from django.templatetags.static import static
 from django.views.decorators.cache import cache_page
@@ -21,7 +22,12 @@ _PRODUITS_JSON = json.dumps([
 
 @cache_page(60)
 def landing(request):
-    return render(request, "landing.html", {
+    # Landing par défaut = clean (thème clair). La landing "showroom" animée
+    # (neural focus reel) devient une option de template : ?template=showroom,
+    # ou LANDING_DEFAULT=showroom dans l'environnement.
+    choice = request.GET.get("template") or getattr(settings, "LANDING_DEFAULT", "clean")
+    template = "landing_showroom.html" if choice == "showroom" else "landing.html"
+    return render(request, template, {
         "produits_json": _PRODUITS_JSON,
         "produits_count": len(PRODUITS),
     })
