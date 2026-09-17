@@ -27,6 +27,8 @@ class Command(BaseCommand):
                             help="Régénère même si un brouillon existe déjà.")
         parser.add_argument("--dry-run", action="store_true",
                             help="Affiche le prompt du 1er item sans appeler claude.")
+        parser.add_argument("--allow-empty", action="store_true",
+                            help="Rédige même les communiqués sans corps (défaut : ignorés).")
         parser.add_argument("--timeout", type=int, default=180)
 
     def handle(self, *args, **o):
@@ -35,6 +37,8 @@ class Command(BaseCommand):
             qs = qs.filter(categorie=o["categorie"])
         if not o["regenerate"]:
             qs = qs.exclude(draft_statut__in=["brouillon", "valide", "publie"])
+        if not o["allow_empty"]:
+            qs = qs.exclude(corps="")
         if o["limit"]:
             qs = qs[: o["limit"]]
 
