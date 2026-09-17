@@ -9,6 +9,7 @@ from pathlib import Path
 
 import requests
 from django.conf import settings
+from django.utils.timezone import now
 
 from .redaction import corps_to_html
 
@@ -77,7 +78,9 @@ def publish_item(it, with_images: bool = True, timeout: int = 60) -> dict:
     if not art:
         return {"ok": False, "error": "pas d'article_id renvoyé"}
     it.mcp_article_id = str(art)
-    it.save(update_fields=["mcp_article_id"])
+    it.mcp_pushed_at = now()
+    it.mcp_status = "draft"
+    it.save(update_fields=["mcp_article_id", "mcp_pushed_at", "mcp_status"])
     n_img = 0
     if with_images:
         try:
@@ -95,3 +98,29 @@ def publish_item(it, with_images: bool = True, timeout: int = 60) -> dict:
                     "images": 0, "warning": f"images non envoyées : {e}"}
     return {"ok": True, "article_id": art, "admin_url": sc.get("admin_url", ""),
             "slug": sc.get("slug", ""), "images": n_img}
+
+
+def refresh_statuses(timeout: int = 30) -> dict:
+    """Réconcilie l'état côté blog : list_drafts → 'draft' ; poussés absents = 'published'.
+
+    Un article poussé qui n'est plus dans les brouillons a été validé/publié par
+    l'équipe (accepté). Met à jour mcp_status localement. Renvoie {ok, draft, published}.
+    """
+    from .models import PressItem
+    if not settings.ATMOSPHERE_MCP_TOKEN:
+        return {"ok": False, "error": "token manquant"}
+    try:
+        res = rpc("tools/call", {"name": "list_drafts", "arguments": {}}, 1, timeout)
+    except requests.RequestException as e:
+        return {"ok": False, "error": str(e)}
+    sc = (res.get("result") or {}).get("structuredContent") or {}
+    draft_ids = {str(d.get("article_id")) for d in (sc.get("drafts") or [])}
+    n_draft = n_pub = 0
+    for it in PressItem.objects.exclude(mcp_article_id=""):
+        st = "draft" if it.mcp_article_id in draft_ids else "published"
+        if it.mcp_status != st:
+            it.mcp_status = st
+            it.save(update_fields=["mcp_status"])
+        n_draft += st == "draft"
+        n_pub += st == "published"
+    return {"ok": True, "draft": n_draft, "published": n_pub}

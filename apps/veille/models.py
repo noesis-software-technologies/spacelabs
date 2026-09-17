@@ -97,6 +97,10 @@ class PressItem(models.Model):
     # ── Publication MCP 13 Atmosphère ──
     mcp_article_id = models.CharField(max_length=64, blank=True,
                                       help_text="article_id renvoyé par le MCP après draft_article")
+    mcp_pushed_at = models.DateTimeField(null=True, blank=True, help_text="Dernière poussée vers le MCP")
+    MCP_STATUT = [("", "—"), ("draft", "Brouillon sur le blog"), ("published", "Publié (validé)")]
+    mcp_status = models.CharField(max_length=20, blank=True, choices=MCP_STATUT,
+                                  help_text="État côté blog (rafraîchi via list_drafts)")
 
     @property
     def toutes_images(self):

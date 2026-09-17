@@ -54,9 +54,19 @@ def articles(request):
     items = list(qs[:200])
     cats = [(slug, label, PressItem.objects.filter(categorie=slug).count())
             for slug, label in CATEGORIES]
+    # Suivi publication (2e panneau) : poussés aujourd'hui / 7 derniers jours
+    today = timezone.localdate()
+    pousses = list(PressItem.objects.exclude(mcp_pushed_at__isnull=True)
+                   .order_by("-mcp_pushed_at")[:60])
+    suivi_today = [p for p in pousses if p.mcp_pushed_at.date() == today]
+    suivi_semaine = [p for p in pousses
+                     if today - _dt.timedelta(days=7) <= p.mcp_pushed_at.date() < today]
     return render(request, "veille/articles.html", {
         "items": items, "cats": cats, "cat": cat, "etat": etat,
         "total": qs.count(), "active_nav": "veille",
+        "suivi_today": suivi_today, "suivi_semaine": suivi_semaine,
+        "suivi_pub": sum(1 for p in pousses if p.mcp_status == "published"),
+        "suivi_draft": sum(1 for p in pousses if p.mcp_status == "draft"),
     })
 
 
@@ -197,22 +207,54 @@ def article_publish(request, pk):
     return JsonResponse(res, status=200 if res.get("ok") else 502)
 
 
-@login_required
-@require_POST
-def article_publish_related(request, pk):
-    """Pousse en BROUILLON tous les articles liés (rédigés) encore absents du blog."""
-    from apps.veille import mcp
-    it = get_object_or_404(PressItem, pk=pk)
-    cibles = [lk["pk"] for lk in _liens_constellation(it)
-              if lk["redige"] and not lk["published"]]
-    resultats = []
-    for cpk in cibles:
+def _collect_related(item, limit=60):
+    """Parcours RÉCURSIF du graphe d'inter-maillage : liés, puis liés des liés…
+
+    Renvoie les PressItem rédigés, encore absents du blog, atteignables depuis
+    `item` (constellation connectée). Anti-cycle via l'ensemble `seen`.
+    """
+    from collections import deque
+    seen = {item.pk}
+    queue = deque(lk.get("pk") for lk in (item.liens_internes or []) if lk.get("pk"))
+    out = []
+    while queue and len(out) < limit:
+        cpk = queue.popleft()
+        if cpk in seen:
+            continue
+        seen.add(cpk)
         cible = PressItem.objects.filter(pk=cpk).first()
         if not cible:
             continue
+        if cible.draft_statut in ("brouillon", "valide", "publie") and not cible.mcp_article_id:
+            out.append(cible)
+        for lk in (cible.liens_internes or []):
+            if lk.get("pk") and lk["pk"] not in seen:
+                queue.append(lk["pk"])
+    return out
+
+
+@login_required
+@require_POST
+def article_publish_related(request, pk):
+    """Pousse en BROUILLON, en cascade récursive, toute la constellation connectée
+    (liés + liés des liés) encore absente du blog. 13-atmosphere reste publicateur."""
+    from apps.veille import mcp
+    it = get_object_or_404(PressItem, pk=pk)
+    resultats = []
+    for cible in _collect_related(it):
         r = mcp.publish_item(cible)
-        resultats.append({"pk": cpk, "titre": (cible.draft_titre or cible.sujet)[:80],
+        resultats.append({"pk": cible.pk, "titre": (cible.draft_titre or cible.sujet)[:80],
                           "ok": r.get("ok"), "article_id": r.get("article_id"),
                           "error": r.get("error")})
+        if not r.get("ok"):
+            break  # MCP tombé : on arrête proprement
     ok = sum(1 for r in resultats if r["ok"])
     return JsonResponse({"ok": True, "pousses": ok, "total": len(resultats), "resultats": resultats})
+
+
+@login_required
+@require_POST
+def mcp_status_refresh(request):
+    """Rafraîchit l'état de publication (brouillon/publié) via list_drafts du MCP."""
+    from apps.veille import mcp
+    return JsonResponse(mcp.refresh_statuses())
