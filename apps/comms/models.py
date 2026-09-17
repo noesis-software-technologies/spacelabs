@@ -26,6 +26,9 @@ class Message(models.Model):
     needs_reply = models.BooleanField(default=False)
     statut = models.CharField(max_length=12, choices=STATUTS, default="nouveau")
     cree_le = models.DateTimeField(auto_now_add=True)
+    # ── Brouillon de réponse IA ──
+    draft_reply = models.TextField(blank=True, help_text="Réponse suggérée (IA), à valider avant envoi")
+    reply_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-recu_le", "-id"]

@@ -19,6 +19,14 @@
     .from{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
     .subj{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+    .airep{margin-left:auto;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);background:transparent;color:var(--accent-ink);border-radius:999px;padding:.12rem .5rem;font:.56rem var(--mono);cursor:pointer}
+    .airep:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+    .reply{margin-top:.5rem}
+    .rtxt{width:100%;border:1px solid var(--border);background:var(--surface2);color:var(--ink);border-radius:8px;padding:.5rem;font:.78rem/1.5 var(--font);resize:vertical}
+    .ractions{display:flex;gap:.4rem;align-items:center;margin-top:.3rem}
+    .ractions button{border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:7px;padding:.25rem .6rem;font-size:.72rem;cursor:pointer}
+    .ractions button:hover{border-color:var(--accent)}
+    .rmsg{font:.62rem var(--mono);color:var(--faint)}
 {% endblock %}
 
 {% block content %}
@@ -32,21 +40,44 @@
     <div class="cols">
       <div class="col hot">
         <h2>Prioritaire <span>{{ prioritaires|length }}</span></h2>
-        {% for m in prioritaires %}
-        <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+        {% for m in prioritaires %}{% include "comms/_msg.html" %}
         {% empty %}<div class="empty">Rien d'urgent.</div>{% endfor %}
       </div>
       <div class="col rep">
         <h2>À répondre <span>{{ a_traiter|length }}</span></h2>
-        {% for m in a_traiter %}
-        <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+        {% for m in a_traiter %}{% include "comms/_msg.html" %}
         {% empty %}<div class="empty">Rien en attente.</div>{% endfor %}
       </div>
       <div class="col">
         <h2>Reste <span>{{ reste|length }}</span></h2>
-        {% for m in reste %}
-        <div class="msg"><div class="top"><span class="chip {{ m.channel }}">{{ m.channel }}</span><span class="from">{{ m.expediteur }}</span></div><div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div></div>
+        {% for m in reste %}{% include "comms/_msg.html" %}
         {% empty %}<div class="empty">Vide.</div>{% endfor %}
       </div>
     </div>
+
+    <script>
+    (function(){
+      function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      function gen(pk, box, btn){
+        const rmsg=box.querySelector('.rmsg'), txt=box.querySelector('.rtxt');
+        const old=btn.textContent; btn.textContent='…'; if(rmsg)rmsg.textContent='génération…';
+        box.querySelector('.reply').style.display='';
+        fetch(`/comms/message/${pk}/reply/`,{method:'POST',headers:{'X-CSRFToken':cookie('csrftoken')}})
+          .then(r=>r.json()).then(d=>{
+            btn.textContent=old;
+            if(d.ok){txt.value=d.reply; if(rmsg)rmsg.textContent='brouillon prêt';}
+            else{if(rmsg)rmsg.textContent='échec : '+(d.error||'');}
+          });
+      }
+      document.querySelector('.cols').addEventListener('click',e=>{
+        const box=e.target.closest('.msg'); if(!box)return;
+        const pk=box.dataset.pk;
+        if(e.target.closest('.airep')||e.target.closest('.rregen')){ gen(pk, box, e.target); }
+        else if(e.target.closest('.rcopy')){
+          const txt=box.querySelector('.rtxt'); txt.select();
+          navigator.clipboard.writeText(txt.value); const rmsg=box.querySelector('.rmsg'); if(rmsg)rmsg.textContent='copié';
+        }
+      });
+    })();
+    </script>
 {% endblock %}

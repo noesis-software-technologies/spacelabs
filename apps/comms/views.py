@@ -3,15 +3,32 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils.timezone import now
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 
 from .models import Message
 from .triage import triage
 
 
 @login_required
+@require_POST
+def message_reply(request, pk):
+    """Génère (ou régénère) un brouillon de réponse IA pour un message."""
+    from .reply import suggest_reply
+    msg = get_object_or_404(Message, pk=pk)
+    reply = suggest_reply(msg)
+    if not reply:
+        return JsonResponse({"ok": False, "error": "génération indisponible (claude)"}, status=502)
+    msg.draft_reply = reply
+    msg.reply_at = now()
+    msg.save(update_fields=["draft_reply", "reply_at"])
+    return JsonResponse({"ok": True, "reply": reply})
+
+
+@login_required
+@ensure_csrf_cookie
 def inbox(request):
     qs = Message.objects.exclude(statut="archive")
     prioritaires = list(qs.filter(priorite="haute")[:40])

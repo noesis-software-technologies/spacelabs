@@ -1,0 +1,16 @@
+<div class="msg" data-pk="{{ m.pk }}">
+  <div class="top">
+    <span class="chip {{ m.channel }}">{{ m.channel }}</span>
+    <span class="from">{{ m.expediteur }}</span>
+    <button class="airep" type="button" data-pk="{{ m.pk }}" title="Brouillon de réponse IA">Réponse IA</button>
+  </div>
+  <div class="subj">{{ m.sujet|default:m.corps|truncatechars:80 }}</div>
+  <div class="reply"{% if not m.draft_reply %} style="display:none"{% endif %}>
+    <textarea class="rtxt" rows="5">{{ m.draft_reply }}</textarea>
+    <div class="ractions">
+      <button class="rcopy" type="button">Copier</button>
+      <button class="rregen" type="button" data-pk="{{ m.pk }}">Régénérer</button>
+      <span class="rmsg"></span>
+    </div>
+  </div>
+</div>

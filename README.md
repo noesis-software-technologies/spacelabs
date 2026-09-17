@@ -129,6 +129,14 @@ La liste blanche `COCKPIT_ALLOWED_CMDS` décide seul de ce qui est spawnable.
 
 ## Démarrer
 
+**Le plus simple (installation en une commande, idempotent) :**
+```bash
+bash install.sh   # venv + deps + .env (SECRET_KEY) + migrations + démo « pilote »
+```
+Puis `source .venv/bin/activate && python manage.py runserver 0.0.0.0:8000 --settings=config.settings.dev`.
+Installation complète client (modèle local, OpenClaw, WhatsApp/Chatwoot) : voir [`docs/INSTALL.md`](docs/INSTALL.md).
+
+**Ou via make :**
 ```bash
 make setup    # dépendances + migrations + utilisateur local « pilote »
 make redis    # (optionnel en dev) Redis via docker compose
