@@ -142,6 +142,10 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# Médias téléchargés en local (images de communiqués sauvegardées pour le MCP)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ── Celery (broker = Redis ; les tâches arrivent au Sprint 5, la plomberie est J0) ──

@@ -33,6 +33,19 @@
     .src{margin-top:2rem;padding-top:1.2rem;border-top:1px solid var(--border)}
     .src h3{font:600 .68rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:.6rem}
     .src p{font-size:.85rem;color:var(--muted);line-height:1.6;white-space:pre-wrap}
+    .seo{margin-top:2rem;padding:1.1rem 1.2rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+    .seo h3{font:600 .68rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
+    .seo .g{font-size:.8rem;margin-bottom:.5rem}
+    .seo .g b{color:var(--faint);font:.62rem var(--mono);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.15rem}
+    .seo .serp .t{color:#1a0dab;font-size:1rem} .seo .serp .u{color:var(--good);font-size:.78rem}
+    [data-theme="dark"] .seo .serp .t{color:#8ab4f8}
+    .seo .serp .d{color:var(--muted);font-size:.82rem}
+    .tags{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.3rem}
+    .tag{font:.62rem var(--mono);padding:.14rem .5rem;border-radius:999px;background:var(--surface2);color:var(--muted)}
+    .liens{margin-top:1.6rem}
+    .liens h3{font:600 .68rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:.7rem}
+    .liens a{display:flex;gap:.5rem;align-items:center;padding:.5rem .2rem;border-bottom:1px solid var(--surface2);font-size:.85rem;color:var(--ink);text-decoration:none}
+    .liens a:hover{color:var(--accent)}
 {% endblock %}
 
 {% block content %}
@@ -71,6 +84,29 @@
         {% else %}
         <h2>{{ item.sujet }}</h2>
         <p class="chapo">Pas encore de brouillon. Lance <code>veille_draft</code> pour générer l'article dans la plume de Thérèse.</p>
+        {% endif %}
+
+        {% if item.seo_title or item.meta_description or item.tags %}
+        <div class="seo">
+          <h3>SEO &amp; méta</h3>
+          <div class="g serp">
+            <b>Aperçu Google</b>
+            <div class="t">{{ item.seo_title|default:item.draft_titre }}</div>
+            <div class="u">13-atmosphere.com › {{ item.slug }}</div>
+            <div class="d">{{ item.meta_description }}</div>
+          </div>
+          {% if item.tags %}<div class="g"><b>Tags</b><div class="tags">{% for t in item.tags %}<span class="tag">{{ t }}</span>{% endfor %}</div></div>{% endif %}
+          {% if item.image_alt %}<div class="g"><b>Alt image</b>{{ item.image_alt }}</div>{% endif %}
+        </div>
+        {% endif %}
+
+        {% if item.liens_internes %}
+        <div class="liens">
+          <h3>Articles liés (inter-maillage)</h3>
+          {% for l in item.liens_internes %}
+          <a href="{% url 'veille:article_detail' l.pk %}">› {{ l.titre }}</a>
+          {% endfor %}
+        </div>
         {% endif %}
 
         {% if item.corps %}

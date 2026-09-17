@@ -53,11 +53,16 @@ Contenu :
 === CONSIGNE DE SORTIE ===
 Rends UNIQUEMENT un objet JSON valide, sans texte autour, sans balises de code,
 de la forme :
-{{"titre": "...", "chapo": "...", "corps": "..."}}
+{{"titre": "...", "chapo": "...", "corps": "...", "seo_title": "...",
+  "meta_description": "...", "tags": ["...", "..."], "image_alt": "..."}}
 - "titre" : évocateur, imagé (pas "Communiqué", pas la marque en premier mot).
 - "chapo" : 2 à 3 phrases qui posent l'atmosphère.
 - "corps" : 350 à 600 mots, paragraphes courts, rubriques en CAPITALES si pertinent,
   ponctuation vivante, aucune donnée inventée (ni prix, ni date, ni citation absente).
+- "seo_title" : ~60 caractères, accrocheur et lisible en résultat Google.
+- "meta_description" : ~150-155 caractères, incitatif, sans guillemets.
+- "tags" : 4 à 6 mots-clés pertinents (minuscules).
+- "image_alt" : description courte de l'image de référence pour l'accessibilité/SEO.
 """
 
 
@@ -74,10 +79,17 @@ def _parse_json(out: str) -> dict | None:
         return None
     if not isinstance(data, dict) or not data.get("corps"):
         return None
+    tags = data.get("tags") or []
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",") if t.strip()]
     return {
         "titre": str(data.get("titre", "")).strip()[:300],
         "chapo": str(data.get("chapo", "")).strip(),
         "corps": str(data.get("corps", "")).strip(),
+        "seo_title": str(data.get("seo_title", "")).strip()[:300],
+        "meta_description": str(data.get("meta_description", "")).strip()[:320],
+        "tags": [str(t).strip().lower()[:40] for t in tags if str(t).strip()][:8],
+        "image_alt": str(data.get("image_alt", "")).strip()[:300],
     }
 
 

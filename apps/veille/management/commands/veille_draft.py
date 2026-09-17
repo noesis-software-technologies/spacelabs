@@ -8,6 +8,7 @@ Exemples :
   python manage.py veille_draft --regenerate --limit 5    # régénère par-dessus l'existant
 """
 from django.core.management.base import BaseCommand
+from django.utils.text import slugify
 from django.utils.timezone import now
 
 from apps.veille.models import PressItem
@@ -61,10 +62,16 @@ class Command(BaseCommand):
             it.draft_titre = draft["titre"]
             it.draft_chapo = draft["chapo"]
             it.draft_corps = draft["corps"]
+            it.seo_title = draft.get("seo_title", "")
+            it.meta_description = draft.get("meta_description", "")
+            it.tags = draft.get("tags", [])
+            it.image_alt = it.image_alt or draft.get("image_alt", "")
+            it.slug = it.slug or slugify(draft.get("seo_title") or draft["titre"])[:300]
             it.draft_statut = "brouillon"
             it.draft_genere_le = now()
             it.save(update_fields=["draft_titre", "draft_chapo", "draft_corps",
-                                   "draft_statut", "draft_genere_le"])
+                                   "seo_title", "meta_description", "tags", "image_alt",
+                                   "slug", "draft_statut", "draft_genere_le"])
             ok += 1
             self.stdout.write(self.style.SUCCESS(f"OK « {draft['titre'][:50]} »"))
 

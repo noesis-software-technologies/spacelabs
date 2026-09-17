@@ -40,3 +40,8 @@ urlpatterns = [
 # charge des modèles hors INSTALLED_APPS et explose.
 if "debug_toolbar" in settings.INSTALLED_APPS:
     urlpatterns = [path("__debug__/", include("debug_toolbar.urls"))] + urlpatterns
+
+# Sert les médias téléchargés en local pendant le dev (images des communiqués).
+if settings.DEBUG:
+    from django.conf.urls.static import static as _static
+    urlpatterns += _static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

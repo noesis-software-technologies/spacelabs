@@ -27,4 +27,10 @@ class PressItemAdmin(admin.ModelAdmin):
             "fields": ("draft_statut", "publier_le", "draft_genere_le",
                        "draft_titre", "draft_chapo", "draft_corps"),
         }),
+        ("SEO & méta", {
+            "fields": ("seo_title", "slug", "meta_description", "tags", "image_alt"),
+        }),
+        ("Visuels & inter-maillage", {
+            "fields": ("image_url", "images", "images_local", "liens_internes"),
+        }),
     )

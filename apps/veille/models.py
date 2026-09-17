@@ -71,15 +71,32 @@ class PressItem(models.Model):
     # ── Visuels (image de référence + carrousel) ──
     image_url = models.URLField(max_length=1000, blank=True, help_text="Image de référence (vignette)")
     images = models.JSONField(default=list, blank=True, help_text="URLs d'images pour le carrousel")
+    images_local = models.JSONField(default=list, blank=True,
+                                    help_text="Chemins locaux des images téléchargées (pour export MCP)")
+    image_alt = models.CharField(max_length=300, blank=True, help_text="Texte alternatif de l'image de référence")
+
+    # ── SEO / méta (prêt pour publication via MCP) ──
+    seo_title = models.CharField(max_length=300, blank=True, help_text="Titre optimisé SEO (~60 car.)")
+    meta_description = models.CharField(max_length=320, blank=True, help_text="Meta description (~155 car.)")
+    slug = models.SlugField(max_length=300, blank=True)
+    tags = models.JSONField(default=list, blank=True, help_text="Mots-clés / tags")
+
+    # ── Inter-maillage ──
+    liens_internes = models.JSONField(default=list, blank=True,
+                                      help_text="Articles liés : [{pk, titre, slug}]")
 
     @property
     def image_ref(self):
-        """Vignette : image_url si posée, sinon la 1re image du carrousel."""
+        """Vignette : local si téléchargé, sinon image_url, sinon 1re du carrousel."""
+        if self.images_local:
+            return self.images_local[0]
         return self.image_url or (self.images[0] if self.images else "")
 
     @property
     def carrousel(self):
-        """Liste dédupliquée des images (ref en tête)."""
+        """Liste dédupliquée des images (local prioritaire ; ref en tête)."""
+        if self.images_local:
+            return list(self.images_local)
         seen, out = set(), []
         for u in ([self.image_url] if self.image_url else []) + list(self.images or []):
             if u and u not in seen:
