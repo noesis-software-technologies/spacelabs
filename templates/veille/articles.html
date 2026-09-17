@@ -1,0 +1,233 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Articles — Veille{% endblock %}
+{% block h1 %}Articles — 13 Atmosphère{% endblock %}
+{% block crumb %}$ veille --articles{% endblock %}
+
+{% block extra_css %}
+    .filters{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem;align-items:center}
+    .chip{font:.72rem/1 var(--font);padding:.4rem .7rem;border-radius:999px;border:1px solid var(--border);
+      color:var(--muted);text-decoration:none;transition:.15s;white-space:nowrap}
+    .chip:hover{color:var(--ink);border-color:var(--accent)}
+    .chip.on{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--ink);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+    .chip b{color:var(--accent)}
+    .sep{width:1px;height:20px;background:var(--border);margin:0 .3rem}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.1rem}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;
+      display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:.15s}
+    .card:hover{border-color:var(--accent);transform:translateY(-2px)}
+    .thumb{aspect-ratio:16/10;background:var(--surface2);overflow:hidden;position:relative}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+      font:600 .7rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+      background:linear-gradient(135deg,var(--surface2),color-mix(in srgb,var(--accent) 12%,var(--surface)))}
+    .card .body{padding:.85rem 1rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
+    .card .meta{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+    .badge{font:.56rem var(--mono);padding:.12rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .badge.br{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+    .badge.va{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+    .badge.pu{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+    .card h3{font-size:.94rem;line-height:1.25;letter-spacing:-.01em}
+    .card p{font-size:.8rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .card .date{font:.62rem var(--mono);color:var(--faint);margin-top:auto}
+    .count{color:var(--faint);font-size:.8rem;margin-left:auto}
+    .arts-layout{display:grid;grid-template-columns:1fr 290px;gap:1.4rem;align-items:start}
+    @media(max-width:1000px){.arts-layout{grid-template-columns:1fr}}
+    .suivi{position:sticky;top:1rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
+    .suivi .sh{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem}
+    .suivi h3{font:600 .66rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+    .suivi .rf{margin-left:auto;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:8px;padding:.25rem .5rem;font:.6rem var(--mono);cursor:pointer}
+    .suivi .rf:hover{color:var(--ink);border-color:var(--accent)}
+    .suivi .kpis{display:flex;gap:.5rem;margin-bottom:.8rem}
+    .suivi .kpi{flex:1;background:var(--surface2);border-radius:9px;padding:.5rem;text-align:center}
+    .suivi .kpi b{display:block;font-size:1.1rem} .suivi .kpi span{font:.58rem var(--mono);color:var(--faint)}
+    .suivi h4{font:600 .6rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:.7rem 0 .35rem}
+    .srow{display:flex;align-items:center;gap:.45rem;padding:.28rem 0;border-bottom:1px solid var(--surface2);font-size:.76rem}
+    .srow:last-child{border-bottom:none}
+    .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .sdot.published{background:var(--good)} .sdot.draft{background:var(--warn)}
+    .srow .stt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .srow .stb{margin-left:auto;font:.55rem var(--mono);color:var(--faint);white-space:nowrap}
+    .suivi .vide{color:var(--faint);font-size:.74rem;font-style:italic;padding:.2rem 0}
+    .thumb{position:relative}
+    .quickbtn{position:absolute;top:6px;right:6px;z-index:2;border:none;color:#fff;cursor:pointer;
+      background:color-mix(in srgb,var(--accent) 88%,#000);font:.6rem var(--mono);padding:.28rem .55rem;border-radius:999px}
+    .quickbtn:hover{background:var(--accent)}
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:1.2rem}
+    .ov.on{display:flex}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:640px;width:100%;max-height:88vh;overflow:auto}
+    .mh{position:relative} .mh img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--surface2)}
+    .mclose{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:1rem;cursor:pointer}
+    .mb{padding:1.2rem} .mb h2{font-size:1.25rem;margin:.3rem 0 .5rem;letter-spacing:-.01em}
+    .mb .chapo{color:var(--muted);font-style:italic;margin-bottom:.7rem;font-size:.92rem}
+    .mb .exc{font-size:.84rem;color:var(--ink);line-height:1.6;max-height:170px;overflow:auto;white-space:pre-wrap}
+    .acts{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem;align-items:center}
+    .mbtn{padding:.55rem .9rem;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--ink);font-size:.85rem;font-weight:600;cursor:pointer;text-decoration:none}
+    .mbtn.primary{background:var(--accent);color:#fff;border-color:transparent} .mbtn.primary:hover{background:var(--accent-ink)}
+    .mbtn.good{border-color:color-mix(in srgb,var(--good) 45%,transparent);color:var(--good)}
+    .mmsg{font-size:.8rem;margin-top:.6rem;min-height:1em;color:var(--muted)}
+    .liens-c{margin-top:1rem;border-top:1px solid var(--border);padding-top:.8rem}
+    .liens-c h4{font:600 .64rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:.5rem}
+    .lrow{display:flex;align-items:center;gap:.5rem;font-size:.8rem;padding:.2rem 0}
+    .ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .ldot.pub{background:var(--good)} .ldot.miss{background:var(--warn)} .ldot.no{background:var(--faint)}
+    .lrow .lt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lrow .ls{margin-left:auto;font:.6rem var(--mono);color:var(--faint)}
+{% endblock %}
+
+{% block content %}
+    <div class="arts-layout">
+    <div class="arts-main">
+    <div class="filters">
+      <a class="chip {% if not cat %}on{% endif %}" href="?{% if etat %}etat={{ etat }}{% endif %}">Toutes</a>
+      {% for slug, label, n in cats %}
+      <a class="chip {% if cat == slug %}on{% endif %}" href="?cat={{ slug }}{% if etat %}&etat={{ etat }}{% endif %}">{{ label }} <b>{{ n }}</b></a>
+      {% endfor %}
+      <span class="sep"></span>
+      <a class="chip {% if etat == 'rediges' %}on{% endif %}" href="?{% if cat %}cat={{ cat }}&{% endif %}etat=rediges">Rédigés</a>
+      <a class="chip {% if etat == 'brouillon' %}on{% endif %}" href="?{% if cat %}cat={{ cat }}&{% endif %}etat=brouillon">Brouillons</a>
+      <a class="chip {% if etat == 'valide' %}on{% endif %}" href="?{% if cat %}cat={{ cat }}&{% endif %}etat=valide">Validés</a>
+      <span class="count">{{ total }} article{{ total|pluralize }}</span>
+    </div>
+
+    <div class="grid">
+      {% for it in items %}
+      <a class="card" href="{% url 'veille:article_detail' it.pk %}">
+        <div class="thumb">
+          {% if it.draft_statut != 'vide' %}<button class="quickbtn" type="button" data-pk="{{ it.pk }}">Quick view</button>{% endif %}
+          {% if it.image_ref %}<img src="{{ it.image_ref }}" alt="" loading="lazy">
+          {% else %}<div class="ph">{{ it.get_categorie_display }}</div>{% endif %}
+        </div>
+        <div class="body">
+          <div class="meta">
+            <span class="badge">{{ it.get_categorie_display }}</span>
+            {% if it.draft_statut == 'brouillon' %}<span class="badge br">brouillon</span>
+            {% elif it.draft_statut == 'valide' %}<span class="badge va">validé</span>
+            {% elif it.draft_statut == 'publie' %}<span class="badge pu">publié</span>{% endif %}
+          </div>
+          <h3>{{ it.draft_titre|default:it.sujet }}</h3>
+          <p>{{ it.draft_chapo|default:it.resume|default:it.corps }}</p>
+          <span class="date">{% if it.publier_le %}Publication {{ it.publier_le|date:"d/m/Y" }}{% elif it.recu_le %}Reçu {{ it.recu_le|date:"d/m/Y" }}{% endif %}</span>
+        </div>
+      </a>
+      {% empty %}
+      <p style="color:var(--faint)">Aucun article pour ce filtre.</p>
+      {% endfor %}
+    </div>
+    </div>{# /arts-main #}
+
+    <aside class="suivi">
+      <div class="sh">
+        <h3>Suivi publication</h3>
+        <button class="rf" id="rfBtn" type="button">Rafraîchir</button>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b>{{ suivi_pub }}</b><span>publiés</span></div>
+        <div class="kpi"><b>{{ suivi_draft }}</b><span>brouillons MCP</span></div>
+      </div>
+      <h4>Poussés aujourd'hui</h4>
+      {% for p in suivi_today %}
+      <div class="srow"><span class="sdot {{ p.mcp_status }}"></span><span class="stt">{{ p.draft_titre|default:p.sujet }}</span><span class="stb">{% if p.mcp_status == 'published' %}publié{% else %}brouillon{% endif %}</span></div>
+      {% empty %}<div class="vide">Rien poussé aujourd'hui.</div>{% endfor %}
+      <h4>7 derniers jours</h4>
+      {% for p in suivi_semaine %}
+      <div class="srow"><span class="sdot {{ p.mcp_status }}"></span><span class="stt">{{ p.draft_titre|default:p.sujet }}</span><span class="stb">{% if p.mcp_status == 'published' %}publié{% else %}brouillon{% endif %}</span></div>
+      {% empty %}<div class="vide">Rien cette semaine.</div>{% endfor %}
+      <div class="mmsg" id="rfMsg"></div>
+    </aside>
+    </div>{# /arts-layout #}
+
+    <div class="ov" id="ov">
+      <div class="modal">
+        <div class="mh"><img id="mCover" src="" alt=""><button class="mclose" id="mClose" type="button">×</button></div>
+        <div class="mb">
+          <div class="meta">
+            <span class="badge" id="mCat"></span>
+            <span class="badge" id="mStatut"></span>
+            <span class="badge" id="mDate"></span>
+          </div>
+          <h2 id="mTitle"></h2>
+          <div class="chapo" id="mChapo"></div>
+          <div class="exc" id="mCorps"></div>
+          <div class="acts">
+            <a class="mbtn" id="mEdit" href="#">Réviser en détail →</a>
+            <button class="mbtn good" id="mValidate" type="button">Valider</button>
+            <button class="mbtn primary" id="mPublish" type="button">Pousser en brouillon sur le blog</button>
+          </div>
+          <div class="mmsg" id="mMsg"></div>
+          <div class="liens-c" id="mLiens" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      const ov=document.getElementById('ov'), msg=document.getElementById('mMsg'), mLiens=document.getElementById('mLiens');
+      let pk=null;
+      function renderLiens(liens){
+        liens=liens||[];
+        if(!liens.length){mLiens.style.display='none';mLiens.innerHTML='';return;}
+        const miss=liens.filter(l=>l.redige&&!l.published);
+        let h='<h4>Constellation liée (inter-maillage)</h4>';
+        liens.forEach(l=>{
+          const cls=l.published?'pub':(l.redige?'miss':'no');
+          const st=l.published?'sur le blog':(l.redige?'à pousser':'pas rédigé');
+          h+='<div class="lrow"><span class="ldot '+cls+'"></span><span class="lt">'+(l.titre||'')+'</span><span class="ls">'+st+'</span></div>';
+        });
+        if(miss.length){h+='<div class="acts"><button class="mbtn primary" id="mRelated" type="button">Pousser les '+miss.length+' liés manquants (brouillons)</button></div>';}
+        mLiens.innerHTML=h; mLiens.style.display='';
+      }
+      function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      function post(url,body){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':cookie('csrftoken')},body:JSON.stringify(body||{})}).then(r=>r.json().then(d=>({s:r.status,d})));}
+      function open(id){
+        pk=id; msg.textContent='Chargement…'; ov.classList.add('on');
+        fetch(`/veille/articles/${id}/quick/`).then(r=>r.json()).then(d=>{
+          const c=document.getElementById('mCover');
+          if(d.cover){c.src=d.cover;c.style.display='';}else{c.style.display='none';}
+          document.getElementById('mTitle').textContent=d.titre||'';
+          document.getElementById('mChapo').textContent=d.chapo||'';
+          document.getElementById('mCorps').textContent=d.corps||'';
+          document.getElementById('mCat').textContent=d.categorie||'';
+          document.getElementById('mStatut').textContent=d.statut||'';
+          document.getElementById('mDate').textContent=d.publier_le?('publication '+d.publier_le):'non planifié';
+          document.getElementById('mEdit').href=`/veille/articles/${id}/edit/`;
+          msg.textContent=d.mcp_article_id?('Déjà sur le blog : article_id '+d.mcp_article_id):'';
+          renderLiens(d.liens);
+        });
+      }
+      mLiens.addEventListener('click',e=>{
+        if(!e.target.closest('#mRelated'))return;
+        msg.textContent='Envoi des articles liés au blog…';
+        post(`/veille/articles/${pk}/publish-related/`,{}).then(({d})=>{
+          if(d.ok){msg.textContent=d.pousses+'/'+d.total+' article(s) lié(s) poussé(s) en brouillon.';
+            fetch(`/veille/articles/${pk}/quick/`).then(r=>r.json()).then(dd=>renderLiens(dd.liens));
+          }else{msg.textContent='Échec cascade des liés.';}
+        });
+      });
+      function close(){ov.classList.remove('on');}
+      document.querySelectorAll('.quickbtn').forEach(b=>b.addEventListener('click',e=>{
+        e.preventDefault(); e.stopPropagation(); open(b.dataset.pk);
+      }));
+      const rfBtn=document.getElementById('rfBtn'), rfMsg=document.getElementById('rfMsg');
+      if(rfBtn){rfBtn.addEventListener('click',()=>{
+        rfMsg.textContent='Rafraîchissement…';
+        post(`/veille/mcp/status-refresh/`,{}).then(({d})=>{
+          if(d.ok){rfMsg.textContent=d.published+' publié(s), '+d.draft+' brouillon(s). Rechargement…';setTimeout(()=>location.reload(),700);}
+          else{rfMsg.textContent='Échec : '+(d.error||'MCP indisponible');}
+        });
+      });}
+      document.getElementById('mClose').addEventListener('click',close);
+      ov.addEventListener('click',e=>{if(e.target===ov)close();});
+      document.getElementById('mValidate').addEventListener('click',()=>{
+        msg.textContent='…'; post(`/veille/articles/${pk}/save/`,{action:'statut',statut:'valide'})
+          .then(({d})=>{msg.textContent=d.ok?'Validé (statut « validé »).':'Échec validation.';});
+      });
+      document.getElementById('mPublish').addEventListener('click',()=>{
+        msg.textContent='Envoi du brouillon au blog (MCP)…';
+        post(`/veille/articles/${pk}/publish/`,{}).then(({s,d})=>{
+          if(d.ok){var n=(d.lies_manquants||[]).length; msg.innerHTML='Brouillon créé sur le blog — article_id <b>'+d.article_id+'</b>, '+(d.images||0)+' image(s).'+(n?' <b>'+n+'</b> article(s) lié(s) pas encore sur le blog → « Pousser les liés manquants » ci-dessous pour une constellation cohérente.':' Constellation cohérente.');}
+          else{msg.textContent='Échec MCP : '+(d.error||('HTTP '+s));}
+        });
+      });
+    })();
+    </script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Tableau de bord{% endblock %}
+{% block h1 %}Tableau de bord{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.9rem;margin-bottom:1.8rem}
+    .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.05rem 1.1rem;position:relative;overflow:hidden}
+    .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.9}
+    .tile.g::before{background:var(--good)} .tile.w::before{background:var(--warn)} .tile.c::before{background:var(--crit)}
+    .tile .lab{font:600 .64rem/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+    .tile .num{font-size:2.1rem;font-weight:800;letter-spacing:-.03em;margin-top:.45rem;line-height:1}
+    .tile .hint{font-size:.72rem;color:var(--faint);margin-top:.35rem}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.9rem}
+    .card{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);padding:1rem 1.1rem;transition:transform .15s,border-color .15s,box-shadow .15s}
+    .card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 50%,var(--border));box-shadow:0 12px 30px color-mix(in srgb,#000 30%,transparent)}
+    .card .ct{display:flex;align-items:center;gap:.55rem;font-weight:700;font-size:.95rem}
+    .card .ct svg{width:18px;height:18px;color:var(--accent)}
+    .card .cd{font-size:.8rem;color:var(--muted);margin-top:.4rem;line-height:1.45}
+    .card .arrow{float:right;color:var(--faint)}
+    .widgets{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-bottom:.4rem}
+    @media(max-width:900px){.widgets{grid-template-columns:1fr}}
+    .wg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+    .wg-h{display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--border);font:600 .68rem/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .wg-h a{color:var(--accent);text-decoration:none;font-size:.68rem}
+    .wg-row{display:flex;align-items:center;gap:.55rem;padding:.5rem 1rem;border-bottom:1px solid var(--surface2);text-decoration:none;color:inherit;font-size:.8rem}
+    .wg-row:last-child{border-bottom:none} .wg-row:hover{background:var(--surface2)}
+    .wg-row .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+    .wg-row .dot.haute{background:var(--crit)} .wg-row .dot.normale{background:var(--accent)} .wg-row .dot.basse{background:var(--faint)}
+    .wg-from{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;flex-shrink:0}
+    .wg-sub{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .wg-row .tag{font:.58rem var(--mono);color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);border-radius:999px;padding:.08rem .45rem;flex-shrink:0;text-transform:uppercase}
+    .wg-empty{padding:1rem;color:var(--faint);font-style:italic;font-size:.8rem}
+    .crud .cd a{color:var(--accent-ink);text-decoration:none;font-weight:600}
+    .crud .cd a:hover{text-decoration:underline} .crud .cd .sep{color:var(--faint);margin:0 .35rem}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="tile"><div class="lab">Produits en prod</div><div class="num">{{ kpi.produits }}</div><div class="hint">vitrine active</div></div>
+      <div class="tile"><div class="lab">Communiqués RP</div><div class="num">{{ kpi.rp_total }}</div><div class="hint">veille 13 Atmosphère</div></div>
+      <div class="tile w"><div class="lab">RP à trier</div><div class="num">{{ kpi.rp_atrier }}</div><div class="hint">non catégorisés</div></div>
+      <div class="tile"><div class="lab">Blogs constellation</div><div class="num">{{ kpi.blogs }}</div><div class="hint">principal + catégories</div></div>
+      <div class="tile"><div class="lab">Messages inbox</div><div class="num">{{ kpi.msg_total }}</div><div class="hint">email + telegram</div></div>
+      <div class="tile w"><div class="lab">À répondre</div><div class="num">{{ kpi.msg_reply }}</div><div class="hint">en attente</div></div>
+      <div class="tile c"><div class="lab">Priorité haute</div><div class="num">{{ kpi.msg_haute }}</div><div class="hint">urgent</div></div>
+      <div class="tile g"><div class="lab">Workspaces</div><div class="num">{{ kpi.workspaces }}</div><div class="hint">agents</div></div>
+    </div>
+
+    <div class="widgets">
+      <section class="wg">
+        <div class="wg-h"><span>Inbox — à traiter</span><a href="/comms/">tout →</a></div>
+        {% for m in inbox_preview %}
+        <a class="wg-row" href="/comms/"><span class="dot {{ m.priorite }}"></span><span class="wg-from">{{ m.expediteur|truncatechars:24 }}</span><span class="wg-sub">{{ m.sujet|default:m.corps|truncatechars:60 }}</span></a>
+        {% empty %}<div class="wg-empty">Rien à traiter dans l'inbox.</div>{% endfor %}
+      </section>
+      <section class="wg">
+        <div class="wg-h"><span>Veille — derniers communiqués</span><a href="/veille/">tout →</a></div>
+        {% for p in veille_preview %}
+        <a class="wg-row" href="/veille/"><span class="tag">{{ p.categorie }}</span><span class="wg-sub">{{ p.sujet|truncatechars:66 }}</span></a>
+        {% empty %}<div class="wg-empty">Aucun communiqué.</div>{% endfor %}
+      </section>
+    </div>
+
+    <div class="h2">Gestion (CRUD)</div>
+    <div class="cards crud">
+      <div class="card"><div class="ct">Workspaces</div><div class="cd"><a href="/django-admin/workspaces/workspace/">Liste</a><span class="sep">·</span><a href="/django-admin/workspaces/workspace/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct">Veille — Blogs</div><div class="cd"><a href="/django-admin/veille/blog/">Liste</a><span class="sep">·</span><a href="/django-admin/veille/blog/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct">Veille — Communiqués</div><div class="cd"><a href="/django-admin/veille/pressitem/">Liste / trier</a><span class="sep">·</span><a href="/django-admin/veille/pressitem/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct">Comms — Messages</div><div class="cd"><a href="/django-admin/comms/message/">Liste</a><span class="sep">·</span><a href="/django-admin/comms/message/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct">Missions</div><div class="cd"><a href="/django-admin/tasker/mission/">Liste</a><span class="sep">·</span><a href="/django-admin/tasker/mission/add/">+ Ajouter</a></div></div>
+      <div class="card"><div class="ct">Utilisateurs</div><div class="cd"><a href="/django-admin/comptes/user/">Liste</a><span class="sep">·</span><a href="/django-admin/comptes/user/add/">+ Ajouter</a></div></div>
+    </div>
+
+    <div class="h2">Accès rapide</div>
+    <div class="cards">
+      <a class="card" href="/veille/"><div class="ct">Veille éditoriale <span class="arrow">→</span></div><div class="cd">Communiqués triés et dispatchés vers la constellation de blogs.</div></a>
+      <a class="card" href="/comms/"><div class="ct">Inbox unifié <span class="arrow">→</span></div><div class="cd">Email + Telegram dans un seul flux, priorisé par l'IA.</div></a>
+      <a class="card" href="/vitrine/"><div class="ct">Vitrine produits <span class="arrow">→</span></div><div class="cd">Les produits SpaceLabs en prod, portfolio animé.</div></a>
+      <a class="card" href="/observer/"><div class="ct">Observer <span class="arrow">→</span></div><div class="cd">Vue spectateur live des agents en action.</div></a>
+    </div>
+{% endblock %}

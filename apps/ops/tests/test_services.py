@@ -35,6 +35,7 @@ def _event(pane, seq, etype, normalized, origin="raw", when=None):
 @pytest.mark.django_db
 def test_usage_counts_active_panes(user, workspace, settings):
     settings.COCKPIT_MAX_PANES = 12
+    settings.COCKPIT_OWNER_MAX_PANES = 0
     PtyPane.objects.create(workspace=workspace, cmd="sh", status=Pane.Status.RUNNING)
     PtyPane.objects.create(workspace=workspace, cmd="sh", status=Pane.Status.DEAD)
     data = services.usage_for_owner(user)

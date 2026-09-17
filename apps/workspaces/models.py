@@ -202,7 +202,7 @@ class HeadlessPane(Pane):
         "modèle",
         max_length=100,
         choices=MODEL_CHOICES,
-        default="claude-sonnet-4-6",
+        default="claude-opus-4-6",
     )
     # Identifiant de session Claude Code (émis dans l'événement init). Persisté
     # pour reprendre EXACTEMENT cette conversation via --resume après un

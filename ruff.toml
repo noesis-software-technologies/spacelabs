@@ -1,0 +1,21 @@
+# Ruff — adoption progressive. On démarre sur un socle net et significatif
+# (vraies erreurs Pyflakes/pycodestyle) ; on durcira règle par règle ensuite.
+target-version = "py312"
+line-length = 100
+
+extend-exclude = [
+    ".venv",
+    "*/migrations/*",
+    "staticfiles",
+    "node_modules",
+]
+
+[lint]
+# E4/E7/E9 = erreurs pycodestyle réelles ; F = Pyflakes (imports/vars morts, etc.)
+select = ["E4", "E7", "E9", "F"]
+
+[lint.per-file-ignores]
+# Les settings importent volontairement de façon conditionnelle / tardive.
+"config/settings/*" = ["E402", "F401", "F403", "F405"]
+# Les tests tolèrent le sucre (semicolons, noms courts, imports après setup).
+"**/tests/**" = ["E402", "E702", "E741"]

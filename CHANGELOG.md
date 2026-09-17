@@ -3,6 +3,36 @@
 Toutes les évolutions notables. Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ;
 versionnage [SemVer](https://semver.org/lang/fr/).
 
+## [Non publié] — Prêt pour l'open source (adoption)
+
+### Ajouté
+
+- **Communauté** : `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, bilingue),
+  templates GitHub `.github/ISSUE_TEMPLATE/` (bug, feature, config) et
+  `PULL_REQUEST_TEMPLATE.md`.
+- **CI durcie** : job `lint` (ruff) ajouté au workflow, déclenchement sur toutes
+  les branches + PR, `concurrency` (annulation des runs redondants), vérification
+  des migrations à jour. Config `ruff.toml` (socle E4/E7/E9/F, adoption
+  progressive) ; `ruff` ajouté à `requirements-dev.txt` et aux cibles `make lint`
+  / `make check`.
+- **i18n** : `LocaleMiddleware`, `LOCALE_PATHS` (`locale/`), `LANGUAGES` (fr/en) et
+  `LANGUAGE_CODE` pilotable par l'environnement (défaut `fr`). Infrastructure
+  gettext prête pour l'anglais sans changer le comportement par défaut.
+- **Docs** : squelette **MkDocs Material** (`mkdocs.yml` + `docs/index.md`,
+  `quickstart.md`, `architecture.md`, `security.md`) et **README anglais**
+  (`README.en.md`) avec bascule de langue + badges (CI, licence, Python, Django,
+  ruff) sur les deux README.
+- **Déploiement vitrine** : `render.yaml` (démo web en un clic, sans agents live —
+  portée documentée).
+
+### Corrigé
+
+- Charte de marque (`test_brand.py`) : suppression des emoji de l'inbox et des
+  occurrences visibles du mot « cockpit » (dashboard, shell, base, vitrine) —
+  5 tests repassent au vert.
+- Nettoyage lint : imports morts (F401) et variable inutilisée (F841) supprimés
+  dans 10 modules.
+
 ## [Non publié] — Full matrix observateur
 
 ### Ajouté

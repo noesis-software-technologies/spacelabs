@@ -1,5 +1,13 @@
 # SpaceLabs
 
+🌍 **Français** · [English](README.en.md)
+
+[![CI](https://github.com/noesis/spacelabs/actions/workflows/ci.yml/badge.svg)](https://github.com/noesis/spacelabs/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/)
+[![Django 5.2](https://img.shields.io/badge/django-5.2-092E20.svg)](https://www.djangoproject.com/)
+[![Ruff](https://img.shields.io/badge/lint-ruff-orange.svg)](https://github.com/astral-sh/ruff)
+
 **Le cockpit web local-first pour piloter une flotte d'agents IA depuis votre navigateur.**
 
 Des dizaines d'agents qui codent, testent et livrent en parallèle sur votre machine.
@@ -38,6 +46,63 @@ l'interface est un cadre et s'efface.
 
 ![Guillaume Studio — second workspace, sessions indépendantes](docs/screenshots/guillaume_studio.png)
 
+## Surfaces web
+
+| URL | Rôle |
+|---|---|
+| `/dashboard/` | **Cockpit central** — sidebar + tuiles KPI live, thème clair/sombre |
+| `/` | Landing publique — constellation neurale (Three.js) |
+| `/vitrine/` | Vitrine produits — portfolio animé, focus desktop |
+| `/veille/` | **Veille éditoriale** — RP triées → constellation de blogs *13 Atmosphère* |
+| `/comms/` | **Inbox unifié** — Email + Telegram, tri IA (priorité / à répondre) |
+| `/observer/` | Vue spectateur live | 
+| `/cockpit/` | Workspaces multi-agents |
+| `/django-admin/` | Admin |
+
+### Veille éditoriale (`apps/veille`)
+Ingestion des communiqués de presse (IMAP), catégorisation en 9 verticales, dispatch vers le blog cible.
+```bash
+python manage.py veille_seed    # crée les blogs (principal 13-atmosphere.com + catégories)
+python manage.py veille_sync    # ingère + catégorise + dispatche
+python manage.py veille_draft --limit 1   # pré-rédige un article dans la plume de Thérèse (via le claude local)
+python manage.py veille_media             # télécharge en local les images (ref + galerie) des communiqués
+python manage.py veille_link --all        # inter-maillage : articles liés (SEO + navigation)
+python manage.py veille_calendar --per-week 3   # planifie les dates de publication des brouillons prêts
+python manage.py veille_export --status valide  # exporte les articles en JSON (prêt pour publication via MCP)
+```
+`veille_draft` génère aussi le **SEO** (titre optimisé, meta description, tags, alt).
+`veille_sync` est **idempotent** (dédup par `Message-ID`) et **robuste** : fallback **HTML→texte**
+(les communiqués sont souvent HTML-only), extraction des **images** (`<img>`, liens image,
+**pièces jointes** sauvées en local) et des **liens** du mail (kit presse we.tl/Dropbox/Drive
+détectés), HTML brut conservé (`corps_html`, ré-extractible). Relancer le sync **complète** les
+communiqués existants sans doublon. Export MCP : un JSON autonome par article dans `exports/veille/`
+(titre, slug, meta, tags, image de référence locale, galerie, corps, liens internes + liens sources).
+
+> Les images/contenus proviennent des mails : il faut **relancer `veille_sync`** (creds IMAP dans
+> `.env.local`) pour rapatrier le contenu — les items ingérés avant cette version n'ont pas de corps.
+Pré-rédaction humanisée : la voix éditoriale est décrite dans `apps/veille/plume_therese.md`
+et injectée dans le prompt ; la génération s'appuie sur le binaire `claude` local (aucune clé API).
+Les brouillons (`draft_statut` : brouillon → validé → publié) et le **calendrier de publication**
+apparaissent dans `/veille/` et l'admin.
+
+### Communication unifiée (`apps/comms`)
+Boîte de réception névralgique multi-canal + tri automatique (priorité, besoin de réponse).
+```bash
+python manage.py comms_sync_email     # ingestion IMAP de la boîte
+python manage.py comms_sync_telegram  # ingestion DM Telegram (getUpdates)
+bash deploy/comms_poll.sh             # suivi constant (boucle détachée)
+```
+Omnicanal complet (WhatsApp / Instagram DM / SMS) via **Chatwoot** :
+`bash deploy/chatwoot/setup.sh` (nécessite Docker).
+
+### Secrets locaux
+Jamais commités. Copie `.env.example` → `.env`, et mets les identifiants IMAP/Telegram
+dans **`.env.local`** (gitignoré) :
+```bash
+VEILLE_IMAP_USER=…   VEILLE_IMAP_PASS=…
+COMMS_IMAP_USER=…    COMMS_IMAP_PASS=…    COMMS_TG_TOKEN=…
+```
+
 ## Aucune clé API
 
 SpaceLabs spawne les binaires CLI déjà authentifiés sur **votre** machine
@@ -54,6 +119,16 @@ make setup    # dépendances + migrations + utilisateur local « pilote »
 make redis    # (optionnel en dev) Redis via docker compose
 make run      # daphne sur http://127.0.0.1:8000
 ```
+
+Installation simplifiée (sans `make`) :
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py bootstrap_demo        # crée l'utilisateur « pilote »
+python manage.py runserver 0.0.0.0:8000 --settings=config.settings.dev
+```
+Puis ouvre **http://localhost:8000/dashboard/**.
 
 Connexion : `pilote` / `cockpit-local` (change-le). La page cockpit ouvre un
 pane terminal qui lance `COCKPIT_DEFAULT_CMD` dans un vrai PTY — ferme l'onglet,
@@ -102,7 +177,11 @@ Ce cockpit **exécute des process avec vos droits utilisateur** :
 
 Fonctionnalités détaillées dans [`CHANGELOG.md`](CHANGELOG.md), cap dans
 [`ROADMAP.md`](ROADMAP.md). Contributions bienvenues — lire
-[`CONTRIBUTING.md`](CONTRIBUTING.md) puis ouvrir une issue.
+[`CONTRIBUTING.md`](CONTRIBUTING.md) et [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md),
+puis ouvrir une issue.
+
+Docs (MkDocs Material) : `pip install mkdocs-material && mkdocs serve`, ou voir
+[`docs/`](docs/).
 
 ## Licence
 

@@ -33,8 +33,16 @@ env = environ.Env(
     COCKPIT_STT_LANGUAGE=(str, "fr"),
     COCKPIT_STT_FAKE_TRANSCRIPT=(str, "ceci est une transcription de test"),
     TIME_ZONE=(str, "Europe/Paris"),
+    LANGUAGE_CODE=(str, "fr"),
+    LANDING_DEFAULT=(str, "clean"),  # "clean" (thème clair) | "showroom" (animée)
+    ATMOSPHERE_MCP_URL=(str, "https://13-atmosphere.com/mcp/"),
+    ATMOSPHERE_MCP_TOKEN=(str, ""),  # secret → .env.local
+    PEXELS_API_KEY=(str, ""),  # secret → .env.local (fallback images libres de droit)
 )
 environ.Env.read_env(BASE_DIR / ".env")
+# Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
+if (BASE_DIR / ".env.local").exists():
+    environ.Env.read_env(BASE_DIR / ".env.local")
 
 SECRET_KEY = env("SECRET_KEY", default="dev-only-insecure-key-change-me")
 DEBUG = env("DEBUG")
@@ -65,6 +73,8 @@ INSTALLED_APPS = [
     "apps.models_routing",
     "apps.voice",
     "apps.vitrine",
+    "apps.veille",
+    "apps.comms",
 ]
 
 MIDDLEWARE = [
@@ -72,6 +82,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.common.middleware.LanTokenMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -110,6 +121,16 @@ LOGIN_URL = "comptes:login"
 LOGIN_REDIRECT_URL = "workspaces:home"
 LOGOUT_REDIRECT_URL = "comptes:login"
 
+# Landing publique : "clean" (thème clair, défaut) ou "showroom" (animée).
+LANDING_DEFAULT = env("LANDING_DEFAULT")
+
+# MCP de publication 13 Atmosphère (token dans .env.local).
+ATMOSPHERE_MCP_URL = env("ATMOSPHERE_MCP_URL")
+ATMOSPHERE_MCP_TOKEN = env("ATMOSPHERE_MCP_TOKEN")
+
+# Pexels — fallback images libres de droit (clé dans .env.local).
+PEXELS_API_KEY = env("PEXELS_API_KEY")
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -117,7 +138,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-LANGUAGE_CODE = "fr"
+# i18n : l'UI est francophone par défaut (public visé, cf. CONTRIBUTING) mais
+# l'infrastructure gettext est prête. Passe LANGUAGE_CODE=en pour l'anglais ;
+# les traductions vivent dans locale/ (django-admin makemessages -l en).
+LANGUAGE_CODE = env("LANGUAGE_CODE")
+LANGUAGES = [
+    ("fr", "Français"),
+    ("en", "English"),
+]
+LOCALE_PATHS = [BASE_DIR / "locale"]
 TIME_ZONE = env("TIME_ZONE")
 USE_I18N = True
 USE_TZ = True
@@ -125,6 +154,10 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Médias téléchargés en local (images de communiqués sauvegardées pour le MCP)
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

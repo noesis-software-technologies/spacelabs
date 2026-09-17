@@ -1,7 +1,6 @@
 """AUTH_USER_MODEL custom actif dès J0."""
 import pytest
 from django.conf import settings
-from django.contrib.auth import get_user_model
 
 
 def test_custom_user_model_is_wired():

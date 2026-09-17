@@ -15,6 +15,26 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+    /* Aurora animée en fond — vibe portfolio moderne */
+    body::before {
+      content: '';
+      position: fixed; inset: -20vmax;
+      z-index: -1;
+      background:
+        radial-gradient(38vmax 38vmax at 12% 8%,  hsl(26 93% 53% / .16), transparent 60%),
+        radial-gradient(32vmax 32vmax at 88% 4%,  hsl(280 80% 60% / .14), transparent 60%),
+        radial-gradient(40vmax 40vmax at 78% 92%, hsl(205 90% 55% / .14), transparent 62%),
+        radial-gradient(30vmax 30vmax at 8% 96%,  hsl(150 70% 50% / .12), transparent 60%);
+      filter: blur(8px);
+      animation: vt-aurora 26s ease-in-out infinite alternate;
+    }
+    @keyframes vt-aurora {
+      0%   { transform: translate3d(0,0,0)      scale(1); }
+      50%  { transform: translate3d(2vw,-1.5vh,0) scale(1.06); }
+      100% { transform: translate3d(-2vw,1.5vh,0) scale(1.03); }
     }
 
     /* ── Header ──────────────────────────────────────────────── */
@@ -23,15 +43,24 @@
       align-items: center;
       gap: 1rem;
       padding: 1.1rem 2rem;
-      border-bottom: 1px solid hsl(240 10% 10%);
+      border-bottom: 1px solid hsl(240 10% 10% / .7);
       flex-shrink: 0;
+      position: sticky; top: 0; z-index: 50;
+      background: hsl(240 11% 4% / .55);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
     }
     .vt-brand {
       display: flex; align-items: center; gap: .55rem;
-      font-size: 1rem; font-weight: 700; letter-spacing: -.02em;
+      font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em;
       color: hsl(var(--ds-fg)); text-decoration: none;
     }
-    .vt-brand svg { width: 22px; height: 22px; }
+    .vt-brand span.vt-brand-name {
+      background: linear-gradient(92deg, hsl(26 93% 58%), hsl(340 82% 62%) 45%, hsl(265 85% 68%) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .vt-brand svg { width: 22px; height: 22px; color: hsl(26 93% 58%); }
     .vt-count {
       font-size: .72rem;
       font-family: var(--ds-font-mono, monospace);
@@ -71,37 +100,166 @@
     .vt-search::placeholder { color: hsl(240 5% 40%); }
     .vt-search:focus { border-color: hsl(26 93% 53% / .5); }
 
-    /* ── Grille ───────────────────────────────────────────────── */
-    .vt-grid {
+    /* ── Scène : focus desktop (gauche) + grille 4 col (droite) ─── */
+    .vt-stage {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 1rem;
+      grid-template-columns: 5fr 7fr;
+      gap: 1.25rem;
       padding: 1.5rem 2rem;
       flex: 1;
+      align-items: start;
+    }
+
+    /* ── Focus carrousel (desktop) ────────────────────────────── */
+    .vt-feature {
+      position: sticky;
+      top: 84px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid hsl(240 10% 12%);
+      background:
+        linear-gradient(180deg,
+          color-mix(in srgb, var(--vt-accent-raw, #f77615) 12%, hsl(240 10% 5%)),
+          hsl(240 10% 5%) 60%);
+      box-shadow: 0 24px 60px hsl(240 11% 1% / .6),
+                  0 0 40px color-mix(in srgb, var(--vt-accent-raw, #f77615) 14%, transparent);
+      transition: box-shadow 400ms, background 400ms;
+    }
+    .vt-feature-frame {
+      position: relative;
+      display: flex; flex-direction: column;
+      margin: .9rem .9rem 0;
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid hsl(240 10% 16%);
+      background: hsl(240 9% 3%);
+      /* Aperçu desktop en pleine hauteur d'écran (≈100vh moins header + infos) */
+      height: calc(100vh - 14rem);
+      min-height: 380px;
+      box-shadow: 0 16px 40px hsl(240 11% 1% / .7);
+    }
+    /* Aperçu desktop = capture pleine LARGEUR (jamais rognée gauche/droite),
+       qui défile verticalement (translateY piloté en JS). Aucun iframe. */
+    .vt-feature-frame img {
+      position: absolute; top: 0; left: 0; z-index: 1;
+      width: 100%; height: auto;
+      border: none; display: block;
+      will-change: transform;
+      background: hsl(240 9% 4%);
+    }
+    .vt-feature-frame::after {
+      content: '';
+      position: absolute; inset: 0; z-index: 0;
+      background: hsl(240 9% 4%);
+    }
+    .vt-feature-badge {
+      position: absolute; top: .6rem; right: .6rem; z-index: 3;
+      font-size: .6rem; font-family: var(--ds-font-mono, monospace);
+      letter-spacing: .1em;
+      padding: .18rem .5rem; border-radius: 999px;
+      background: hsl(240 11% 3% / .7); backdrop-filter: blur(6px);
+      color: hsl(26 93% 62%); border: 1px solid hsl(26 93% 53% / .4);
+    }
+    .vt-feature-info { padding: 1rem 1.1rem 1.15rem; display: flex; flex-direction: column; gap: .5rem; }
+    .vt-feature-top { display: flex; align-items: center; gap: .55rem; }
+    .vt-feature-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--vt-accent-raw, #f77615); flex-shrink: 0; }
+    .vt-feature-name { font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; }
+    .vt-feature-cat {
+      margin-left: auto; font-size: .62rem; font-family: var(--ds-font-mono, monospace);
+      padding: .14rem .55rem; border-radius: 999px;
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 16%, hsl(240 9% 9%));
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 72%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 35%, transparent);
+    }
+    .vt-feature-tagline {
+      font-size: .95rem; font-weight: 600;
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 55%, white);
+    }
+    .vt-feature-desc { font-size: .82rem; line-height: 1.55; color: hsl(240 5% 62%); }
+    .vt-feature-foot { display: flex; align-items: center; gap: .7rem; margin-top: .2rem; }
+    .vt-feature-url {
+      font-family: var(--ds-font-mono, monospace); font-size: .68rem; color: hsl(240 5% 45%);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%;
+    }
+    .vt-feature-live {
+      font-size: .68rem; font-weight: 600; text-decoration: none;
+      padding: .2rem .6rem; border-radius: 999px;
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 78%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 45%, transparent);
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 12%, transparent);
+      transition: background 150ms, border-color 150ms;
+      white-space: nowrap;
+    }
+    .vt-feature-live:hover { background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 22%, transparent); }
+    .vt-feature-count {
+      margin-left: auto; font-size: .66rem; font-family: var(--ds-font-mono, monospace);
+      color: hsl(240 5% 50%);
+    }
+    .vt-feature-count b { color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 75%, white); }
+    .vt-feature-nav {
+      display: inline-flex; gap: .3rem;
+    }
+    .vt-feature-nav button {
+      width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 6px; border: 1px solid hsl(240 10% 15%); background: transparent;
+      color: hsl(240 5% 60%); cursor: pointer; font-size: .8rem; line-height: 1;
+      transition: color 150ms, border-color 150ms, background 150ms;
+    }
+    .vt-feature-nav button:hover { color: hsl(var(--ds-fg)); border-color: var(--vt-accent-raw, #f77615); }
+    .vt-feature-progress {
+      height: 3px; border-radius: 999px; background: hsl(240 10% 12%);
+      overflow: hidden; margin-top: .1rem;
+    }
+    .vt-feature-progress span {
+      display: block; height: 100%; width: 0;
+      background: var(--vt-accent-raw, #f77615);
+      box-shadow: 0 0 10px var(--vt-accent-raw, #f77615);
+    }
+    .vt-feature.is-playing .vt-feature-progress span { animation: vt-fill var(--dur, 8s) linear forwards; }
+    @keyframes vt-fill { from { width: 0; } to { width: 100%; } }
+
+    /* ── Grille (droite) 4 colonnes ───────────────────────────── */
+    .vt-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
       align-content: start;
     }
 
     /* ── Card produit ─────────────────────────────────────────── */
     .vt-card {
       position: relative;
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
       cursor: pointer;
       outline: none;
-      border: 1px solid hsl(240 10% 10%);
-      background: hsl(240 10% 6%);
+      border: 1px solid hsl(240 10% 12%);
+      background:
+        linear-gradient(180deg,
+          color-mix(in srgb, var(--vt-accent-raw, #f77615) 10%, hsl(240 10% 6%)),
+          hsl(240 10% 6%) 55%);
       aspect-ratio: 9/14;
       display: flex;
       flex-direction: column;
-      transition: transform 200ms var(--ds-ease-out, ease-out),
-                  border-color 200ms,
-                  box-shadow 200ms;
+      transition: transform 260ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)),
+                  border-color 260ms,
+                  box-shadow 260ms;
+    }
+    /* Barre d'accent colorée en haut de chaque carte */
+    .vt-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--vt-accent-raw, #f77615);
+      opacity: .85; z-index: 3;
+      box-shadow: 0 0 14px var(--vt-accent-raw, #f77615);
     }
     .vt-card:hover, .vt-card:focus-visible {
-      transform: translateY(-4px) scale(1.01);
+      transform: translateY(-6px) scale(1.02) rotate(-.5deg);
       border-color: var(--vt-accent, hsl(26 93% 53% / .5));
-      box-shadow: 0 16px 40px hsl(240 11% 2% / .6),
-                  0 0 0 1px var(--vt-accent, hsl(26 93% 53% / .3));
+      box-shadow: 0 22px 50px hsl(240 11% 2% / .7),
+                  0 0 34px color-mix(in srgb, var(--vt-accent-raw, #f77615) 30%, transparent),
+                  0 0 0 1px var(--vt-accent, hsl(26 93% 53% / .35));
     }
 
     /* Screenshot zone */
@@ -118,8 +276,54 @@
       object-position: top center;
       display: block;
       transition: transform 400ms var(--ds-ease-out, ease-out);
+      /* Défilement continu façon "visite mobile" — décalé par carte via --i */
+      animation: vt-pan 16s ease-in-out infinite;
+      animation-delay: calc(var(--i, 0) * -0.9s);
+      will-change: object-position;
     }
-    .vt-card:hover .vt-card-shot img { transform: scale(1.04); }
+    .vt-card:hover .vt-card-shot img {
+      transform: scale(1.04);
+      animation-play-state: paused;
+    }
+
+    /* Défilement vertical de l'aperçu (haut → bas → haut) */
+    @keyframes vt-pan {
+      0%,   6%  { object-position: top center; }
+      50%       { object-position: bottom center; }
+      94%, 100% { object-position: top center; }
+    }
+
+    /* Entrée en cascade des cartes */
+    .vt-card {
+      animation: vt-rise 520ms var(--ds-ease-out, cubic-bezier(.22,.61,.36,1)) backwards;
+      animation-delay: calc(var(--i, 0) * 35ms);
+    }
+    @keyframes vt-rise {
+      from { opacity: 0; transform: translateY(14px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* Indicateur LIVE (page en ligne en permanence) */
+    .vt-live {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .66rem; font-family: var(--ds-font-mono, monospace);
+      letter-spacing: .08em; color: hsl(125 44% 62%);
+      padding: .2rem .55rem;
+      background: hsl(125 44% 20% / .18);
+      border: 1px solid hsl(125 44% 40% / .35);
+      border-radius: 4px;
+    }
+    .vt-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: hsl(125 60% 55%);
+      box-shadow: 0 0 0 0 hsl(125 60% 55% / .7);
+      animation: vt-pulse 1.8s ease-out infinite;
+    }
+    @keyframes vt-pulse {
+      0%   { box-shadow: 0 0 0 0 hsl(125 60% 55% / .7); }
+      70%  { box-shadow: 0 0 0 7px hsl(125 60% 55% / 0); }
+      100% { box-shadow: 0 0 0 0 hsl(125 60% 55% / 0); }
+    }
 
     /* Placeholder quand pas de screenshot */
     .vt-card-shot-placeholder {
@@ -183,11 +387,11 @@
     .vt-badge {
       font-size: .62rem;
       font-family: var(--ds-font-mono, monospace);
-      padding: .12rem .45rem;
-      border-radius: 3px;
-      background: hsl(240 9% 9%);
-      color: hsl(240 5% 45%);
-      border: 1px solid hsl(240 10% 13%);
+      padding: .14rem .5rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--vt-accent-raw, #f77615) 16%, hsl(240 9% 9%));
+      color: color-mix(in srgb, var(--vt-accent-raw, #f77615) 70%, white);
+      border: 1px solid color-mix(in srgb, var(--vt-accent-raw, #f77615) 35%, transparent);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       max-width: 120px;
     }
@@ -298,11 +502,9 @@
 
     /* ── Mode TV / Chromecast ─────────────────────────────────── */
     body.tv-mode .vt-header { padding: 1.5rem 3rem; }
-    body.tv-mode .vt-grid {
-      padding: 2rem 3rem;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 1.5rem;
-    }
+    body.tv-mode .vt-stage { padding: 2rem 3rem; gap: 1.75rem; }
+    body.tv-mode .vt-grid { gap: 1.4rem; }
+    body.tv-mode .vt-feature-name { font-size: 1.35rem; }
     body.tv-mode .vt-card-nom { font-size: 1.05rem; }
     body.tv-mode .vt-card-tagline { font-size: .8rem; }
 
@@ -310,8 +512,18 @@
     .vt-card[hidden] { display: none; }
 
     /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .vt-stage { grid-template-columns: 1fr; }
+      .vt-feature { position: static; }
+      .vt-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .vt-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     @media (max-width: 600px) {
-      .vt-grid { grid-template-columns: repeat(2, 1fr); padding: 1rem; gap: .75rem; }
+      .vt-stage { padding: 1rem; gap: 1rem; }
+      .vt-feature-frame { height: 54vh; min-height: 260px; }
+      .vt-grid { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
       .vt-header { padding: .75rem 1rem; gap: .5rem; }
       .vt-search { width: 130px; }
       .vt-device--desktop { max-height: 44vh; }
@@ -320,6 +532,8 @@
 
     @media (prefers-reduced-motion: reduce) {
       .vt-card, .vt-card-shot img { transition: none; }
+      .vt-card, .vt-card-shot img, .vt-live-dot { animation: none !important; }
+      .vt-card-shot img { object-position: top center; }
     }
   </style>
 </head>
@@ -333,10 +547,12 @@
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
         <path d="M12.6 7.4 9 12.6h2.6l-.6 4.4 3.6-5.2h-2.6z" fill="currentColor" stroke="none"/>
       </svg>
-      SpaceLabs
+      <span class="vt-brand-name">SpaceLabs</span>
     </a>
     <span class="vt-count">{{ produits|length }} produits</span>
+    <span class="vt-live"><span class="vt-live-dot"></span>LIVE</span>
     <div class="vt-controls">
+      <a class="vt-btn" href="/dashboard/" title="Tableau de bord">‹ Dashboard</a>
       <input class="vt-search" type="search" id="vt-search" placeholder="Rechercher…" autocomplete="off">
       <button class="vt-btn" id="btn-tv" aria-pressed="false" title="Mode TV Chromecast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
@@ -349,8 +565,14 @@
     </div>
   </header>
 
-  <!-- Grille -->
-  <main class="vt-grid" id="vt-grid">
+  <!-- Scène : focus desktop (gauche) + grille 4 colonnes (droite) -->
+  <main class="vt-stage">
+
+    <!-- Focus carrousel — l'application en desktop (rempli par JS) -->
+    <section class="vt-feature" id="vt-feature" aria-label="Application en vedette"></section>
+
+    <!-- Grille produits (4 colonnes) -->
+    <div class="vt-grid" id="vt-grid">
     {% for p in produits %}
     <article class="vt-card"
              role="button" tabindex="0"
@@ -358,8 +580,12 @@
              data-url="{{ p.url }}"
              data-mode="{{ p.preview_mode }}"
              data-nom="{{ p.nom }}"
+             data-tagline="{{ p.tagline }}"
+             data-cat="{{ p.categorie }}"
+             data-desc="{{ p.description }}"
+             data-couleur="{{ p.couleur }}"
              data-search="{{ p.nom|lower }} {{ p.tagline|lower }} {{ p.categorie|lower }}"
-             style="--vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
+             style="--i: {{ forloop.counter0 }}; --vt-accent: color-mix(in srgb, {{ p.couleur }} 50%, transparent); --vt-accent-raw: {{ p.couleur }};">
 
       <!-- Screenshot ou placeholder -->
       <div class="vt-card-shot">
@@ -394,6 +620,7 @@
     {% empty %}
     <p style="color:hsl(240 5% 45%);padding:2rem;grid-column:1/-1;">Aucun produit dans le catalogue.</p>
     {% endfor %}
+    </div>
   </main>
 
   <!-- Modal -->
@@ -421,7 +648,7 @@
             </svg>
             Ouvrir
           </a>
-          <button class="vt-modal-close" id="modal-close">✕</button>
+          <button class="vt-modal-close" id="modal-close">&times;</button>
         </div>
       </div>
       <div class="vt-device-wrap" id="device-wrap"></div>
@@ -513,6 +740,126 @@
     }
 
     function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ── Focus carrousel desktop ─────────────────────────────────
+    (function () {
+      const feature = document.getElementById('vt-feature');
+      const cards = [...document.querySelectorAll('.vt-card')];
+      if (!feature || !cards.length) return;
+
+      const items = cards.map(c => {
+        const mob = (c.querySelector('.vt-card-shot img') || {}).src || '';
+        return {
+          url: c.dataset.url || '', nom: c.dataset.nom || '', tagline: c.dataset.tagline || '',
+          cat: c.dataset.cat || '', desc: c.dataset.desc || '',
+          couleur: c.dataset.couleur || '#f77615', mode: c.dataset.mode || 'desktop',
+          shotMobile: mob,
+          shotDesktop: mob.replace('/screenshots/', '/desktop/'),
+        };
+      });
+
+      feature.innerHTML =
+        '<div class="vt-feature-frame" id="ft-frame" title="Ouvrir en grand">' +
+          '<span class="vt-feature-badge">● APERÇU DESKTOP</span>' +
+          '<div id="ft-media" style="flex:1;display:flex;min-height:0;"></div>' +
+        '</div>' +
+        '<div class="vt-feature-info">' +
+          '<div class="vt-feature-top"><span class="vt-feature-dot"></span>' +
+            '<span class="vt-feature-name" id="ft-name"></span>' +
+            '<span class="vt-feature-cat" id="ft-cat"></span></div>' +
+          '<div class="vt-feature-tagline" id="ft-tag"></div>' +
+          '<div class="vt-feature-desc" id="ft-desc"></div>' +
+          '<div class="vt-feature-foot">' +
+            '<span class="vt-feature-nav">' +
+              '<button id="ft-prev" aria-label="Précédent">‹</button>' +
+              '<button id="ft-next" aria-label="Suivant">›</button></span>' +
+            '<span class="vt-feature-url" id="ft-url"></span>' +
+            '<a class="vt-feature-live" id="ft-live" target="_blank" rel="noopener">Voir en direct ↗</a>' +
+            '<span class="vt-feature-count" id="ft-count"></span></div>' +
+          '<div class="vt-feature-progress"><span id="ft-bar"></span></div>' +
+        '</div>';
+
+      const el = id => document.getElementById(id);
+      let idx = 0, timer = null, paused = false, panAnim = null;
+      const DUR = 8000;
+
+      // Défilement vertical de la capture pleine largeur (voir toute la page,
+      // gauche+droite jamais rognées). Distance calculée sur la hauteur réelle.
+      function startPan(img) {
+        if (panAnim) { panAnim.cancel(); panAnim = null; }
+        const frame = document.getElementById('ft-frame');
+        if (!frame || !img.clientHeight) return;
+        const frameH = frame.clientHeight, imgH = img.clientHeight;
+        const dist = Math.max(0, imgH - frameH);
+        img.style.transform = 'translateY(0)';
+        if (dist < 8) {                          // page courte : centrée, rien à faire défiler
+          img.style.top = Math.max(0, (frameH - imgH) / 2) + 'px';
+          return;
+        }
+        img.style.top = '0px';
+        const dur = Math.max(9000, dist * 22);   // vitesse ~ constante
+        if (!img.animate) return;                // navigateur sans WAAPI : image fixe
+        panAnim = img.animate(
+          [{ transform: 'translateY(0)' },
+           { transform: 'translateY(-' + dist + 'px)' },
+           { transform: 'translateY(0)' }],
+          { duration: dur, iterations: Infinity, easing: 'ease-in-out' }
+        );
+        if (paused) panAnim.pause();
+      }
+
+      function render(i) {
+        idx = (i + items.length) % items.length;
+        const it = items[idx];
+        feature.style.setProperty('--vt-accent-raw', it.couleur);
+        el('ft-name').textContent = it.nom;
+        el('ft-cat').textContent  = it.cat;
+        el('ft-tag').textContent  = it.tagline;
+        el('ft-desc').textContent = it.desc;
+        el('ft-url').textContent  = it.url.replace(/^https?:\/\//, '');
+        el('ft-count').innerHTML  = '<b>' + String(idx + 1).padStart(2, '0') + '</b> / ' + String(items.length).padStart(2, '0');
+        const live = el('ft-live');
+        if (live) live.href = /^https?:\/\//.test(it.url) ? it.url : '#';
+        // Aperçu = capture desktop pleine largeur qui défile (repli mobile si absente). Aucun iframe.
+        const media = el('ft-media');
+        media.innerHTML = '';
+        const img = document.createElement('img');
+        img.alt = it.nom + ' desktop';
+        img.onerror = function () { this.onerror = null; this.src = it.shotMobile; };
+        img.onload = function () { startPan(img); };
+        img.src = it.shotDesktop;
+        media.appendChild(img);
+        // Relancer la barre de progression
+        feature.classList.remove('is-playing');
+        feature.style.setProperty('--dur', (DUR / 1000) + 's');
+        void feature.offsetWidth;
+        if (!paused) feature.classList.add('is-playing');
+      }
+      function schedule() {
+        clearTimeout(timer);
+        if (paused) return;
+        timer = setTimeout(() => { render(idx + 1); schedule(); }, DUR);
+      }
+      function go(i) { render(i); schedule(); }
+
+      el('ft-prev').addEventListener('click', () => go(idx - 1));
+      el('ft-next').addEventListener('click', () => go(idx + 1));
+      el('ft-frame').addEventListener('click', e => {
+        if (e.target.closest('.vt-feature-badge')) return;
+        const it = items[idx];
+        openModal(it.nom, it.url, it.mode, it.couleur);
+      });
+
+      feature.addEventListener('mouseenter', () => { paused = true; clearTimeout(timer); feature.classList.remove('is-playing'); if (panAnim) panAnim.pause(); });
+      feature.addEventListener('mouseleave', () => { paused = false; feature.classList.add('is-playing'); schedule(); if (panAnim) panAnim.play(); });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { paused = true; clearTimeout(timer); if (panAnim) panAnim.pause(); }
+        else { paused = false; schedule(); if (panAnim) panAnim.play(); }
+      });
+
+      render(0);
+      schedule();
+    })();
   </script>
 </body>
 </html>

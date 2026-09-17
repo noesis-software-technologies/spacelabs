@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from apps.ops import tasks
-from apps.ops.models import MCPAlert, RuntimeHeartbeat, UsageSnapshot
+from apps.ops.models import MCPAlert, UsageSnapshot
 from apps.workspaces.models import HeadlessPane, Pane, PtyPane, Workspace
 
 

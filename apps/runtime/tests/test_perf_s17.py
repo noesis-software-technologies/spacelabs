@@ -5,7 +5,6 @@ l'objectif n'est pas de figer une performance (la machine de CI varie), mais
 d'attraper une régression d'ordre de grandeur — une boucle quadratique, une
 copie du tampon à chaque trame, un abonné jamais retiré.
 """
-import asyncio
 import time
 
 import pytest

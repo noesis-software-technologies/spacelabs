@@ -20,7 +20,6 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render
-from django.views.decorators.http import require_POST
 
 from apps.common.htmx import render_htmx
 from apps.runtime.services.headless_manager import HeadlessManager
@@ -29,7 +28,6 @@ from apps.workspaces.models import Pane
 
 from .forms import RedactionRuleForm
 from .models import ObserverSettings, RedactionRule
-from .redaction import redactor_for_rules_qs
 
 KEEPALIVE_SECONDS = 15
 SSE_RETRY_MS = 2000
