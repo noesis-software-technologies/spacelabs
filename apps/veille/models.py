@@ -88,6 +88,10 @@ class PressItem(models.Model):
     liens_internes = models.JSONField(default=list, blank=True,
                                       help_text="Articles liés : [{pk, titre, slug}]")
 
+    # ── Publication MCP 13 Atmosphère ──
+    mcp_article_id = models.CharField(max_length=64, blank=True,
+                                      help_text="article_id renvoyé par le MCP après draft_article")
+
     @property
     def image_ref(self):
         """Vignette : local si téléchargé, sinon image_url, sinon 1re du carrousel."""

@@ -93,6 +93,40 @@ def _parse_json(out: str) -> dict | None:
     }
 
 
+def _est_rubrique(ligne: str) -> bool:
+    s = ligne.strip()
+    if not (2 <= len(s) <= 40):
+        return False
+    lettres = [c for c in s if c.isalpha()]
+    return bool(lettres) and all(c.isupper() for c in lettres)
+
+
+def corps_to_html(chapo: str, corps: str) -> str:
+    """Convertit le brouillon (texte + rubriques CAPITALES) en HTML pour le MCP."""
+    from html import escape
+    out = []
+    if chapo:
+        out.append(f'<p class="chapo"><em>{escape(chapo.strip())}</em></p>')
+    para = []
+
+    def flush():
+        if para:
+            out.append("<p>" + escape(" ".join(para)) + "</p>")
+            para.clear()
+
+    for ligne in (corps or "").splitlines():
+        s = ligne.strip()
+        if not s:
+            flush()
+        elif _est_rubrique(s):
+            flush()
+            out.append(f"<h2>{escape(s)}</h2>")
+        else:
+            para.append(s)
+    flush()
+    return "\n".join(out)
+
+
 def generer_draft(sujet: str, corps: str, categorie: str, timeout: int = 180) -> dict | None:
     """Appelle le `claude` local et renvoie {titre, chapo, corps} ou None."""
     claude = getattr(settings, "COCKPIT_CLAUDE_BIN", "claude")

@@ -35,6 +35,8 @@ env = environ.Env(
     TIME_ZONE=(str, "Europe/Paris"),
     LANGUAGE_CODE=(str, "fr"),
     LANDING_DEFAULT=(str, "clean"),  # "clean" (thème clair) | "showroom" (animée)
+    ATMOSPHERE_MCP_URL=(str, "https://13-atmosphere.com/mcp/"),
+    ATMOSPHERE_MCP_TOKEN=(str, ""),  # secret → .env.local
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -120,6 +122,10 @@ LOGOUT_REDIRECT_URL = "comptes:login"
 
 # Landing publique : "clean" (thème clair, défaut) ou "showroom" (animée).
 LANDING_DEFAULT = env("LANDING_DEFAULT")
+
+# MCP de publication 13 Atmosphère (token dans .env.local).
+ATMOSPHERE_MCP_URL = env("ATMOSPHERE_MCP_URL")
+ATMOSPHERE_MCP_TOKEN = env("ATMOSPHERE_MCP_TOKEN")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
