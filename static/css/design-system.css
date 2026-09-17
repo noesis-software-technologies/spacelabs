@@ -179,18 +179,28 @@
      La crème chaude était la marque v1 ; elle jurait avec l'accent orange.
      Les terminaux suivent le thème (fond clair) : les sorties ANSI restent
      lisibles car le texte des panes passe par les variables du système. */
+  /* Thème clair — DÉFAUT du cockpit. Neutre « shadcn » (zinc), quasi noir &
+     blanc : surfaces blanches, bordures fines, accent monochrome near-black.
+     L'orange de marque reste le repère de sélection en thème SOMBRE. */
   [data-theme="light"] {
-    --ds-bg: 240 20% 97%;
-    --ds-bg-raised: 0 0% 100%;
-    --ds-bg-inset: 240 15% 99%;      /* terminaux alignés sur le thème clair */
-    --ds-border: 240 12% 88%;
-    --ds-border-strong: 240 10% 78%;
-    --ds-text: 240 15% 12%;
-    --ds-text-muted: 240 6% 42%;
-    --ds-text-faint: 240 5% 58%;
-    --ds-shadow: 0 10px 30px hsl(240 20% 40% / 0.12);
-    --ds-shadow-lg: 0 24px 60px hsl(240 20% 30% / 0.18);
-    --ds-accent-contrast: 240 15% 5%;
+    --ds-bg: 0 0% 98%;               /* zinc-50 */
+    --ds-bg-raised: 0 0% 100%;       /* blanc */
+    --ds-bg-inset: 0 0% 100%;
+    --ds-border: 240 6% 90%;         /* zinc-200 */
+    --ds-border-strong: 240 5% 82%;  /* zinc-300 */
+    --ds-text: 240 10% 9%;           /* zinc-950 */
+    --ds-text-muted: 240 4% 46%;     /* zinc-500 */
+    --ds-text-faint: 240 5% 65%;     /* zinc-400 */
+    --ds-shadow: 0 1px 2px hsl(240 6% 10% / 0.06);
+    --ds-shadow-lg: 0 12px 40px hsl(240 6% 10% / 0.10);
+    /* Accent NEUTRE en clair (sélection + CTA en near-black, texte blanc) */
+    --ds-accent: 240 6% 10%;
+    --ds-accent-2: 240 5% 26%;
+    --ds-ring: 240 5% 65%;
+    --ds-cta: 240 6% 10%;
+    --ds-cta-hover: 240 5% 26%;
+    --ds-cta-contrast: 0 0% 100%;
+    --ds-accent-contrast: 0 0% 100%;
     color-scheme: light;
   }
 }

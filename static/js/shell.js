@@ -12,7 +12,7 @@
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
   }
-  applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+  applyTheme(localStorage.getItem(THEME_KEY) || "light");
   document.addEventListener("click", function (event) {
     const toggle = event.target.closest("[data-theme-toggle]");
     if (!toggle) return;
