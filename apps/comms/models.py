@@ -18,6 +18,8 @@ class Message(models.Model):
     channel = models.CharField(max_length=20, choices=CHANNELS, default="email")
     ext_id = models.CharField(max_length=500, unique=True)  # Message-ID / id télégram… (dédup)
     expediteur = models.CharField(max_length=300, blank=True)
+    sender_id = models.CharField(max_length=120, blank=True,
+                                 help_text="Id plateforme de l'expéditeur (wa_id / PSID / IGSID) — pour répondre")
     sujet = models.CharField(max_length=500, blank=True)
     corps = models.TextField(blank=True)
     recu_le = models.DateTimeField(null=True, blank=True)

@@ -28,6 +28,27 @@ def message_reply(request, pk):
 
 
 @login_required
+@require_POST
+def message_send(request, pk):
+    """Envoie la réponse (validée) à l'expéditeur, via le canal du message.
+
+    Texte pris dans le POST (`text`) sinon le brouillon IA. Sur succès :
+    statut → « repondu ». Envoi explicite (bouton) — jamais automatique.
+    """
+    from .send import send_reply
+    msg = get_object_or_404(Message, pk=pk)
+    text = (request.POST.get("text") or msg.draft_reply or "").strip()
+    if not text:
+        return JsonResponse({"ok": False, "error": "aucun texte à envoyer"}, status=400)
+    ok, detail = send_reply(msg, text)
+    if not ok:
+        return JsonResponse({"ok": False, "error": detail}, status=502)
+    msg.statut = "repondu"
+    msg.save(update_fields=["statut"])
+    return JsonResponse({"ok": True, "detail": detail})
+
+
+@login_required
 @ensure_csrf_cookie
 def inbox(request):
     qs = Message.objects.exclude(statut="archive")
@@ -50,6 +71,11 @@ def inbox(request):
 def _meta_ingest(payload):
     """Parse un payload webhook Meta (WhatsApp + Instagram/Messenger) → Messages."""
     created = 0
+    obj = (payload.get("object") or "").lower()
+    # object: "instagram" = DM Instagram ; "page" = Messenger ; "whatsapp_business_account" = WA
+    msgr = obj == "page"
+    chan = "messenger" if msgr else "instagram"
+    pfx = "mg" if msgr else "ig"
     for entry in payload.get("entry", []):
         # WhatsApp Cloud API : entry[].changes[].value.messages[]
         for change in entry.get("changes", []):
@@ -65,8 +91,8 @@ def _meta_ingest(payload):
                 prio, needs, cat = triage(noms.get(frm) or frm, "", text)
                 Message.objects.create(
                     channel="whatsapp", ext_id=ext, expediteur=noms.get(frm) or frm,
-                    sujet="", corps=text[:8000], recu_le=now(), categorie=cat,
-                    priorite=prio, needs_reply=needs, statut="nouveau")
+                    sender_id=frm, sujet="", corps=text[:8000], recu_le=now(),
+                    categorie=cat, priorite=prio, needs_reply=needs, statut="nouveau")
                 created += 1
         # Instagram / Messenger : entry[].messaging[]
         for msg in entry.get("messaging", []):
@@ -75,12 +101,12 @@ def _meta_ingest(payload):
             if not text:
                 continue
             sender = (msg.get("sender") or {}).get("id", "")
-            ext = f"ig-{message.get('mid') or msg.get('timestamp')}"
+            ext = f"{pfx}-{message.get('mid') or msg.get('timestamp')}"
             if Message.objects.filter(ext_id=ext).exists():
                 continue
             prio, needs, cat = triage(sender, "", text)
             Message.objects.create(
-                channel="instagram", ext_id=ext, expediteur=sender, sujet="",
+                channel=chan, ext_id=ext, expediteur=sender, sender_id=sender, sujet="",
                 corps=text[:8000], recu_le=now(), categorie=cat, priorite=prio,
                 needs_reply=needs, statut="nouveau")
             created += 1

@@ -8,6 +8,7 @@
   <div class="reply"{% if not m.draft_reply %} style="display:none"{% endif %}>
     <textarea class="rtxt" rows="5">{{ m.draft_reply }}</textarea>
     <div class="ractions">
+      <button class="rsend" type="button" data-pk="{{ m.pk }}" data-channel="{{ m.channel }}">Envoyer</button>
       <button class="rcopy" type="button">Copier</button>
       <button class="rregen" type="button" data-pk="{{ m.pk }}">Régénérer</button>
       <span class="rmsg"></span>

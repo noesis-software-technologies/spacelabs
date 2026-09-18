@@ -77,6 +77,19 @@
           const txt=box.querySelector('.rtxt'); txt.select();
           navigator.clipboard.writeText(txt.value); const rmsg=box.querySelector('.rmsg'); if(rmsg)rmsg.textContent='copié';
         }
+        else if(e.target.closest('.rsend')){
+          const btn=e.target.closest('.rsend'), txt=box.querySelector('.rtxt'), rmsg=box.querySelector('.rmsg');
+          if(!txt.value.trim()){ if(rmsg)rmsg.textContent='rien à envoyer'; return; }
+          if(!confirm('Envoyer cette réponse à '+box.querySelector('.from').textContent+' ?')) return;
+          const old=btn.textContent; btn.textContent='envoi…'; if(rmsg)rmsg.textContent='';
+          fetch(`/comms/message/${pk}/send/`,{method:'POST',
+              headers:{'X-CSRFToken':cookie('csrftoken'),'Content-Type':'application/x-www-form-urlencoded'},
+              body:'text='+encodeURIComponent(txt.value)})
+            .then(r=>r.json()).then(d=>{ btn.textContent=old;
+              if(d.ok){ if(rmsg)rmsg.textContent='✅ envoyé'; box.style.opacity=.6; }
+              else{ if(rmsg)rmsg.textContent='échec : '+JSON.stringify(d.error).slice(0,120); }
+            }).catch(()=>{btn.textContent=old; if(rmsg)rmsg.textContent='erreur réseau';});
+        }
       });
     })();
     </script>

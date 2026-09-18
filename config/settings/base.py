@@ -42,6 +42,12 @@ env = environ.Env(
     META_MCP_TOKEN=(str, ""),  # secret → .env.local (Meta Business : WhatsApp / Instagram)
     META_VERIFY_TOKEN=(str, "spacelabs-verify"),  # webhook GET (à recopier dans l'app Meta)
     META_APP_SECRET=(str, ""),  # secret → .env.local (vérif signature X-Hub-Signature-256)
+    # Envoi sortant (réponses validées) → secrets .env.local
+    WHATSAPP_TOKEN=(str, ""),       # token WhatsApp Cloud API
+    WHATSAPP_PHONE_ID=(str, ""),    # phone_number_id de l'expéditeur WhatsApp
+    META_PAGE_TOKEN=(str, ""),      # Page access token (Messenger)
+    META_IG_TOKEN=(str, ""),        # token Instagram (DM)
+    META_GRAPH_VERSION=(str, "v22.0"),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -140,6 +146,11 @@ META_MCP_URL = env("META_MCP_URL")
 META_MCP_TOKEN = env("META_MCP_TOKEN")
 META_VERIFY_TOKEN = env("META_VERIFY_TOKEN")
 META_APP_SECRET = env("META_APP_SECRET")
+WHATSAPP_TOKEN = env("WHATSAPP_TOKEN")
+WHATSAPP_PHONE_ID = env("WHATSAPP_PHONE_ID")
+META_PAGE_TOKEN = env("META_PAGE_TOKEN")
+META_IG_TOKEN = env("META_IG_TOKEN")
+META_GRAPH_VERSION = env("META_GRAPH_VERSION")
 
 # Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
 VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})
