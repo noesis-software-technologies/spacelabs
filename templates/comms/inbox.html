@@ -55,9 +55,19 @@
       </div>
     </div>
 
+    {{ playbooks|json_script:"pbdata" }}
     <script>
     (function(){
       function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      var PB=(function(){try{return JSON.parse(document.getElementById('pbdata').textContent);}catch(e){return[];}})();
+      function isJP(s){return /[぀-ヿ一-龯]/.test(s||'');}
+      document.querySelector('.cols').addEventListener('change',e=>{
+        const sel=e.target.closest('.rtpl'); if(!sel)return;
+        const box=e.target.closest('.msg'); const p=PB.find(x=>x.key===sel.value);
+        if(box&&p){ const txt=box.querySelector('.rtxt'); box.querySelector('.reply').style.display='';
+          txt.value = isJP(box.textContent)? p.jp : p.fr; txt.focus(); }
+        sel.value='';
+      });
       function gen(pk, box, btn){
         const rmsg=box.querySelector('.rmsg'), txt=box.querySelector('.rtxt');
         const old=btn.textContent; btn.textContent='…'; if(rmsg)rmsg.textContent='génération…';

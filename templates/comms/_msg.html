@@ -8,6 +8,10 @@
   <div class="reply"{% if not m.draft_reply %} style="display:none"{% endif %}>
     <textarea class="rtxt" rows="5">{{ m.draft_reply }}</textarea>
     <div class="ractions">
+      <select class="rtpl" title="Insérer un modèle de réponse (FR/JP auto)">
+        <option value="">Modèle…</option>
+        {% for p in playbooks %}<option value="{{ p.key }}">{{ p.label }}</option>{% endfor %}
+      </select>
       <button class="rsend" type="button" data-pk="{{ m.pk }}" data-channel="{{ m.channel }}">Envoyer</button>
       <button class="rcopy" type="button">Copier</button>
       <button class="rregen" type="button" data-pk="{{ m.pk }}">Régénérer</button>

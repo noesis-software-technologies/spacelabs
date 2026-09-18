@@ -62,9 +62,10 @@ def inbox(request):
         "par_canal": dict(Message.objects.values_list("channel")
                           .annotate(n=Count("id")).values_list("channel", "n")),
     }
+    from .playbooks import PLAYBOOKS
     return render(request, "comms/inbox.html", {
         "prioritaires": prioritaires, "a_traiter": a_traiter, "reste": reste, "stats": stats,
-        "active_nav": "comms",
+        "active_nav": "comms", "playbooks": PLAYBOOKS,
     })
 
 
