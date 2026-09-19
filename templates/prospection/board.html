@@ -54,7 +54,8 @@
       <select name="vue"><option value="">Vue : Pipeline</option>
         {% for k, lbl in vues.items %}<option value="{{ k }}" {% if k == vue %}selected{% endif %}>{{ lbl }}</option>{% endfor %}</select>
       <button type="submit">Filtrer</button>
-      <a class="md" href="{% url 'prospection:modeles' %}">✉️ Modèles &amp; checklist</a>
+      <a class="md" href="{% url 'prospection:modeles' %}">✉️ Modèles</a>
+      <a class="md" href="{% url 'prospection:export_csv' %}?q={{ q }}&cat={{ cat }}&etat={{ etat }}&bmin={{ bmin }}">⬇️ Export CSV</a>
     </form>
 
     {% if colonnes %}

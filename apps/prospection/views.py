@@ -155,13 +155,15 @@ def cockpit(request):
 @login_required
 def opportunity_detail(request, pk):
     it = get_object_or_404(Opportunity, pk=pk)
+    from django.contrib.auth import get_user_model
     from .models import TYPES_ETAPE
     from .scoring import suggest_rejet
+    users = get_user_model().objects.filter(is_active=True).order_by("username")[:50]
     return render(request, "prospection/detail.html", {
         "it": it, "stages": STATUTS, "etats": ETATS,
         "motifs_rejet": MOTIFS_REJET, "motifs_perte": MOTIFS_PERTE,
         "rejet_suggere": suggest_rejet(it), "types_etape": TYPES_ETAPE,
-        "etapes": it.etapes.all(),
+        "etapes": it.etapes.all(), "users": users,
         "activites": it.activites.all()[:50], "active_nav": "prospection",
     })
 
@@ -223,6 +225,19 @@ def ai_offer(request, pk):
 
 @login_required
 @require_POST
+def ai_relance(request, pk):
+    """Agentic sales : rédige la relance J+3 (IA locale)."""
+    from .sales_ai import draft_relance
+    it = get_object_or_404(Opportunity, pk=pk)
+    ok, txt = draft_relance(it)
+    if not ok:
+        return JsonResponse({"ok": False, "error": txt}, status=502)
+    Activity.objects.create(opportunity=it, auteur=request.user, texte="Relance IA générée (brouillon)")
+    return JsonResponse({"ok": True, "offer": txt})
+
+
+@login_required
+@require_POST
 def ai_next(request, pk):
     from .sales_ai import suggest_next
     it = get_object_or_404(Opportunity, pk=pk)
@@ -263,18 +278,57 @@ def update_field(request, pk):
     it = get_object_or_404(Opportunity, pk=pk)
     champ = request.POST.get("champ", "")
     val = request.POST.get("valeur", "")
-    allowed = {"etat", "priorite", "motif_rejet", "motif_perte", "offres_detection", "date_relance"}
+    allowed = {"etat", "priorite", "motif_rejet", "motif_perte", "offres_detection",
+               "date_relance", "owner"}
     if champ not in allowed:
         return JsonResponse({"ok": False, "error": "champ non autorisé"}, status=400)
     if champ == "offres_detection":
         it.offres_detection = int(val) if val.isdigit() else None
     elif champ == "date_relance":
         it.date_relance = val or None
+    elif champ == "owner":
+        from django.contrib.auth import get_user_model
+        it.owner = get_user_model().objects.filter(pk=val).first() if val else None
     else:
         setattr(it, champ, val)
     it.score = compute_score(it)
     it.save()
     return JsonResponse({"ok": True, "score": it.score})
+
+
+@login_required
+def export_csv(request):
+    """Export CSV du pipeline (colonnes du cahier des charges) — pour la direction.
+    Respecte les mêmes filtres que le board (q, cat, bmin, etat, vue)."""
+    import csv
+
+    from django.http import HttpResponse
+    qs = Opportunity.objects.all().select_related("owner")
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(Q(titre__icontains=q) | Q(client_nom__icontains=q))
+    if request.GET.get("cat"):
+        qs = qs.filter(categorie=request.GET["cat"])
+    if request.GET.get("etat"):
+        qs = qs.filter(etat=request.GET["etat"])
+    if request.GET.get("bmin", "").isdigit():
+        qs = qs.filter(budget_eur__gte=int(request.GET["bmin"]))
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="pipeline_{timezone.localdate()}.csv"'
+    w = csv.writer(resp)
+    w.writerow(["ID projet", "Titre", "URL", "Date publication", "Date détection", "État",
+                "Budget €", "Offres détection", "Profils", "Résumé", "Score", "Statut",
+                "Commercial", "Date offre", "Date relance", "Motif rejet", "Motif perte"])
+    for it in qs.iterator():
+        w.writerow([it.codeur_id, it.titre, it.ext_url, it.publie_le,
+                    it.date_detection.strftime("%Y-%m-%d %H:%M") if it.date_detection else "",
+                    it.get_etat_display(), it.budget_eur, it.offres_detection or "",
+                    " / ".join(it.competences or []), it.resume_besoin, it.score,
+                    it.get_stage_display(), it.owner.username if it.owner else "",
+                    it.date_offre or "", it.date_relance or "",
+                    it.get_motif_rejet_display() if it.motif_rejet else "",
+                    it.get_motif_perte_display() if it.motif_perte else ""])
+    return resp
 
 
 @login_required

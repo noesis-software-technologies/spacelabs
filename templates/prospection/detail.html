@@ -71,6 +71,9 @@
         <select data-champ="motif_perte">{% for s, lbl in motifs_perte %}<option value="{{ s }}" {% if s == it.motif_perte %}selected{% endif %}>{{ lbl }}</option>{% endfor %}</select>
         <label>Date de relance</label>
         <input type="date" data-champ="date_relance" value="{{ it.date_relance|date:'Y-m-d' }}">
+        <label>Commercial affecté</label>
+        <select data-champ="owner"><option value="">— Non assigné</option>
+          {% for u in users %}<option value="{{ u.pk }}" {% if it.owner_id == u.pk %}selected{% endif %}>{{ u.username }}</option>{% endfor %}</select>
         <div id="msg" style="font-size:.75rem;color:var(--faint)"></div>
       </div>
       <div class="panel">
@@ -94,6 +97,7 @@
       <div class="panel">
         <h3>🤖 Agentic sales</h3>
         <button id="aiOffer" type="button">Générer l'offre (IA)</button>
+        <button id="aiRelance" type="button" style="margin-left:.4rem">Relance J+3 (IA)</button>
         <button id="aiNext" type="button" style="margin-left:.4rem">Prochaine étape</button>
         <div id="aiSug" style="font-size:.78rem;color:var(--accent-ink);margin:.5rem 0"></div>
         <textarea id="aiOut" rows="8" placeholder="L'offre générée apparaîtra ici (brouillon à valider avant envoi via la messagerie plateforme)…" style="display:none;margin-top:.5rem"></textarea>
@@ -143,6 +147,11 @@
     document.getElementById('aiOffer').addEventListener('click',function(){
       var b=this; b.textContent='Rédaction…'; b.disabled=true;
       post('/prospection/'+pk+'/ai/offer/','',function(d){ b.textContent='Générer l’offre (IA)'; b.disabled=false;
+        if(d.ok){ out.style.display=''; out.value=d.offer; copy.style.display=''; } else { document.getElementById('aiSug').textContent='⚠️ '+(d.error||''); } });
+    });
+    document.getElementById('aiRelance').addEventListener('click',function(){
+      var b=this; b.textContent='Rédaction…'; b.disabled=true;
+      post('/prospection/'+pk+'/ai/relance/','',function(d){ b.textContent='Relance J+3 (IA)'; b.disabled=false;
         if(d.ok){ out.style.display=''; out.value=d.offer; copy.style.display=''; } else { document.getElementById('aiSug').textContent='⚠️ '+(d.error||''); } });
     });
     document.getElementById('aiNext').addEventListener('click',function(){

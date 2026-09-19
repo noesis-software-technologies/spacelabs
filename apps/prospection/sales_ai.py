@@ -62,6 +62,20 @@ def draft_offer(op):
         return False, f"IA locale indisponible : {type(e).__name__}"
 
 
+def draft_relance(op):
+    """Rédige une relance courte J+3 (Modèle 3) — non insistante. (ok, texte|err)."""
+    prompt = (
+        f"Rédige une RELANCE courte et non insistante (modèle J+3) pour l'appel d'offres "
+        f"« {op.titre} ». Rappelle le projet en une ligne, demande où en est la sélection, "
+        f"propose un découpage en lots pour démarrer sur une 1re tranche, et dis que tu "
+        f"n'insisteras pas si le sujet est en pause. Pas de prix. Signe NOESIS."
+    )
+    try:
+        return True, _chat(prompt, max_tokens=220)
+    except Exception as e:  # noqa: BLE001
+        return False, f"IA locale indisponible : {type(e).__name__}"
+
+
 def suggest_next(op):
     prompt = (
         f"Opportunité « {op.titre} » — statut actuel : {op.get_stage_display()}, "
