@@ -61,11 +61,20 @@ def spacelabs_usage(request):
         p["conversations"] += t.conversations
         p["lignes"].append(t)
     projets = sorted(projets.values(), key=lambda x: -x["cost"])
+    # Ventilation par source (veille / comms / scraping / telegram…)
+    sources = {}
+    for t in traces:
+        s = sources.setdefault(t.get_source_display(), {
+            "source": t.get_source_display(), "cost": Decimal("0"), "tout": 0, "n": 0})
+        s["cost"] += t.cost_usd or 0
+        s["tout"] += t.tokens_out
+        s["n"] += 1
+    sources = sorted(sources.values(), key=lambda x: -x["cost"])
     agg = SessionTrace.objects.aggregate(
         cost=Sum("cost_usd"), tin=Sum("tokens_in"), tout=Sum("tokens_out"),
         sessions=Sum("sessions"), conversations=Sum("conversations"), n=Count("id"))
     return render(request, "dashboard/usage.html", {
-        "active_nav": "usage", "projets": projets, "agg": agg,
+        "active_nav": "usage", "projets": projets, "agg": agg, "sources": sources,
     })
 
 

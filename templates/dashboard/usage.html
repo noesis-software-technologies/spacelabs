@@ -30,6 +30,20 @@
       <div class="kpi"><b>{{ agg.n|default:0 }}</b><span>Entrées</span></div>
     </div>
 
+    {% if sources %}
+    <div class="proj">
+      <h2>Ventilation par source<span class="tot">coût par canal</span></h2>
+      <table>
+        <thead><tr><th>Source</th><th style="text-align:right">Entrées</th><th style="text-align:right">Tok. out</th><th style="text-align:right">Coût $</th></tr></thead>
+        <tbody>
+        {% for s in sources %}
+          <tr><td>{{ s.source }}</td><td style="text-align:right">{{ s.n }}</td><td style="text-align:right">{{ s.tout }}</td><td style="text-align:right">${{ s.cost|floatformat:2 }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
     {% for p in projets %}
     <div class="proj">
       <h2>{{ p.projet }}<span class="tot"><span class="cost">${{ p.cost|floatformat:2 }}</span> · {{ p.tout }} tok · {{ p.sessions }} sessions</span></h2>
