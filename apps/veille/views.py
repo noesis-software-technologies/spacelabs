@@ -14,7 +14,11 @@ from .models import CATEGORIES, Blog, PressItem
 
 @login_required
 def dashboard(request):
-    blogs = list(Blog.objects.all())
+    blog_id = request.GET.get("blog", "")
+    blogs_qs = Blog.objects.all()
+    if blog_id:
+        blogs_qs = blogs_qs.filter(pk=blog_id)
+    blogs = list(blogs_qs)
     for b in blogs:
         b.items_list = list(b.items.all()[:50])
     non_assignes = PressItem.objects.filter(blog_cible__isnull=True)[:50]
@@ -39,12 +43,43 @@ def dashboard(request):
 
 
 @login_required
+def constellation(request):
+    """Hub éditorial : une carte par blog de la constellation, avec ses deux
+    entrées — Veille (sujets/sources) et Articles/carrousel (brouillons) — et
+    ses compteurs. Point d'entrée unique de la zone éditoriale multi-blogs."""
+    blogs = []
+    for b in Blog.objects.all():
+        items = PressItem.objects.filter(blog_cible=b)
+        drafts = items.filter(draft_statut__in=["brouillon", "valide", "publie"]).count()
+        pousses = items.exclude(mcp_pushed_at__isnull=True).count()
+        blogs.append({
+            "obj": b,
+            "veille_n": items.count(),
+            "drafts_n": drafts,
+            "pousses_n": pousses,
+            "mcp_ok": bool(b.mcp_url or b.mcp_token) or b.is_principal,
+        })
+    non_assignes = PressItem.objects.filter(blog_cible__isnull=True).count()
+    return render(request, "veille/constellation.html", {
+        "blogs": blogs, "non_assignes": non_assignes, "active_nav": "veille",
+    })
+
+
+@login_required
 @ensure_csrf_cookie
 def articles(request):
     """List view des articles (communiqués + brouillons) avec image de référence."""
     cat = request.GET.get("cat", "")
     etat = request.GET.get("etat", "")  # brouillon / valide / publie / vide
+    blog_id = request.GET.get("blog", "")
     qs = PressItem.objects.select_related("blog_cible").all()
+    blog_focus = None
+    if blog_id:
+        try:
+            blog_focus = Blog.objects.get(pk=int(blog_id))
+            qs = qs.filter(blog_cible=blog_focus)
+        except (Blog.DoesNotExist, ValueError):
+            pass
     if cat:
         qs = qs.filter(categorie=cat)
     if etat == "rediges":
@@ -63,6 +98,7 @@ def articles(request):
                      if today - _dt.timedelta(days=7) <= p.mcp_pushed_at.date() < today]
     return render(request, "veille/articles.html", {
         "items": items, "cats": cats, "cat": cat, "etat": etat,
+        "blog_focus": blog_focus,
         "total": qs.count(), "active_nav": "veille",
         "suivi_today": suivi_today, "suivi_semaine": suivi_semaine,
         "suivi_pub": sum(1 for p in pousses if p.mcp_status == "published"),

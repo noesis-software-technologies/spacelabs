@@ -1,0 +1,58 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Éditorial — Constellation{% endblock %}
+{% block h1 %}Constellation éditoriale{% endblock %}
+{% block crumb %}$ veille --blogs{% endblock %}
+
+{% block extra_css %}
+    .intro{color:var(--muted);font-size:.85rem;margin-bottom:1.4rem;max-width:60ch}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+    .blog{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:.7rem}
+    .blog.principal{border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+    .blog .top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
+    .blog .nm{font-size:1rem;font-weight:700}
+    .blog .dom{font:.68rem/1.3 var(--mono);color:var(--faint)}
+    .badge{font:.56rem var(--mono);padding:.14rem .5rem;border-radius:999px;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent-ink);border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);white-space:nowrap}
+    .badge.on{background:color-mix(in srgb,var(--good) 16%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 32%,transparent)}
+    .badge.off{background:color-mix(in srgb,var(--warn) 14%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+    .kpis{display:flex;gap:1.1rem;font-size:.8rem}
+    .kpis .k b{display:block;font-size:1.3rem;color:var(--accent);line-height:1.1}
+    .kpis .k span{color:var(--faint);font-size:.7rem}
+    .links{display:flex;gap:.5rem;margin-top:.2rem}
+    .links a{flex:1;text-align:center;text-decoration:none;border:1px solid var(--border);border-radius:9px;padding:.55rem;font-size:.8rem;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:.4rem}
+    .links a:hover{border-color:var(--accent);color:var(--accent-ink)}
+    .links a.primary{background:color-mix(in srgb,var(--accent) 14%,transparent);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+    .na{margin-top:1.4rem;background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:.8rem 1rem;font-size:.82rem;color:var(--muted)}
+{% endblock %}
+
+{% block content %}
+    <p class="intro">Un espace éditorial <b>par blog</b> de la constellation. Chaque blog a ses deux entrées : <b>Veille</b> (sujets & sources) et <b>Articles / carrousel</b> (brouillons rédigés, prêts à valider et pousser via MCP).</p>
+
+    <div class="grid">
+      {% for b in blogs %}
+      <div class="blog {% if b.obj.is_principal %}principal{% endif %}">
+        <div class="top">
+          <div>
+            <div class="nm">{{ b.obj.nom }}</div>
+            <div class="dom">{{ b.obj.domaine|default:b.obj.categorie|default:"—" }}</div>
+          </div>
+          {% if b.mcp_ok %}<span class="badge on">MCP ✓</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}
+        </div>
+        <div class="kpis">
+          <div class="k"><b>{{ b.veille_n }}</b><span>veille</span></div>
+          <div class="k"><b>{{ b.drafts_n }}</b><span>articles</span></div>
+          <div class="k"><b>{{ b.pousses_n }}</b><span>poussés</span></div>
+        </div>
+        <div class="links">
+          <a href="{% url 'veille:dashboard' %}?blog={{ b.obj.id }}">📡 Veille</a>
+          <a class="primary" href="{% url 'veille:articles' %}?blog={{ b.obj.id }}">🖼️ Articles / carrousel</a>
+        </div>
+      </div>
+      {% empty %}
+      <div class="na">Aucun blog. Lance <code>veille_seed</code> ou <code>veille_scrape_agentic</code>.</div>
+      {% endfor %}
+    </div>
+
+    {% if non_assignes %}
+    <div class="na">📥 <b>{{ non_assignes }}</b> sujet(s) non assigné(s) à un blog — <a href="{% url 'veille:dashboard' %}">à trier dans la veille</a>.</div>
+    {% endif %}
+{% endblock %}
