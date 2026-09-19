@@ -1,0 +1,81 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Prospection & CRM{% endblock %}
+{% block h1 %}Prospection — Opportunités{% endblock %}
+{% block crumb %}$ crm --pipeline{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.1rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem 1rem;font-size:.82rem}
+    .kpi b{font-size:1.2rem;color:var(--accent);display:block}
+    .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+    .filters input,.filters select{background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:.45rem .6rem;font-size:.82rem}
+    .filters button{background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:8px;padding:.45rem .9rem;font-size:.82rem;cursor:pointer}
+    .cols{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:.9rem;overflow-x:auto}
+    .col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;min-height:120px}
+    .col h2{font:600 .82rem/1 var(--font);padding:.7rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+    .col h2 span{color:var(--faint);font-family:var(--mono);font-size:.7rem}
+    .card{padding:.6rem .7rem;border-bottom:1px solid var(--surface2);font-size:.8rem}
+    .card:last-child{border-bottom:none}
+    .card .tt{color:var(--ink);font-weight:600;display:block;text-decoration:none;line-height:1.3;margin-bottom:.25rem}
+    .card .tt:hover{color:var(--accent-ink)}
+    .card .meta{color:var(--faint);font-size:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem}
+    .bud{color:var(--good);font-weight:700}
+    .card select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--ink);border-radius:7px;padding:.3rem;font-size:.72rem}
+    .empty{padding:.8rem;color:var(--faint);font-size:.78rem;font-style:italic}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="kpi"><b>{{ kpis.total }}</b> opportunités</div>
+      <div class="kpi"><b>{{ kpis.ouverts }}</b> en pipeline</div>
+      <div class="kpi"><b>{{ kpis.pipeline_eur }} €</b> valeur pipeline</div>
+      <div class="kpi"><b>{{ kpis.gagne }}</b> gagnées · {{ kpis.gagne_eur }} €</div>
+    </div>
+
+    <form class="filters" method="get">
+      <input type="search" name="q" value="{{ q }}" placeholder="Recherche (titre, client…)">
+      <select name="cat">
+        <option value="">Toutes catégories</option>
+        {% for c, n in cats %}<option value="{{ c }}" {% if c == cat %}selected{% endif %}>{{ c }} ({{ n }})</option>{% endfor %}
+      </select>
+      <input type="number" name="bmin" value="{{ bmin }}" placeholder="Budget min €" style="width:120px">
+      <button type="submit">Filtrer</button>
+    </form>
+
+    <div class="cols">
+      {% for col in colonnes %}
+      <div class="col">
+        <h2>{{ col.label }} <span>{{ col.n }}</span></h2>
+        {% for it in col.items %}
+        <div class="card" data-pk="{{ it.pk }}">
+          <a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:70 }}</a>
+          <div class="meta">
+            <span class="bud">{{ it.budget_eur }} €</span>
+            {% if it.categorie %}<span>{{ it.categorie }}</span>{% endif %}
+            {% if it.client_societe or it.client_nom %}<span>{{ it.client_societe|default:it.client_nom|truncatechars:24 }}</span>{% endif %}
+          </div>
+          <select class="stage" data-pk="{{ it.pk }}">
+            {% for s, lbl in stages %}<option value="{{ s }}" {% if s == it.stage %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+          </select>
+        </div>
+        {% empty %}<div class="empty">—</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <script>
+    (function(){
+      function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+      document.querySelector('.cols').addEventListener('change',function(e){
+        var sel=e.target.closest('.stage'); if(!sel)return;
+        var pk=sel.dataset.pk;
+        fetch('/prospection/'+pk+'/stage/',{method:'POST',
+          headers:{'X-CSRFToken':cookie('csrftoken'),'Content-Type':'application/x-www-form-urlencoded'},
+          body:'stage='+encodeURIComponent(sel.value)})
+          .then(function(r){return r.json();}).then(function(d){
+            var card=sel.closest('.card'); if(d.ok){ card.style.opacity=.4; setTimeout(function(){location.reload();},350); }
+          });
+      });
+    })();
+    </script>
+{% endblock %}

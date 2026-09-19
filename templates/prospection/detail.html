@@ -1,0 +1,85 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Opportunité{% endblock %}
+{% block h1 %}{{ it.titre|truncatechars:70 }}{% endblock %}
+{% block crumb %}$ crm --opportunity {{ it.pk }}{% endblock %}
+
+{% block extra_css %}
+    .wrap{display:grid;grid-template-columns:1.6fr 1fr;gap:1.2rem}
+    @media(max-width:820px){.wrap{grid-template-columns:1fr}}
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1rem}
+    .panel h3{font-size:.85rem;margin:0 0 .6rem;color:var(--accent-ink)}
+    .kv{display:flex;gap:.5rem;font-size:.82rem;padding:.25rem 0;border-bottom:1px solid var(--surface2)}
+    .kv b{min-width:120px;color:var(--faint);font-weight:500}
+    .bud{color:var(--good);font-weight:700}
+    .desc{font-size:.85rem;line-height:1.6;white-space:pre-wrap;color:var(--muted);max-height:340px;overflow:auto}
+    .chip{display:inline-block;font:.62rem var(--mono);padding:.14rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);margin:.15rem .2rem 0 0}
+    textarea,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:.5rem;font:.82rem/1.5 var(--font)}
+    button{margin-top:.5rem;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:8px;padding:.45rem .9rem;font-size:.82rem;cursor:pointer}
+    .act{font-size:.78rem;padding:.35rem 0;border-bottom:1px solid var(--surface2);color:var(--muted)}
+    .act .t{color:var(--faint);font-family:var(--mono);font-size:.68rem}
+    a.src{color:var(--accent-ink);font-size:.8rem}
+{% endblock %}
+
+{% block content %}
+  <div class="wrap">
+    <div>
+      <div class="panel">
+        <h3>Détail de l'opportunité</h3>
+        <div class="kv"><b>Budget</b><span class="bud">{{ it.budget_eur }} € <span style="color:var(--faint)">({{ it.budget_texte }})</span></span></div>
+        <div class="kv"><b>Catégorie</b><span>{{ it.categorie|default:"—" }}</span></div>
+        <div class="kv"><b>Publié</b><span>{{ it.publie_le|default:"—" }} · {{ it.vues }} vues · {{ it.offres_existantes }} offres</span></div>
+        <div class="kv"><b>Source</b><span><a class="src" href="{{ it.ext_url }}" target="_blank" rel="noopener">{{ it.get_source_display }} ↗</a></span></div>
+        <div class="kv" style="border:none"><b>Compétences</b><span>{% for c in it.competences %}<span class="chip">{{ c }}</span>{% empty %}—{% endfor %}</span></div>
+      </div>
+      <div class="panel">
+        <h3>Description</h3>
+        <div class="desc">{{ it.description|default:"(pas de description)" }}</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <h3>Client / contact</h3>
+        <div class="kv"><b>Client</b><span>{{ it.client_nom|default:"—" }}</span></div>
+        <div class="kv"><b>Société</b><span>{{ it.client_societe|default:"—" }}</span></div>
+        <div class="kv"><b>Localisation</b><span>{{ it.client_localisation|default:"—" }}</span></div>
+        <div class="kv"><b>Téléphone</b><span>{{ it.contact_tel|default:"—" }}</span></div>
+        <div class="kv"><b>Email</b><span>{{ it.contact_email|default:"—" }} {% if it.email_verifie %}✓{% endif %}</span></div>
+        <div class="kv" style="border:none"><b>Site</b><span>{{ it.client_site|default:"—" }}</span></div>
+      </div>
+      <div class="panel">
+        <h3>Pipeline</h3>
+        <select id="stage">
+          {% for s, lbl in stages %}<option value="{{ s }}" {% if s == it.stage %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+        <h3 style="margin-top:1rem">Ajouter une note</h3>
+        <textarea id="note" rows="3" placeholder="Compte-rendu d'appel, prochaine étape…"></textarea>
+        <button id="saveNote" type="button">Enregistrer la note</button>
+        <div id="msg" style="font-size:.75rem;color:var(--faint);margin-top:.4rem"></div>
+      </div>
+      <div class="panel">
+        <h3>Historique</h3>
+        {% for a in activites %}<div class="act"><span class="t">{{ a.cree_le|date:"d/m H:i" }}</span> — {{ a.texte }}</div>
+        {% empty %}<div class="act">Aucune activité.</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
+    var pk={{ it.pk }};
+    function post(url,body,cb){ fetch(url,{method:'POST',headers:{'X-CSRFToken':cookie('csrftoken'),'Content-Type':'application/x-www-form-urlencoded'},body:body}).then(function(r){return r.json();}).then(cb); }
+    document.getElementById('stage').addEventListener('change',function(e){
+      post('/prospection/'+pk+'/stage/','stage='+encodeURIComponent(e.target.value),function(d){
+        document.getElementById('msg').textContent=d.ok?'Étape mise à jour.':'Erreur.'; });
+    });
+    document.getElementById('saveNote').addEventListener('click',function(){
+      var t=document.getElementById('note');
+      if(!t.value.trim())return;
+      post('/prospection/'+pk+'/note/','note='+encodeURIComponent(t.value),function(d){
+        if(d.ok){ t.value=''; document.getElementById('msg').textContent='Note enregistrée.'; setTimeout(function(){location.reload();},500);} });
+    });
+  })();
+  </script>
+{% endblock %}
