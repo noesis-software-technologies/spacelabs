@@ -13,6 +13,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 
 from apps.prospection.models import Opportunity
+from apps.prospection.scoring import compute_score
 
 DEFAULT_CSV = "/home/noesis/.openclaw/workspace/codeur_prospects_FINAL.csv"
 TRUE = {"true", "1", "oui", "yes", "vérifié", "verifie"}
@@ -21,6 +22,15 @@ TRUE = {"true", "1", "oui", "yes", "vérifié", "verifie"}
 def _int_eur(s):
     digits = re.sub(r"[^\d]", "", (s or "").split("-")[0])
     return int(digits) if digits else 0
+
+
+def _codeur_id(url):
+    m = re.search(r"/projects/(\d+)", url or "")
+    return m.group(1) if m else ""
+
+
+def _is_tjm(s):
+    return "/jour" in (s or "").lower() or "jour" in (s or "").lower() and "€" in (s or "")
 
 
 def _skills(s):
@@ -45,12 +55,16 @@ class Command(BaseCommand):
                 url = (row.get("project_url") or "").strip()
                 if not url:
                     continue
+                desc = row.get("description") or ""
                 defaults = {
                     "source": "codeur",
+                    "codeur_id": _codeur_id(url),
                     "titre": (row.get("title") or "")[:400],
                     "budget_texte": (row.get("budget") or "")[:120],
                     "budget_eur": _int_eur(row.get("budget")),
-                    "description": row.get("description") or "",
+                    "tjm": _is_tjm(row.get("budget")),
+                    "description": desc,
+                    "resume_besoin": re.sub(r"\s+", " ", desc).strip()[:400],
                     "categorie": (row.get("category") or "")[:120],
                     "competences": _skills(row.get("skills_sought")),
                     "publie_le": (row.get("published_at") or "")[:80],
@@ -71,12 +85,14 @@ class Command(BaseCommand):
                     created += 1
                 else:
                     # MAJ des champs sourcés sans toucher au CRM (stage/owner/notes)
-                    for k in ("titre", "budget_texte", "budget_eur", "description",
-                              "categorie", "competences", "contact_tel", "contact_email"):
+                    for k in ("codeur_id", "titre", "budget_texte", "budget_eur", "tjm",
+                              "description", "resume_besoin", "categorie", "competences",
+                              "contact_tel", "contact_email"):
                         setattr(obj, k, defaults[k])
-                    obj.save(update_fields=["titre", "budget_texte", "budget_eur", "description",
-                                            "categorie", "competences", "contact_tel", "contact_email"])
                     updated += 1
+                # Score auto (barème cahier des charges)
+                obj.score = compute_score(obj)
+                obj.save()
         self.stdout.write(self.style.SUCCESS(
             f"Import terminé : {created} nouvelles opportunités, {updated} mises à jour "
             f"(total {Opportunity.objects.count()})."))

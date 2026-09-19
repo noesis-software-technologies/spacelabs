@@ -4,55 +4,71 @@
 {% block crumb %}$ crm --pipeline{% endblock %}
 
 {% block extra_css %}
-    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.1rem}
-    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem 1rem;font-size:.82rem}
-    .kpi b{font-size:1.2rem;color:var(--accent);display:block}
-    .filters{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
-    .filters input,.filters select{background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:.45rem .6rem;font-size:.82rem}
-    .filters button{background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:8px;padding:.45rem .9rem;font-size:.82rem;cursor:pointer}
-    .cols{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:.9rem;overflow-x:auto}
+    .kpis{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.5rem .9rem;font-size:.8rem}
+    .kpi b{font-size:1.15rem;color:var(--accent);display:block}
+    .bar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+    .bar input,.bar select{background:var(--surface);border:1px solid var(--border);color:var(--ink);border-radius:8px;padding:.42rem .6rem;font-size:.8rem}
+    .bar button{background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:8px;padding:.42rem .9rem;font-size:.8rem;cursor:pointer}
+    .bar a.md{margin-left:auto;color:var(--accent-ink);font-size:.78rem;text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:.42rem .7rem}
+    .cols{display:grid;grid-template-columns:repeat(4,minmax(230px,1fr));gap:.8rem;overflow-x:auto}
     .col{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;min-height:120px}
-    .col h2{font:600 .82rem/1 var(--font);padding:.7rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+    .col h2{font:600 .8rem/1 var(--font);padding:.65rem .8rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
     .col h2 span{color:var(--faint);font-family:var(--mono);font-size:.7rem}
-    .card{padding:.6rem .7rem;border-bottom:1px solid var(--surface2);font-size:.8rem}
+    .card{padding:.55rem .7rem;border-bottom:1px solid var(--surface2);font-size:.79rem}
     .card:last-child{border-bottom:none}
-    .card .tt{color:var(--ink);font-weight:600;display:block;text-decoration:none;line-height:1.3;margin-bottom:.25rem}
+    .card .tt{color:var(--ink);font-weight:600;text-decoration:none;line-height:1.3;display:block;margin-bottom:.3rem}
     .card .tt:hover{color:var(--accent-ink)}
-    .card .meta{color:var(--faint);font-size:.7rem;display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem}
-    .bud{color:var(--good);font-weight:700}
-    .card select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--ink);border-radius:7px;padding:.3rem;font-size:.72rem}
+    .row{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.3rem}
+    .sc{font:.62rem var(--mono);font-weight:700;padding:.1rem .4rem;border-radius:999px}
+    .sc.hi{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
+    .sc.mid{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+    .sc.lo{background:var(--surface2);color:var(--faint)}
+    .bud{color:var(--good);font-weight:700;font-size:.74rem}
+    .tag{font:.6rem var(--mono);color:var(--faint)}
+    .card select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--ink);border-radius:7px;padding:.28rem;font-size:.7rem;margin-top:.25rem}
     .empty{padding:.8rem;color:var(--faint);font-size:.78rem;font-style:italic}
+    table.lst{width:100%;border-collapse:collapse;font-size:.8rem}
+    table.lst th,table.lst td{text-align:left;padding:.45rem .5rem;border-bottom:1px solid var(--surface2)}
+    table.lst th{color:var(--faint);font-weight:500;font-size:.72rem}
 {% endblock %}
 
 {% block content %}
     <div class="kpis">
       <div class="kpi"><b>{{ kpis.total }}</b> opportunités</div>
-      <div class="kpi"><b>{{ kpis.ouverts }}</b> en pipeline</div>
-      <div class="kpi"><b>{{ kpis.pipeline_eur }} €</b> valeur pipeline</div>
+      <div class="kpi"><b>{{ kpis.pipeline_eur }} €</b> pipeline actif</div>
+      <div class="kpi"><b>{{ kpis.qualifies }}</b> qualifiées</div>
+      <div class="kpi"><b>{{ kpis.score_moyen }}</b> score moyen</div>
+      <div class="kpi"><b>{{ kpis.taux_reponse }}%</b> réponse</div>
+      <div class="kpi"><b>{{ kpis.taux_transfo }}%</b> transfo</div>
       <div class="kpi"><b>{{ kpis.gagne }}</b> gagnées · {{ kpis.gagne_eur }} €</div>
     </div>
 
-    <form class="filters" method="get">
-      <input type="search" name="q" value="{{ q }}" placeholder="Recherche (titre, client…)">
-      <select name="cat">
-        <option value="">Toutes catégories</option>
-        {% for c, n in cats %}<option value="{{ c }}" {% if c == cat %}selected{% endif %}>{{ c }} ({{ n }})</option>{% endfor %}
-      </select>
-      <input type="number" name="bmin" value="{{ bmin }}" placeholder="Budget min €" style="width:120px">
+    <form class="bar" method="get">
+      <input type="search" name="q" value="{{ q }}" placeholder="Recherche…">
+      <select name="etat"><option value="">Tous états</option>
+        {% for s, lbl in etats %}<option value="{{ s }}" {% if s == etat %}selected{% endif %}>{{ lbl }}</option>{% endfor %}</select>
+      <select name="cat"><option value="">Toutes catégories</option>
+        {% for c, n in cats %}<option value="{{ c }}" {% if c == cat %}selected{% endif %}>{{ c }} ({{ n }})</option>{% endfor %}</select>
+      <input type="number" name="bmin" value="{{ bmin }}" placeholder="Budget min €" style="width:110px">
+      <select name="vue"><option value="">Vue : Pipeline</option>
+        {% for k, lbl in vues.items %}<option value="{{ k }}" {% if k == vue %}selected{% endif %}>{{ lbl }}</option>{% endfor %}</select>
       <button type="submit">Filtrer</button>
+      <a class="md" href="{% url 'prospection:modeles' %}">✉️ Modèles &amp; checklist</a>
     </form>
 
+    {% if colonnes %}
     <div class="cols">
       {% for col in colonnes %}
       <div class="col">
         <h2>{{ col.label }} <span>{{ col.n }}</span></h2>
         {% for it in col.items %}
-        <div class="card" data-pk="{{ it.pk }}">
-          <a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:70 }}</a>
-          <div class="meta">
-            <span class="bud">{{ it.budget_eur }} €</span>
-            {% if it.categorie %}<span>{{ it.categorie }}</span>{% endif %}
-            {% if it.client_societe or it.client_nom %}<span>{{ it.client_societe|default:it.client_nom|truncatechars:24 }}</span>{% endif %}
+        <div class="card">
+          <a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:64 }}</a>
+          <div class="row">
+            <span class="sc {% if it.score >= 70 %}hi{% elif it.score >= 45 %}mid{% else %}lo{% endif %}">{{ it.score }}</span>
+            <span class="bud">{{ it.budget_eur }} €{% if it.tjm %}/j{% endif %}</span>
+            {% if it.categorie %}<span class="tag">{{ it.categorie|truncatechars:20 }}</span>{% endif %}
           </div>
           <select class="stage" data-pk="{{ it.pk }}">
             {% for s, lbl in stages %}<option value="{{ s }}" {% if s == it.stage %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
@@ -62,19 +78,35 @@
       </div>
       {% endfor %}
     </div>
+    {% else %}
+    <table class="lst">
+      <thead><tr><th>Score</th><th>Titre</th><th>Budget</th><th>Catégorie</th><th>Statut</th><th>Relance</th></tr></thead>
+      <tbody>
+      {% for it in items %}
+      <tr>
+        <td><span class="sc {% if it.score >= 70 %}hi{% elif it.score >= 45 %}mid{% else %}lo{% endif %}">{{ it.score }}</span></td>
+        <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:70 }}</a></td>
+        <td class="bud">{{ it.budget_eur }} €{% if it.tjm %}/j{% endif %}</td>
+        <td class="tag">{{ it.categorie|default:"—" }}</td>
+        <td class="tag">{{ it.get_stage_display }}</td>
+        <td class="tag">{{ it.date_relance|default:"—" }}</td>
+      </tr>
+      {% empty %}<tr><td colspan="6" class="empty">Aucune opportunité dans cette vue.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
 
     <script>
     (function(){
       function cookie(n){return (document.cookie.match('(^|;)\\s*'+n+'\\s*=\\s*([^;]+)')||[]).pop()||'';}
-      document.querySelector('.cols').addEventListener('change',function(e){
+      var cols=document.querySelector('.cols');
+      if(cols) cols.addEventListener('change',function(e){
         var sel=e.target.closest('.stage'); if(!sel)return;
-        var pk=sel.dataset.pk;
-        fetch('/prospection/'+pk+'/stage/',{method:'POST',
+        fetch('/prospection/'+sel.dataset.pk+'/stage/',{method:'POST',
           headers:{'X-CSRFToken':cookie('csrftoken'),'Content-Type':'application/x-www-form-urlencoded'},
           body:'stage='+encodeURIComponent(sel.value)})
           .then(function(r){return r.json();}).then(function(d){
-            var card=sel.closest('.card'); if(d.ok){ card.style.opacity=.4; setTimeout(function(){location.reload();},350); }
-          });
+            var card=sel.closest('.card'); if(d.ok){ card.style.opacity=.4; setTimeout(function(){location.reload();},300);} });
       });
     })();
     </script>

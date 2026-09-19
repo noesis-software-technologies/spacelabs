@@ -1,0 +1,79 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Modèles de messages{% endblock %}
+{% block h1 %}Modèles de messages & checklist{% endblock %}
+{% block crumb %}$ crm --templates{% endblock %}
+
+{% block extra_css %}
+    .intro{color:var(--muted);font-size:.85rem;margin-bottom:1.2rem;max-width:70ch}
+    .tpl{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1rem}
+    .tpl h3{font-size:.9rem;margin:0 0 .5rem;color:var(--accent-ink)}
+    .tpl pre{white-space:pre-wrap;font:.83rem/1.55 var(--font);color:var(--ink);margin:0}
+    .tpl button{margin-top:.6rem;background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:8px;padding:.4rem .8rem;font-size:.78rem;cursor:pointer}
+    .rules{background:color-mix(in srgb,var(--crit) 10%,transparent);border:1px solid color-mix(in srgb,var(--crit) 30%,transparent);border-radius:var(--radius);padding:.8rem 1rem;font-size:.82rem;margin-bottom:1.2rem}
+    .chk{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;font-size:.85rem;line-height:1.9}
+{% endblock %}
+
+{% block content %}
+  <p class="intro">Règle unique : sur une annonce à 30 offres, le client lit trois lignes. Preuve de lecture du brief, preuve de compétence, une question. Pas de présentation d'entreprise en tête. On écrit au nom de l'équipe projet <b>NOESIS SOFTWARE TECHNOLOGIES</b>.</p>
+
+  <div class="rules"><b>Interdits :</b> « nous sommes une agence spécialisée… », listes de technos, liens portfolio générique, toute mention d'outils d'assistance internes.</div>
+
+  <div class="tpl"><h3>Modèle 1 — Offre annonce ouverte, score ≥ 70</h3><pre id="t1">Bonjour,
+
+Sur votre besoin de [reformulation en une ligne, avec le détail technique qui prouve qu'on a lu], le point qui décide du budget est [contrainte réelle : volumétrie, intégration existante, reprise de données…].
+
+Nous avons livré ce type de plateforme en Python/Django, dont [référence comparable en une ligne]. Sur votre périmètre, je situe la mission entre [fourchette] selon la réponse à un point : [la question qui change le chiffrage].
+
+Je peux vous envoyer un découpage en lots d'ici demain si cela vous aide à comparer.
+
+[Prénom Nom] — NOESIS SOFTWARE TECHNOLOGIES</pre><button data-t="t1">Copier</button></div>
+
+  <div class="tpl"><h3>Modèle 2 — Offre annonce ouverte, score 45 à 69</h3><pre id="t2">Bonjour,
+
+Votre annonce porte sur [reformulation en une ligne]. Deux éléments manquent pour chiffrer sérieusement : [point 1] et [point 2].
+
+Si vous me les précisez, je vous renvoie un devis ferme dans la journée. Nous développons ce type d'application en Python/Django, avec reprise de l'existant quand il y en a un.
+
+[Prénom Nom] — NOESIS SOFTWARE TECHNOLOGIES</pre><button data-t="t2">Copier</button></div>
+
+  <div class="tpl"><h3>Modèle 3 — Relance à J+3</h3><pre id="t3">Bonjour,
+
+Je reviens vers vous sur [titre du projet]. Avez-vous avancé sur votre sélection ?
+
+Si le sujet est en pause, dites-le-moi simplement, je n'insisterai pas. Si vous hésitez sur le périmètre, je peux vous faire un découpage en lots pour démarrer sur une première tranche.
+
+[Prénom Nom] — NOESIS SOFTWARE TECHNOLOGIES</pre><button data-t="t3">Copier</button></div>
+
+  <div class="tpl"><h3>Modèle 4 — Opportunité future (annonce « En cours »)</h3><pre id="t4">Bonjour,
+
+Vous aviez publié [titre du projet] il y a [durée]. Nous intervenons régulièrement en reprise sur ce type d'applicatif, quand un développement s'arrête en cours de route ou qu'il faut le faire évoluer après la livraison.
+
+Si le projet est en production et que vous cherchez une équipe pour la suite, je peux vous faire un point technique gratuit sur l'existant.
+
+[Prénom Nom] — NOESIS SOFTWARE TECHNOLOGIES</pre><button data-t="t4">Copier</button></div>
+
+  <div class="tpl"><h3>Modèle 5 — « Demande de devis » sans budget</h3><pre id="t5">Bonjour,
+
+Pour vous donner un chiffre utile plutôt qu'une fourchette large, j'ai besoin de deux réponses : [question volumétrie/utilisateurs] et [question sur l'existant à reprendre].
+
+Avec ça je vous envoie un devis découpé en lots, ce qui vous permet de démarrer sur une première tranche et d'arbitrer la suite.
+
+[Prénom Nom] — NOESIS SOFTWARE TECHNOLOGIES</pre><button data-t="t5">Copier</button></div>
+
+  <div class="chk"><h3 style="margin-top:0">Checklist avant envoi</h3>
+    ☐ Annonce à l'état <b>Ouvert</b>, vérifié à l'instant<br>
+    ☐ La première phrase cite un élément précis du brief<br>
+    ☐ Aucun copier-coller visible (nom de projet, techno)<br>
+    ☐ Une seule question posée<br>
+    ☐ Une fourchette ou une question de chiffrage, jamais un prix ferme sans brief complet<br>
+    ☐ Ligne créée dans le tableau <b>avant</b> l'envoi
+  </div>
+
+  <script>
+  document.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-t]'); if(!b)return;
+    var txt=document.getElementById(b.dataset.t).textContent;
+    navigator.clipboard.writeText(txt); b.textContent='Copié ✓'; setTimeout(function(){b.textContent='Copier';},1500);
+  });
+  </script>
+{% endblock %}
