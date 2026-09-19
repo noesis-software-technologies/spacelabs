@@ -79,6 +79,27 @@
         <button id="saveNote" type="button">Enregistrer</button>
       </div>
       <div class="panel">
+        <h3>Étapes commerciales <button id="genSteps" type="button" style="font-size:.72rem;padding:.25rem .6rem">⚙︎ Générer (SLA)</button></h3>
+        <div id="steps">
+          {% for s in etapes %}
+          <label class="act" style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
+            <input type="checkbox" data-step="{{ s.pk }}" {% if s.fait %}checked{% endif %} style="width:auto;margin:0">
+            <span style="{% if s.fait %}text-decoration:line-through;color:var(--faint){% endif %}">{{ s.libelle }}{% if s.echeance %} <span class="t">· {{ s.echeance }}</span>{% endif %}{% if s.auto %} 🤖{% endif %}</span>
+          </label>
+          {% empty %}<div class="act" id="noStep">Aucune étape. Clique « Générer » ou ajoute-en une.</div>{% endfor %}
+        </div>
+        <input id="stepLib" type="text" placeholder="Nouvelle étape…" style="margin-top:.5rem">
+        <button id="addStep" type="button">Ajouter l'étape</button>
+      </div>
+      <div class="panel">
+        <h3>🤖 Agentic sales</h3>
+        <button id="aiOffer" type="button">Générer l'offre (IA)</button>
+        <button id="aiNext" type="button" style="margin-left:.4rem">Prochaine étape</button>
+        <div id="aiSug" style="font-size:.78rem;color:var(--accent-ink);margin:.5rem 0"></div>
+        <textarea id="aiOut" rows="8" placeholder="L'offre générée apparaîtra ici (brouillon à valider avant envoi via la messagerie plateforme)…" style="display:none;margin-top:.5rem"></textarea>
+        <button id="aiCopy" type="button" style="display:none">Copier l'offre</button>
+      </div>
+      <div class="panel">
         <h3>Historique</h3>
         {% for a in activites %}<div class="act"><span class="t">{{ a.cree_le|date:"d/m H:i" }}</span> — {{ a.texte }}</div>
         {% empty %}<div class="act">Aucune activité.</div>{% endfor %}
@@ -105,6 +126,30 @@
       var t=document.getElementById('note'); if(!t.value.trim())return;
       post('/prospection/'+pk+'/note/','note='+encodeURIComponent(t.value),function(d){ if(d.ok){t.value='';setTimeout(function(){location.reload();},400);} });
     });
+    // Étapes commerciales
+    document.getElementById('genSteps').addEventListener('click',function(){
+      post('/prospection/'+pk+'/step/generate/','',function(d){ location.reload(); });
+    });
+    document.getElementById('addStep').addEventListener('click',function(){
+      var el=document.getElementById('stepLib'); if(!el.value.trim())return;
+      post('/prospection/'+pk+'/step/add/','libelle='+encodeURIComponent(el.value),function(d){ if(d.ok)location.reload(); });
+    });
+    document.getElementById('steps').addEventListener('change',function(e){
+      var cb=e.target.closest('[data-step]'); if(!cb)return;
+      post('/prospection/step/'+cb.dataset.step+'/toggle/','',function(d){ location.reload(); });
+    });
+    // Agentic sales
+    var out=document.getElementById('aiOut'), copy=document.getElementById('aiCopy');
+    document.getElementById('aiOffer').addEventListener('click',function(){
+      var b=this; b.textContent='Rédaction…'; b.disabled=true;
+      post('/prospection/'+pk+'/ai/offer/','',function(d){ b.textContent='Générer l’offre (IA)'; b.disabled=false;
+        if(d.ok){ out.style.display=''; out.value=d.offer; copy.style.display=''; } else { document.getElementById('aiSug').textContent='⚠️ '+(d.error||''); } });
+    });
+    document.getElementById('aiNext').addEventListener('click',function(){
+      document.getElementById('aiSug').textContent='…';
+      post('/prospection/'+pk+'/ai/next/','',function(d){ document.getElementById('aiSug').textContent = d.ok? '→ '+d.suggestion : '⚠️ '+(d.error||''); });
+    });
+    copy.addEventListener('click',function(){ out.select(); navigator.clipboard.writeText(out.value); copy.textContent='Copié ✓'; setTimeout(function(){copy.textContent='Copier l’offre';},1500); });
   })();
   </script>
 {% endblock %}

@@ -122,6 +122,37 @@ class Opportunity(models.Model):
         return None
 
 
+TYPES_ETAPE = [
+    ("qualification", "Qualification"),
+    ("offre", "Envoyer l'offre"),
+    ("relance", "Relance"),
+    ("echange", "Échange client"),
+    ("cloture", "Clôture"),
+    ("autre", "Autre"),
+]
+
+
+class SalesStep(models.Model):
+    """Étape commerciale (action) rattachée à une opportunité — la matière de
+    l'« agentic sales team » : générée par l'IA (SLA) puis suivie par l'humain."""
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name="etapes")
+    type = models.CharField(max_length=16, choices=TYPES_ETAPE, default="autre")
+    libelle = models.CharField(max_length=300)
+    echeance = models.DateField(null=True, blank=True)
+    fait = models.BooleanField(default=False)
+    fait_le = models.DateTimeField(null=True, blank=True)
+    auto = models.BooleanField(default=False, help_text="Créée par l'agent (IA/SLA)")
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                              on_delete=models.SET_NULL, related_name="etapes_vente")
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["fait", "echeance", "id"]
+
+    def __str__(self):
+        return f"{self.libelle[:50]} ({'fait' if self.fait else 'à faire'})"
+
+
 class Activity(models.Model):
     """Historique CRM : changements de statut, notes, offres, relances."""
     opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name="activites")

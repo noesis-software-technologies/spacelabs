@@ -100,13 +100,80 @@ def board(request):
 @login_required
 def opportunity_detail(request, pk):
     it = get_object_or_404(Opportunity, pk=pk)
+    from .models import TYPES_ETAPE
     from .scoring import suggest_rejet
     return render(request, "prospection/detail.html", {
         "it": it, "stages": STATUTS, "etats": ETATS,
         "motifs_rejet": MOTIFS_REJET, "motifs_perte": MOTIFS_PERTE,
-        "rejet_suggere": suggest_rejet(it),
+        "rejet_suggere": suggest_rejet(it), "types_etape": TYPES_ETAPE,
+        "etapes": it.etapes.all(),
         "activites": it.activites.all()[:50], "active_nav": "prospection",
     })
+
+
+@login_required
+@require_POST
+def add_step(request, pk):
+    from .models import SalesStep
+    it = get_object_or_404(Opportunity, pk=pk)
+    lib = (request.POST.get("libelle") or "").strip()
+    if not lib:
+        return JsonResponse({"ok": False, "error": "libellé vide"}, status=400)
+    SalesStep.objects.create(opportunity=it, libelle=lib[:300],
+                             type=request.POST.get("type", "autre"),
+                             echeance=request.POST.get("echeance") or None,
+                             owner=request.user)
+    return JsonResponse({"ok": True})
+
+
+@login_required
+@require_POST
+def toggle_step(request, pk):
+    from .models import SalesStep
+    step = get_object_or_404(SalesStep, pk=pk)
+    step.fait = not step.fait
+    step.fait_le = timezone.now() if step.fait else None
+    step.save(update_fields=["fait", "fait_le"])
+    return JsonResponse({"ok": True, "fait": step.fait})
+
+
+@login_required
+@require_POST
+def generate_steps(request, pk):
+    """Pré-remplit les étapes SLA (agent) selon le statut, sans doublonner."""
+    from .models import SalesStep
+    from .sales_ai import default_steps
+    it = get_object_or_404(Opportunity, pk=pk)
+    existing = set(it.etapes.values_list("libelle", flat=True))
+    n = 0
+    for s in default_steps(it):
+        if s["libelle"] not in existing:
+            SalesStep.objects.create(opportunity=it, auto=True, owner=request.user, **s)
+            n += 1
+    return JsonResponse({"ok": True, "created": n})
+
+
+@login_required
+@require_POST
+def ai_offer(request, pk):
+    """Agentic sales : rédige une offre sur mesure (IA locale) à partir du brief."""
+    from .sales_ai import draft_offer
+    it = get_object_or_404(Opportunity, pk=pk)
+    ok, txt = draft_offer(it)
+    if not ok:
+        return JsonResponse({"ok": False, "error": txt}, status=502)
+    Activity.objects.create(opportunity=it, auteur=request.user, texte="Offre IA générée (brouillon)")
+    return JsonResponse({"ok": True, "offer": txt})
+
+
+@login_required
+@require_POST
+def ai_next(request, pk):
+    from .sales_ai import suggest_next
+    it = get_object_or_404(Opportunity, pk=pk)
+    ok, txt = suggest_next(it)
+    return JsonResponse({"ok": ok, "suggestion": txt} if ok else {"ok": False, "error": txt},
+                        status=200 if ok else 502)
 
 
 @login_required
