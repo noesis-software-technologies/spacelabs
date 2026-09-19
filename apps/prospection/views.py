@@ -98,6 +98,61 @@ def board(request):
 
 
 @login_required
+def cockpit(request):
+    """Harnais de pilotage : ce qu'il faut faire MAINTENANT — prospects les plus
+    chauds à contacter, actions/relances dues (SLA), et rappel des blogs."""
+    from .models import SalesStep
+    today = timezone.localdate()
+    ouverts = Opportunity.objects.filter(etat="ouvert")
+
+    # Prospects les plus chauds : score élevé, ouverts, pas encore d'offre.
+    chauds = list(ouverts.filter(stage__in=["detecte", "qualifie"], score__gte=70)
+                  .order_by("-score", "-budget_eur")[:15])
+    # Actions commerciales en retard / du jour.
+    actions = list(SalesStep.objects.filter(fait=False, echeance__lte=today)
+                   .select_related("opportunity").order_by("echeance")[:20])
+    # Offres à relancer (J+3 à J+10) et à clôturer (>J+10).
+    relances = list(Opportunity.objects.filter(
+        stage="offre_envoyee", date_offre__lte=today - _dt.timedelta(days=3),
+        date_offre__gte=today - _dt.timedelta(days=10)).order_by("date_offre")[:20])
+    a_cloturer = list(Opportunity.objects.filter(
+        stage="offre_envoyee", date_offre__lt=today - _dt.timedelta(days=10))[:20])
+    # Vivier dû.
+    vivier = list(Opportunity.objects.filter(
+        stage="opportunite_future", date_relance__lte=today).order_by("date_relance")[:20])
+
+    kpis = {
+        "chauds": ouverts.filter(stage__in=["detecte", "qualifie"], score__gte=70).count(),
+        "actions": SalesStep.objects.filter(fait=False, echeance__lte=today).count(),
+        "relances": len(relances),
+        "pipeline_eur": ouverts.filter(stage__in=STATUTS_ACTIFS).aggregate(
+            s=Sum("budget_eur"))["s"] or 0,
+    }
+
+    # Rappel blogs (constellation éditoriale) — ne pas les oublier.
+    blogs = []
+    try:
+        from apps.veille.models import Blog, PressItem
+        for b in Blog.objects.all():
+            items = PressItem.objects.filter(blog_cible=b)
+            prets = items.filter(draft_statut__in=["brouillon", "valide"]).exclude(
+                mcp_status="published").count()
+            if prets or b.domaine == "agentic-pods.com":
+                blogs.append({"nom": b.nom, "id": b.id, "prets": prets,
+                              "mcp_ok": bool(b.mcp_url or b.mcp_token) or b.is_principal})
+        non_assignes = PressItem.objects.filter(blog_cible__isnull=True).count()
+    except Exception:  # noqa: BLE001
+        non_assignes = 0
+
+    return render(request, "prospection/cockpit.html", {
+        "chauds": chauds, "actions": actions, "relances": relances,
+        "a_cloturer": a_cloturer, "vivier": vivier, "kpis": kpis,
+        "blogs": blogs, "non_assignes": non_assignes, "today": today,
+        "active_nav": "prospection",
+    })
+
+
+@login_required
 def opportunity_detail(request, pk):
     it = get_object_or_404(Opportunity, pk=pk)
     from .models import TYPES_ETAPE

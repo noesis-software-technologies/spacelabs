@@ -5,7 +5,8 @@ from . import views
 app_name = "prospection"
 
 urlpatterns = [
-    path("", views.board, name="board"),
+    path("", views.cockpit, name="cockpit"),
+    path("board/", views.board, name="board"),
     path("modeles/", views.modeles, name="modeles"),
     path("<int:pk>/", views.opportunity_detail, name="detail"),
     path("<int:pk>/stage/", views.set_stage, name="set_stage"),

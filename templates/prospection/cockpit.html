@@ -1,0 +1,115 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Cockpit commercial{% endblock %}
+{% block h1 %}Cockpit — priorités du jour{% endblock %}
+{% block crumb %}$ crm --today{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.1rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem .95rem;font-size:.8rem}
+    .kpi b{font-size:1.3rem;color:var(--accent);display:block}
+    .kpi.hot b{color:var(--crit)}
+    .sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.1rem;overflow:hidden}
+    .sec h2{font:600 .85rem/1 var(--font);padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+    .sec h2 .c{color:var(--faint);font-family:var(--mono);font-size:.72rem}
+    table{width:100%;border-collapse:collapse;font-size:.8rem}
+    td,th{text-align:left;padding:.5rem 1rem;border-bottom:1px solid var(--surface2)}
+    th{color:var(--faint);font-weight:500;font-size:.7rem}
+    tr:last-child td{border-bottom:none}
+    .sc{font:.64rem var(--mono);font-weight:700;padding:.1rem .45rem;border-radius:999px}
+    .sc.hi{background:color-mix(in srgb,var(--good) 20%,transparent);color:var(--good)}
+    .sc.mid{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+    .bud{color:var(--good);font-weight:700}
+    .tt{color:var(--ink);text-decoration:none;font-weight:600}.tt:hover{color:var(--accent-ink)}
+    .cta{background:color-mix(in srgb,var(--accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);color:var(--accent-ink);border-radius:7px;padding:.25rem .6rem;font-size:.72rem;text-decoration:none;white-space:nowrap}
+    .late{color:var(--crit);font-family:var(--mono);font-size:.72rem}
+    .empty{padding:.9rem 1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+    .links{margin-bottom:1rem;display:flex;gap:.6rem;flex-wrap:wrap}
+    .links a{color:var(--accent-ink);font-size:.8rem;text-decoration:none;border:1px solid var(--border);border-radius:8px;padding:.4rem .8rem}
+    .blog{display:flex;justify-content:space-between;padding:.5rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
+    .badge{font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px}
+    .badge.on{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+    .badge.off{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="kpi hot"><b>{{ kpis.chauds }}</b> prospects chauds (≥70)</div>
+      <div class="kpi"><b>{{ kpis.actions }}</b> actions dues</div>
+      <div class="kpi"><b>{{ kpis.relances }}</b> relances à faire</div>
+      <div class="kpi"><b>{{ kpis.pipeline_eur }} €</b> pipeline actif</div>
+    </div>
+    <div class="links">
+      <a href="{% url 'prospection:board' %}">📊 Pipeline complet</a>
+      <a href="{% url 'prospection:modeles' %}">✉️ Modèles &amp; checklist</a>
+      <a href="/veille/">🖼️ Constellation éditoriale</a>
+    </div>
+
+    <div class="sec">
+      <h2>🔥 Prospects les plus chauds — offre sous 2 h <span class="c">score ≥ 70</span></h2>
+      <table><thead><tr><th>Score</th><th>Titre</th><th>Budget</th><th>Catégorie</th><th></th></tr></thead><tbody>
+      {% for it in chauds %}
+      <tr>
+        <td><span class="sc hi">{{ it.score }}</span></td>
+        <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td>
+        <td class="bud">{{ it.budget_eur }} €{% if it.tjm %}/j{% endif %}</td>
+        <td style="color:var(--faint)">{{ it.categorie|truncatechars:24 }}</td>
+        <td><a class="cta" href="{% url 'prospection:detail' it.pk %}">🤖 Rédiger l'offre</a></td>
+      </tr>
+      {% empty %}<tr><td colspan="5" class="empty">Aucun prospect chaud en attente — beau travail.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="sec">
+      <h2>⏰ Actions dues / en retard <span class="c">SLA</span></h2>
+      <table><tbody>
+      {% for s in actions %}
+      <tr>
+        <td class="late">{% if s.echeance < today %}en retard {% endif %}{{ s.echeance }}</td>
+        <td>{{ s.libelle }}</td>
+        <td><a class="tt" href="{% url 'prospection:detail' s.opportunity.pk %}">{{ s.opportunity.titre|truncatechars:44 }}</a></td>
+      </tr>
+      {% empty %}<tr><td class="empty">Aucune action en retard.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    <div class="sec">
+      <h2>↩️ Relances dues (J+3 → J+10) <span class="c">{{ relances|length }}</span></h2>
+      <table><tbody>
+      {% for it in relances %}
+      <tr><td class="late">offre {{ it.date_offre }}</td>
+        <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td>
+        <td class="bud">{{ it.budget_eur }} €</td></tr>
+      {% empty %}<tr><td class="empty">Aucune relance due.</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    {% if a_cloturer %}
+    <div class="sec">
+      <h2>🚫 À passer en « Sans réponse » (&gt; J+10) <span class="c">{{ a_cloturer|length }}</span></h2>
+      <table><tbody>
+      {% for it in a_cloturer %}<tr><td class="late">offre {{ it.date_offre }}</td>
+        <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    {% if vivier %}
+    <div class="sec">
+      <h2>🌱 Vivier à relancer <span class="c">{{ vivier|length }}</span></h2>
+      <table><tbody>
+      {% for it in vivier %}<tr><td class="late">{{ it.date_relance }}</td>
+        <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    <div class="sec">
+      <h2>🖼️ Blogs — à ne pas oublier <span class="c">{{ non_assignes }} sujets non assignés</span></h2>
+      {% for b in blogs %}
+      <div class="blog">
+        <a class="tt" href="/veille/articles/?blog={{ b.id }}">{{ b.nom }}</a>
+        <span><b style="color:var(--accent)">{{ b.prets }}</b> brouillon(s) à pousser · {% if b.mcp_ok %}<span class="badge on">MCP ✓</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}</span>
+      </div>
+      {% empty %}<div class="empty">Rien à pousser côté blogs.</div>{% endfor %}
+    </div>
+{% endblock %}
