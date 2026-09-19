@@ -23,6 +23,9 @@ class Blog(models.Model):
     categorie = models.CharField(max_length=40, blank=True, help_text="slug de catégorie ; vide = principal")
     is_principal = models.BooleanField(default=False)
     statut = models.CharField(max_length=20, choices=STATUT, default="a_ouvrir")
+    # MCP dédié par blog (sinon fallback settings.ATMOSPHERE_MCP_*) — même protocole.
+    mcp_url = models.CharField(max_length=300, blank=True, help_text="Endpoint MCP du blog (vide = 13-Atmosphère)")
+    mcp_token = models.CharField(max_length=300, blank=True, help_text="Token MCP du blog (secret)")
     cree_le = models.DateTimeField(auto_now_add=True)
 
     class Meta:

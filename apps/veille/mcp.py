@@ -33,13 +33,27 @@ def image_arg(url: str, alt: str = "", name: str = "") -> dict:
     return arg
 
 
-def rpc(method: str, params: dict, rid: int = 1, timeout: int = 60, retries: int = 3) -> dict:
+def mcp_creds(obj=None):
+    """(url, token) du MCP : par blog si défini, sinon 13-Atmosphère (settings).
+
+    `obj` peut être un Blog ou un PressItem (on remonte alors à blog_cible).
+    """
+    blog = getattr(obj, "blog_cible", obj)
+    url = getattr(blog, "mcp_url", "") or settings.ATMOSPHERE_MCP_URL
+    token = getattr(blog, "mcp_token", "") or settings.ATMOSPHERE_MCP_TOKEN
+    return url, token
+
+
+def rpc(method: str, params: dict, rid: int = 1, timeout: int = 60, retries: int = 3,
+        url: str = None, token: str = None) -> dict:
     """Appel JSON-RPC avec retry/backoff sur 503/502/504 (le blog flappe)."""
+    url = url or settings.ATMOSPHERE_MCP_URL
+    token = token or settings.ATMOSPHERE_MCP_TOKEN
     last = None
     for attempt in range(retries):
         r = requests.post(
-            settings.ATMOSPHERE_MCP_URL, timeout=timeout,
-            headers={"Authorization": f"Bearer {settings.ATMOSPHERE_MCP_TOKEN}",
+            url, timeout=timeout,
+            headers={"Authorization": f"Bearer {token}",
                      "Content-Type": "application/json"},
             json={"jsonrpc": "2.0", "id": rid, "method": method, "params": params},
         )
@@ -75,10 +89,12 @@ def payload(it) -> dict:
 
 def publish_item(it, with_images: bool = True, timeout: int = 60) -> dict:
     """Crée/MAJ le brouillon sur le MCP. Renvoie {ok, article_id?, admin_url?, images?, error?}."""
-    if not settings.ATMOSPHERE_MCP_TOKEN:
-        return {"ok": False, "error": "ATMOSPHERE_MCP_TOKEN manquant (.env.local)"}
+    url, token = mcp_creds(it)
+    if not token:
+        return {"ok": False, "error": "MCP token manquant (blog ou .env.local)"}
     try:
-        res = rpc("tools/call", {"name": "draft_article", "arguments": payload(it)}, 1, timeout)
+        res = rpc("tools/call", {"name": "draft_article", "arguments": payload(it)}, 1, timeout,
+                  url=url, token=token)
     except requests.RequestException as e:
         return {"ok": False, "error": f"MCP injoignable : {e}"}
     result = res.get("result") or {}
@@ -99,11 +115,13 @@ def publish_item(it, with_images: bool = True, timeout: int = 60) -> dict:
             if it.image_ref:
                 rpc("tools/call", {"name": "set_cover_image",
                                    "arguments": {"article_id": art,
-                                                 "image": image_arg(it.image_ref, it.image_alt)}}, 2, timeout)
+                                                 "image": image_arg(it.image_ref, it.image_alt)}}, 2, timeout,
+                    url=url, token=token)
             imgs = [image_arg(u, it.image_alt, f"img{n}") for n, u in enumerate(it.carrousel)]
             if imgs:
                 rpc("tools/call", {"name": "add_carousel_images",
-                                   "arguments": {"article_id": art, "images": imgs}}, 3, timeout)
+                                   "arguments": {"article_id": art, "images": imgs}}, 3, timeout,
+                    url=url, token=token)
                 n_img = len(imgs)
         except requests.RequestException as e:
             return {"ok": True, "article_id": art, "admin_url": sc.get("admin_url", ""),
