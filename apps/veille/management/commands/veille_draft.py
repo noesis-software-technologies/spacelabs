@@ -88,3 +88,31 @@ class Command(BaseCommand):
             f"Usage claude — coût cumulé ~${tot_cost:.4f} · "
             f"{tot_in} tokens in · {tot_out} tokens out "
             f"(abonnement Claude Code, pas de facturation API au token)."))
+
+        # ── Traçabilité coût (SessionTrace, workspace Noésis) ──
+        if ok or tot_cost:
+            self._log_trace(items, ok, tot_in, tot_out, tot_cost, o.get("categorie") or "")
+
+    def _log_trace(self, items, ok, tin, tout, cost, categorie):
+        from apps.ops.models import SessionTrace
+        # Blog dominant (pour attribuer la trace au bon projet éditorial)
+        blogs = [it.blog_cible for it in items if it.blog_cible]
+        blog = blogs[0] if blogs else None
+        projet = f"Veille — {blog.nom}" if blog else (f"Veille — {categorie}" if categorie else "Veille éditoriale")
+        ws = None
+        try:
+            from apps.workspaces.models import Workspace
+            ws = (Workspace.objects.filter(name__icontains="no").first()
+                  or Workspace.objects.filter(name__icontains="space").first()
+                  or Workspace.objects.first())
+        except Exception:  # noqa: BLE001
+            ws = None
+        SessionTrace.objects.create(
+            projet=projet, workspace=ws, source="veille",
+            sessions=1, conversations=ok, tokens_in=tin, tokens_out=tout,
+            cost_usd=round(cost, 4),
+            resume=f"Rédaction {ok} brouillon(s)"
+                   + (f" — blog {blog.domaine or blog.nom}" if blog else "")
+                   + f" (~${cost:.4f}, abonnement Claude Code).",
+        )
+        self.stdout.write(self.style.SUCCESS(f"↳ SessionTrace enregistré : « {projet} » (${cost:.4f})."))
