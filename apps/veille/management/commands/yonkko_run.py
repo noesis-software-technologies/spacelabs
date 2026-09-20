@@ -59,27 +59,18 @@ class Command(BaseCommand):
         photos = search(pexels_query(it.categorie), per_page=per_article)
         if not photos:
             return 0
-        dest = Path(settings.MEDIA_ROOT) / "veille" / str(it.pk) / "pexels"
-        dest.mkdir(parents=True, exist_ok=True)
-        local = []
-        for n, ph in enumerate(photos):
-            try:
-                r = requests.get(ph["url"], timeout=timeout)
-                r.raise_for_status()
-            except requests.RequestException:
-                continue
-            ext = EXT.get(r.headers.get("Content-Type", "").split(";")[0].strip(), ".jpg")
-            (dest / f"px{n:02d}{ext}").write_bytes(r.content)
-            local.append(f"{settings.MEDIA_URL}veille/{it.pk}/pexels/px{n:02d}{ext}")
-        if not local:
+        # On stocke les URLs Pexels distantes (pas de base64) → le blog les récupère
+        # lui-même : payload MCP minuscule (évite le 400 « request too large »).
+        urls = [p["url"] for p in photos if p.get("url")]
+        if not urls:
             return 0
-        it.images_local = local
-        if not it.image_url:
-            it.image_url = local[0]
-        if not it.image_alt and photos[0].get("alt"):
+        it.images = urls          # carrousel (URLs distantes)
+        it.images_local = []      # on n'utilise plus le base64 local
+        it.image_url = urls[0]    # cover
+        if photos[0].get("alt"):
             it.image_alt = photos[0]["alt"][:300]
-        it.save(update_fields=["images_local", "image_url", "image_alt"])
-        return len(local)
+        it.save(update_fields=["images", "images_local", "image_url", "image_alt"])
+        return len(urls)
 
     def _reimage_pushed(self, o):
         """Re-télécharge de belles images et met à jour cover + carrousel des
