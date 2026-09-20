@@ -7,11 +7,12 @@ Les images (URLs absolues du site officiel) alimentent cover + carrousel.
 
 Usage : python manage.py veille_scrape_opcg [--limit 100] [--gallery 5]
 """
+import datetime as _dt
 import re
 
 import requests
 from django.core.management.base import BaseCommand
-from django.utils.timezone import now
+from django.utils.timezone import make_aware, now
 
 from apps.veille.models import Blog, PressItem
 from apps.veille.yonkko import BLOC, SUBCATS
@@ -26,6 +27,23 @@ CATMAP = {
     "ANNOUNCE": "op-actu", "RULES": "op-actu", "MAGAZINE": "op-actu", "STREAM": "op-actu",
 }
 IMG_RE = re.compile(r'(/onepiececg/[^"\')\s]+\.(?:webp|jpg|jpeg|png))', re.I)
+
+
+def _date(a):
+    """Vraie date de l'article : dspdate 'YYYY/MM/DD HH:MM' sinon updated (epoch)."""
+    ds = a.get("dspdate") or ""
+    for fmt in ("%Y/%m/%d %H:%M", "%Y/%m/%d"):
+        try:
+            return make_aware(_dt.datetime.strptime(ds, fmt))
+        except (ValueError, TypeError):
+            continue
+    up = a.get("updated")
+    if isinstance(up, (int, float)):
+        try:
+            return make_aware(_dt.datetime.fromtimestamp(up))
+        except (ValueError, OSError):
+            pass
+    return now()
 
 
 def _abs(path):
@@ -94,9 +112,11 @@ class Command(BaseCommand):
                      f"Titre : {title}\n{desc}\n\n"
                      f"Angle Yonkko : vulgariser pour les collectionneurs FR — ce que ça change, "
                      f"dates, produits/cartes concernés, à retenir. Source : site officiel.")
+            art_date = _date(a)
             defaults = dict(
                 expediteur="One Piece Card Game (officiel)", sujet=title[:500],
-                recu_le=now(), categorie=slug, resume=desc[:500], corps=corps,
+                recu_le=art_date, publier_le=art_date.date(), categorie=slug,
+                resume=desc[:500], corps=corps,
                 blog_cible=blog, statut="nouveau",
                 liens_sources=[{"url": url, "texte": "Site officiel", "kind": "source"}],
                 image_url=cover, images=gallery, image_alt=title[:300],
@@ -111,7 +131,10 @@ class Command(BaseCommand):
                     obj.images = gallery
                 obj.blog_cible = blog
                 obj.categorie = slug
-                obj.save(update_fields=["image_url", "images", "blog_cible", "categorie"])
+                obj.recu_le = art_date
+                obj.publier_le = art_date.date()
+                obj.save(update_fields=["image_url", "images", "blog_cible", "categorie",
+                                        "recu_le", "publier_le"])
                 updated += 1
         self.stdout.write(self.style.SUCCESS(
             f"OPCG officiel : {created} créés, {updated} mis à jour (avec photos officielles)."))

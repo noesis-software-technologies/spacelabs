@@ -43,6 +43,8 @@ class Command(BaseCommand):
         parser.add_argument("--timeout", type=int, default=150)
         parser.add_argument("--reimage", action="store_true",
                             help="Re-illustre + met à jour cover/galerie des articles DÉJÀ poussés.")
+        parser.add_argument("--repush", action="store_true",
+                            help="Re-pousse les articles déjà en ligne (met à jour la date de publication).")
         parser.add_argument("--claude", action="store_true",
                             help="Rédige via Claude (claude -p) au lieu du modèle local (plus rapide/qualitatif).")
         parser.add_argument("--bloc", default="Yonkko",
@@ -112,9 +114,29 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"✗ reimage {it.sujet[:40]} : {type(e).__name__}"))
         self.stdout.write(self.style.SUCCESS(f"\nRe-illustration : {fixed} article(s) mis à jour."))
 
+    def _repush(self, o):
+        """Re-pousse les articles déjà en ligne pour mettre à jour leur date de
+        publication (calendrier) — upsert par slug, pas de doublon."""
+        qs = (PressItem.objects.filter(blog_cible__bloc=o["bloc"],
+                                       mcp_status__in=["draft", "published"])
+              .order_by("-recu_le")[: o["limit"]])
+        done = fail = 0
+        for it in qs:
+            try:
+                res = publish_item(it, with_images=False)  # date via payload (publier_le)
+                if res.get("ok"):
+                    done += 1
+                else:
+                    fail += 1
+            except Exception:  # noqa: BLE001
+                fail += 1
+        self.stdout.write(self.style.SUCCESS(f"Re-push dates : {done} MAJ, {fail} échec(s)."))
+
     def handle(self, *args, **o):
         if o["reimage"]:
             return self._reimage_pushed(o)
+        if o["repush"]:
+            return self._repush(o)
         demain = now().date() + _dt.timedelta(days=1)
         qs = (PressItem.objects.filter(blog_cible__bloc=o["bloc"])
               .exclude(mcp_status__in=["draft", "published"])
@@ -129,7 +151,8 @@ class Command(BaseCommand):
                 if not it.toutes_images:
                     self._images(it, o["per_article"], 25)
                 if not it.publier_le:
-                    it.publier_le = demain
+                    # Vraie date de l'article (calendrier), sinon demain par défaut.
+                    it.publier_le = it.recu_le.date() if it.recu_le else demain
                     it.save(update_fields=["publier_le"])
                 res = publish_item(it, with_images=True)
                 if res.get("ok"):
