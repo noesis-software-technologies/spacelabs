@@ -18,10 +18,11 @@ from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from django.utils.timezone import now
 
-from apps.veille.mcp import publish_item
+from apps.veille.mcp import image_arg, mcp_creds, publish_item, rpc
 from apps.veille.models import PressItem
-from apps.veille.pexels import build_query, search
+from apps.veille.pexels import search
 from apps.veille.redaction import generer_draft_local
+from apps.veille.yonkko import pexels_query
 
 EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
@@ -31,8 +32,10 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--limit", type=int, default=100)
-        parser.add_argument("--per-article", type=int, default=3)
+        parser.add_argument("--per-article", type=int, default=4)
         parser.add_argument("--timeout", type=int, default=150)
+        parser.add_argument("--reimage", action="store_true",
+                            help="Re-illustre + met à jour cover/galerie des articles DÉJÀ poussés.")
 
     def _draft(self, it, timeout):
         draft, meta = generer_draft_local(it.sujet, it.corps, it.categorie, timeout=timeout)
@@ -51,8 +54,9 @@ class Command(BaseCommand):
         it.save()
         return True
 
-    def _images(self, it, per_article, timeout):
-        photos = search(build_query(it), per_page=per_article)
+    def _images(self, it, per_article, timeout, force=False):
+        # Requête curée par sous-catégorie (les tags d'article polluent Pexels).
+        photos = search(pexels_query(it.categorie), per_page=per_article)
         if not photos:
             return 0
         dest = Path(settings.MEDIA_ROOT) / "veille" / str(it.pk) / "pexels"
@@ -77,7 +81,37 @@ class Command(BaseCommand):
         it.save(update_fields=["images_local", "image_url", "image_alt"])
         return len(local)
 
+    def _reimage_pushed(self, o):
+        """Re-télécharge de belles images et met à jour cover + carrousel des
+        articles déjà poussés, SANS recréer de brouillon (utilise l'article_id)."""
+        qs = (PressItem.objects.filter(blog_cible__bloc="Yonkko")
+              .filter(mcp_status__in=["draft", "published"]).exclude(mcp_article_id="")[: o["limit"]])
+        fixed = 0
+        for it in qs:
+            try:
+                if not self._images(it, o["per_article"], 25, force=True):
+                    continue
+                url, tok = mcp_creds(it)
+                art = it.mcp_article_id
+                if it.image_ref:
+                    rpc("tools/call", {"name": "set_cover_image",
+                                       "arguments": {"article_id": art,
+                                                     "image": image_arg(it.image_ref, it.image_alt)}},
+                        2, 60, url=url, token=tok)
+                imgs = [image_arg(u, it.image_alt, f"img{n}") for n, u in enumerate(it.carrousel)]
+                if imgs:
+                    rpc("tools/call", {"name": "add_carousel_images",
+                                       "arguments": {"article_id": art, "images": imgs}},
+                        3, 60, url=url, token=tok)
+                fixed += 1
+                self.stdout.write(self.style.SUCCESS(f"✓ galerie MAJ : {it.draft_titre[:45]} ({len(imgs)} imgs)"))
+            except Exception as e:  # noqa: BLE001
+                self.stdout.write(self.style.ERROR(f"✗ reimage {it.sujet[:40]} : {type(e).__name__}"))
+        self.stdout.write(self.style.SUCCESS(f"\nRe-illustration : {fixed} article(s) mis à jour."))
+
     def handle(self, *args, **o):
+        if o["reimage"]:
+            return self._reimage_pushed(o)
         demain = now().date() + _dt.timedelta(days=1)
         qs = (PressItem.objects.filter(blog_cible__bloc="Yonkko")
               .exclude(mcp_status__in=["draft", "published"])
