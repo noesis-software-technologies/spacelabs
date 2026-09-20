@@ -32,11 +32,14 @@ class Command(BaseCommand):
         parser.add_argument("--timeout", type=int, default=180)
         parser.add_argument("--local", action="store_true",
                             help="Rédige via le modèle local (:8081) — gratuit/rapide.")
+        parser.add_argument("--bloc", help="Limiter à un bloc éditorial (ex. Yonkko).")
 
     def handle(self, *args, **o):
         qs = PressItem.objects.all().order_by("-recu_le", "-id")
         if o["categorie"]:
             qs = qs.filter(categorie=o["categorie"])
+        if o.get("bloc"):
+            qs = qs.filter(blog_cible__bloc=o["bloc"])
         if not o["regenerate"]:
             qs = qs.exclude(draft_statut__in=["brouillon", "valide", "publie"])
         if not o["allow_empty"]:
