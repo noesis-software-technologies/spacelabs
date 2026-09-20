@@ -51,12 +51,18 @@ def rpc(method: str, params: dict, rid: int = 1, timeout: int = 60, retries: int
     token = token or settings.ATMOSPHERE_MCP_TOKEN
     last = None
     for attempt in range(retries):
-        r = requests.post(
-            url, timeout=timeout,
-            headers={"Authorization": f"Bearer {token}",
-                     "Content-Type": "application/json"},
-            json={"jsonrpc": "2.0", "id": rid, "method": method, "params": params},
-        )
+        try:
+            r = requests.post(
+                url, timeout=timeout,
+                headers={"Authorization": f"Bearer {token}",
+                         "Content-Type": "application/json"},
+                json={"jsonrpc": "2.0", "id": rid, "method": method, "params": params},
+            )
+        except requests.RequestException:  # connexion coupée / reset → retry
+            if attempt < retries - 1:
+                time.sleep(1.5 * (attempt + 1))
+                continue
+            raise
         if r.status_code in (502, 503, 504) and attempt < retries - 1:
             last = r
             time.sleep(1.5 * (attempt + 1))  # backoff : 1.5s, 3s
