@@ -19,6 +19,14 @@ CAT_QUERY = {
     "societe": "société ville tendance",
     "events": "événement salon exposition",
     "autre": "élégance lifestyle",
+    # Yonkko — One Piece TCG
+    "onepiece-tcg": "anime trading cards collection",
+    "op-sorties": "trading card booster box collection",
+    "op-meta": "card game strategy table",
+    "op-marche": "rare collectible trading cards",
+    "op-tournois": "card game tournament players competition",
+    "op-collection": "anime art collectible cards",
+    "op-actu": "one piece anime manga",
 }
 
 

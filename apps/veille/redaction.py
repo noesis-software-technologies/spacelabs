@@ -34,6 +34,10 @@ def plume() -> str:
 
 
 def build_prompt(sujet: str, corps: str, categorie: str) -> str:
+    # Blog Yonkko (One Piece TCG) : plume journalistique dédiée.
+    if (categorie or "").startswith("op-") or categorie == "onepiece-tcg":
+        from .yonkko import build_prompt as yonkko_prompt
+        return yonkko_prompt(sujet, corps, categorie)
     angle = CATEGORIE_ANGLE.get(categorie, CATEGORIE_ANGLE["autre"])
     matiere = (corps or "").strip()[:6000] or "(communiqué sans corps ; s'appuyer sur le sujet)"
     return f"""Tu es Thérèse, la plume du blog déco & lifestyle 13 Atmosphère.
@@ -125,6 +129,30 @@ def corps_to_html(chapo: str, corps: str) -> str:
             para.append(s)
     flush()
     return "\n".join(out)
+
+
+def generer_draft_local(sujet: str, corps: str, categorie: str, timeout: int = 120):
+    """Rédige via le modèle local (llama.cpp :8081) — gratuit/rapide. (draft|None, meta)."""
+    import os
+
+    import requests
+    base = os.environ.get("LOCAL_LLM_BASE", "http://127.0.0.1:8081").rstrip("/")
+    model = os.environ.get("LOCAL_LLM_MODEL", "qwen2.5-3b-local")
+    prompt = build_prompt(sujet, corps, categorie)
+    meta = {"cost_usd": 0.0, "input_tokens": 0, "output_tokens": 0, "duration_ms": 0}
+    try:
+        r = requests.post(f"{base}/v1/chat/completions", timeout=timeout, json={
+            "model": model, "temperature": 0.5, "max_tokens": 1100,
+            "messages": [{"role": "user", "content": prompt}]})
+        r.raise_for_status()
+        data = r.json()
+        text = data["choices"][0]["message"]["content"]
+        u = data.get("usage") or {}
+        meta["input_tokens"] = int(u.get("prompt_tokens") or 0)
+        meta["output_tokens"] = int(u.get("completion_tokens") or 0)
+    except Exception:  # noqa: BLE001
+        return None, meta
+    return _parse_json(text), meta
 
 
 def generer_draft(sujet: str, corps: str, categorie: str, timeout: int = 180):

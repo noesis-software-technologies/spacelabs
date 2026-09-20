@@ -12,7 +12,7 @@ from django.utils.text import slugify
 from django.utils.timezone import now
 
 from apps.veille.models import PressItem
-from apps.veille.redaction import build_prompt, generer_draft
+from apps.veille.redaction import build_prompt, generer_draft, generer_draft_local
 
 
 class Command(BaseCommand):
@@ -30,6 +30,8 @@ class Command(BaseCommand):
         parser.add_argument("--allow-empty", action="store_true",
                             help="Rédige même les communiqués sans corps (défaut : ignorés).")
         parser.add_argument("--timeout", type=int, default=180)
+        parser.add_argument("--local", action="store_true",
+                            help="Rédige via le modèle local (:8081) — gratuit/rapide.")
 
     def handle(self, *args, **o):
         qs = PressItem.objects.all().order_by("-recu_le", "-id")
@@ -59,7 +61,8 @@ class Command(BaseCommand):
         for it in items:
             self.stdout.write(f"→ [{it.categorie}] {it.sujet[:60]} … ", ending="")
             self.stdout.flush()
-            draft, meta = generer_draft(it.sujet, it.corps, it.categorie, timeout=o["timeout"])
+            gen = generer_draft_local if o["local"] else generer_draft
+            draft, meta = gen(it.sujet, it.corps, it.categorie, timeout=o["timeout"])
             tot_cost += meta.get("cost_usd", 0.0)
             tot_in += meta.get("input_tokens", 0)
             tot_out += meta.get("output_tokens", 0)
