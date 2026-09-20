@@ -21,7 +21,7 @@ from django.utils.timezone import now
 from apps.veille.mcp import image_arg, mcp_creds, publish_item, rpc
 from apps.veille.models import PressItem
 from apps.veille.pexels import search
-from apps.veille.redaction import generer_draft_local
+from apps.veille.redaction import generer_draft, generer_draft_local
 from apps.veille.yonkko import pexels_query
 
 EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
@@ -36,9 +36,12 @@ class Command(BaseCommand):
         parser.add_argument("--timeout", type=int, default=150)
         parser.add_argument("--reimage", action="store_true",
                             help="Re-illustre + met à jour cover/galerie des articles DÉJÀ poussés.")
+        parser.add_argument("--claude", action="store_true",
+                            help="Rédige via Claude (claude -p) au lieu du modèle local (plus rapide/qualitatif).")
 
-    def _draft(self, it, timeout):
-        draft, meta = generer_draft_local(it.sujet, it.corps, it.categorie, timeout=timeout)
+    def _draft(self, it, timeout, use_claude=False):
+        gen = generer_draft if use_claude else generer_draft_local
+        draft, meta = gen(it.sujet, it.corps, it.categorie, timeout=timeout)
         if not draft:
             return False
         it.draft_titre = draft["titre"]
@@ -110,7 +113,7 @@ class Command(BaseCommand):
         done = fail = 0
         for it in qs:
             try:
-                if it.draft_statut == "vide" and not self._draft(it, o["timeout"]):
+                if it.draft_statut == "vide" and not self._draft(it, o["timeout"], o["claude"]):
                     fail += 1
                     self.stdout.write(self.style.ERROR(f"✗ rédac {it.sujet[:40]}"))
                     continue
