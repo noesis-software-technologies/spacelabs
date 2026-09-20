@@ -27,6 +27,8 @@ CAT_QUERY = {
     "op-tournois": "card game tournament players competition",
     "op-collection": "anime art collectible cards",
     "op-actu": "one piece anime manga",
+    # Agentic Pods — transformation agentique
+    "agentique": "artificial intelligence technology",
 }
 
 

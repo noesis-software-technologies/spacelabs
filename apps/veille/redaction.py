@@ -38,6 +38,29 @@ def build_prompt(sujet: str, corps: str, categorie: str) -> str:
     if (categorie or "").startswith("op-") or categorie == "onepiece-tcg":
         from .yonkko import build_prompt as yonkko_prompt
         return yonkko_prompt(sujet, corps, categorie)
+    # Blog Agentic Pods : plume analyse business / transformation agentique.
+    if categorie == "agentique":
+        matiere = (corps or "").strip()[:5000] or "(sujet sans corps ; s'appuyer sur le titre)"
+        return f"""Tu es analyste éditorial du blog Agentic Pods, dédié à la transformation
+de l'entreprise dans l'univers agentique (agents IA, automatisation, type-safe AI, AI primitives).
+Écris un ARTICLE d'ANALYSE clair et crédible pour des dirigeants et décideurs tech, à partir
+de la matière ci-dessous — vulgarisé mais rigoureux, orienté enjeux, cas d'usage, ROI et gouvernance.
+
+=== MATIÈRE (réécrire à 100 %, ne rien recopier, n'invente aucun chiffre/citation) ===
+Sujet : {sujet}
+Contenu :
+{matiere}
+
+=== SORTIE : uniquement un JSON valide (sans texte autour, sans balises) ===
+{{"titre": "...", "chapo": "...", "corps": "...", "seo_title": "...",
+  "meta_description": "...", "tags": ["...", "..."], "image_alt": "..."}}
+- "titre" : clair et concret (pas de hype creuse).
+- "chapo" : 2-3 phrases posant l'enjeu business.
+- "corps" : 350 à 600 mots, paragraphes courts, rubriques en CAPITALES si utile, explique le
+  jargon (agent, orchestration, type-safe AI, primitives, gouvernance), pas de données inventées.
+- "seo_title" ~60 car. · "meta_description" ~150 car. · "tags" 4-6 (minuscules, dont "agentic ai").
+- "image_alt" : description courte de l'image principale.
+"""
     angle = CATEGORIE_ANGLE.get(categorie, CATEGORIE_ANGLE["autre"])
     matiere = (corps or "").strip()[:6000] or "(communiqué sans corps ; s'appuyer sur le sujet)"
     return f"""Tu es Thérèse, la plume du blog déco & lifestyle 13 Atmosphère.

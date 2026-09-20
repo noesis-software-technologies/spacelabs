@@ -20,9 +20,16 @@ from django.utils.timezone import now
 
 from apps.veille.mcp import image_arg, mcp_creds, publish_item, rpc
 from apps.veille.models import PressItem
-from apps.veille.pexels import search
+from apps.veille.pexels import CAT_QUERY, search
 from apps.veille.redaction import generer_draft, generer_draft_local
-from apps.veille.yonkko import pexels_query
+from apps.veille.yonkko import SUBCATS, pexels_query
+
+
+def _query(categorie):
+    """Requête image curée : sous-cat Yonkko sinon table CAT_QUERY (agentique, etc.)."""
+    if categorie in SUBCATS:
+        return pexels_query(categorie)
+    return CAT_QUERY.get(categorie, CAT_QUERY["autre"])
 
 EXT = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
 
@@ -38,6 +45,8 @@ class Command(BaseCommand):
                             help="Re-illustre + met à jour cover/galerie des articles DÉJÀ poussés.")
         parser.add_argument("--claude", action="store_true",
                             help="Rédige via Claude (claude -p) au lieu du modèle local (plus rapide/qualitatif).")
+        parser.add_argument("--bloc", default="Yonkko",
+                            help="Bloc éditorial cible (Yonkko, Agentic Pods…).")
 
     def _draft(self, it, timeout, use_claude=False):
         gen = generer_draft if use_claude else generer_draft_local
@@ -58,8 +67,8 @@ class Command(BaseCommand):
         return True
 
     def _images(self, it, per_article, timeout, force=False):
-        # Requête curée par sous-catégorie (les tags d'article polluent Pexels).
-        photos = search(pexels_query(it.categorie), per_page=per_article)
+        # Requête curée par catégorie (les tags d'article polluent Pexels).
+        photos = search(_query(it.categorie), per_page=per_article)
         if not photos:
             return 0
         # On stocke les URLs Pexels distantes (pas de base64) → le blog les récupère
@@ -78,7 +87,7 @@ class Command(BaseCommand):
     def _reimage_pushed(self, o):
         """Re-télécharge de belles images et met à jour cover + carrousel des
         articles déjà poussés, SANS recréer de brouillon (utilise l'article_id)."""
-        qs = (PressItem.objects.filter(blog_cible__bloc="Yonkko")
+        qs = (PressItem.objects.filter(blog_cible__bloc=o["bloc"])
               .filter(mcp_status__in=["draft", "published"]).exclude(mcp_article_id="")[: o["limit"]])
         fixed = 0
         for it in qs:
@@ -107,7 +116,7 @@ class Command(BaseCommand):
         if o["reimage"]:
             return self._reimage_pushed(o)
         demain = now().date() + _dt.timedelta(days=1)
-        qs = (PressItem.objects.filter(blog_cible__bloc="Yonkko")
+        qs = (PressItem.objects.filter(blog_cible__bloc=o["bloc"])
               .exclude(mcp_status__in=["draft", "published"])
               .order_by("-recu_le", "-id")[: o["limit"]])
         done = fail = 0
@@ -133,7 +142,7 @@ class Command(BaseCommand):
             except Exception as e:  # noqa: BLE001
                 fail += 1
                 self.stdout.write(self.style.ERROR(f"✗ {it.sujet[:40]} : {type(e).__name__} {e}"))
-        pushed = PressItem.objects.filter(blog_cible__bloc="Yonkko",
+        pushed = PressItem.objects.filter(blog_cible__bloc=o["bloc"],
                                           mcp_status__in=["draft", "published"]).count()
         self.stdout.write(self.style.SUCCESS(
             f"\nYonkko run : {done} publié(s), {fail} échec(s) — total poussé {pushed}/100."))
