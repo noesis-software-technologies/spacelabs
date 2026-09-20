@@ -23,12 +23,14 @@ class Command(BaseCommand):
             b, _ = Blog.objects.get_or_create(
                 categorie=slug,
                 defaults={"nom": f"Yonkko — {label}", "bloc": BLOC, "statut": "actif"})
-            # garantir le rattachement au bloc + nom
+            # garantir bloc + nom + héritage des creds MCP du blog principal
             changed = False
             if b.bloc != BLOC:
                 b.bloc = BLOC; changed = True
             if not b.nom.startswith("Yonkko"):
                 b.nom = f"Yonkko — {label}"; changed = True
+            if principal.mcp_url and b.mcp_url != principal.mcp_url:
+                b.mcp_url = principal.mcp_url; b.mcp_token = principal.mcp_token; changed = True
             if changed:
                 b.save()
             sub[slug] = b
