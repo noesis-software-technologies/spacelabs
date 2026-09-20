@@ -45,11 +45,22 @@ class Command(BaseCommand):
                             help="Ne pas ouvrir chaque page (plus rapide, cover seule).")
 
     def handle(self, *args, **o):
+        # Pagination : l'API renvoie 100/appel — on boucle sur start jusqu'à tout avoir.
+        data, start = [], 0
         try:
-            data = requests.get(API, timeout=30, headers=H).json()["data"]["article_list"]
+            while True:
+                d = requests.get(API, timeout=30, headers=H,
+                                 params={"start": start, "limit": 100}).json()["data"]
+                batch = d.get("article_list") or []
+                data.extend(batch)
+                total = d.get("total_count", len(data))
+                start += len(batch)
+                if not batch or start >= total or len(data) >= o["limit"]:
+                    break
         except Exception as e:  # noqa: BLE001
-            self.stderr.write(self.style.ERROR(f"API officielle inaccessible : {e}"))
-            return
+            if not data:
+                self.stderr.write(self.style.ERROR(f"API officielle inaccessible : {e}"))
+                return
         # sous-blogs Yonkko (déjà créés par yonkko_prepare)
         subs = {b.categorie: b for b in Blog.objects.filter(bloc=BLOC)}
         principal = Blog.objects.filter(domaine="yonko.life").first()
