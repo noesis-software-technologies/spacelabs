@@ -31,6 +31,10 @@ QUERIES = [
     '"AI agents" (workflow OR automation OR "digital labor")',
     '"agentic" (adoption OR ROI OR gouvernance OR governance)',
     'agentic AI (strategy OR "operating model" OR productivity)',
+    # Sujets spécifiques Agentic Pods (demandés par la direction)
+    '"type-safe AI" OR "typesafe AI" OR "JEV"',
+    '"Weft" ("AI primitives" OR "agent primitives" OR agentic)',
+    '"AI primitives" (agents OR agentic OR framework)',
 ]
 TAG_RE = re.compile(r"<[^>]+>")
 
@@ -63,8 +67,12 @@ class Command(BaseCommand):
     def handle(self, *args, **o):
         blog, _ = Blog.objects.get_or_create(
             domaine=BLOG_DOMAINE,
-            defaults={"nom": BLOG_NOM, "categorie": "agentique", "statut": "actif"},
+            defaults={"nom": BLOG_NOM, "categorie": "agentique", "statut": "actif",
+                      "bloc": "Agentic Pods"},
         )
+        if not blog.bloc:
+            blog.bloc = "Agentic Pods"
+            blog.save(update_fields=["bloc"])
         queries = QUERIES + o["query"]
         seen, created, skipped = set(), 0, 0
         for q in queries:

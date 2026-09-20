@@ -22,6 +22,10 @@ class Blog(models.Model):
     domaine = models.CharField(max_length=200, blank=True)
     categorie = models.CharField(max_length=40, blank=True, help_text="slug de catégorie ; vide = principal")
     is_principal = models.BooleanField(default=False)
+    # Marque/tête de constellation (onglet dans la zone éditoriale). Ex : « 13 Atmosphère »
+    # regroupe le principal + ses sous-blogs par catégorie ; « Agentic Pods », « Yonkko »
+    # sont des blogs autonomes = leur propre bloc.
+    bloc = models.CharField(max_length=80, blank=True, help_text="Regroupement (onglet) éditorial")
     statut = models.CharField(max_length=20, choices=STATUT, default="a_ouvrir")
     # MCP dédié par blog (sinon fallback settings.ATMOSPHERE_MCP_*) — même protocole.
     mcp_url = models.CharField(max_length=300, blank=True, help_text="Endpoint MCP du blog (vide = 13-Atmosphère)")

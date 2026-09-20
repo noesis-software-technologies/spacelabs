@@ -47,21 +47,28 @@ def constellation(request):
     """Hub éditorial : une carte par blog de la constellation, avec ses deux
     entrées — Veille (sujets/sources) et Articles/carrousel (brouillons) — et
     ses compteurs. Point d'entrée unique de la zone éditoriale multi-blogs."""
-    blogs = []
+    blocs = {}
     for b in Blog.objects.all():
         items = PressItem.objects.filter(blog_cible=b)
         drafts = items.filter(draft_statut__in=["brouillon", "valide", "publie"]).count()
         pousses = items.exclude(mcp_pushed_at__isnull=True).count()
-        blogs.append({
-            "obj": b,
-            "veille_n": items.count(),
-            "drafts_n": drafts,
-            "pousses_n": pousses,
+        card = {
+            "obj": b, "veille_n": items.count(), "drafts_n": drafts, "pousses_n": pousses,
             "mcp_ok": bool(b.mcp_url or b.mcp_token) or b.is_principal,
-        })
+        }
+        key = b.bloc or b.nom
+        blocs.setdefault(key, {"nom": key, "cards": [], "veille": 0, "drafts": 0})
+        g = blocs[key]
+        g["cards"].append(card)
+        g["veille"] += card["veille_n"]
+        g["drafts"] += card["drafts_n"]
+    # Ordre : 13 Atmosphère d'abord, puis le reste alphabétique.
+    order = sorted(blocs.values(), key=lambda g: (g["nom"] != "13 Atmosphère", g["nom"]))
+    for g in order:  # au sein d'un bloc : principal/plus gros en tête
+        g["cards"].sort(key=lambda c: (not c["obj"].is_principal, -c["veille_n"]))
     non_assignes = PressItem.objects.filter(blog_cible__isnull=True).count()
     return render(request, "veille/constellation.html", {
-        "blogs": blogs, "non_assignes": non_assignes, "active_nav": "veille",
+        "blocs": order, "non_assignes": non_assignes, "active_nav": "veille",
     })
 
 
