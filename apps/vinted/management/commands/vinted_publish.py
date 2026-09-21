@@ -75,7 +75,9 @@ class Command(BaseCommand):
         if not (title and desc and it.prix):
             raise CommandError("Titre / description / prix requis avant publication.")
         etat = ETAT_LABELS.get(it.etat, "")
+        # Colis : Petit par défaut (cas quasi systématique pour une carte) sauf indication.
         colis = COLIS_LABELS.get((it.format_colis or "").strip().lower(), it.format_colis or "Petit")
+        marque = (it.marque or os.environ.get("VINTED_MARQUE", "")).strip()
 
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
@@ -104,6 +106,17 @@ class Command(BaseCommand):
                 opt.click(timeout=4000)
             except Exception as e:  # noqa: BLE001
                 self.stdout.write(self.style.WARNING(f"catégorie non auto-sélectionnée : {e}"))
+
+            # Marque (autocomplete : ouvre + tape + clique la proposition correspondante)
+            if marque:
+                try:
+                    page.get_by_role("textbox", name="Marque").click()
+                    page.keyboard.type(marque, delay=30)
+                    time.sleep(1.0)
+                    page.get_by_text(marque, exact=False).first.click(timeout=4000)
+                    self.stdout.write(f"marque : {marque}")
+                except Exception as e:  # noqa: BLE001
+                    self.stdout.write(self.style.WARNING(f"marque « {marque} » non sélectionnée : {e}"))
 
             # État
             if etat:
