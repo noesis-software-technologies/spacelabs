@@ -112,11 +112,15 @@ class Command(BaseCommand):
                     page.get_by_text(etat, exact=True).first.click(timeout=4000)
                 except Exception as e:  # noqa: BLE001
                     self.stdout.write(self.style.WARNING(f"état non sélectionné : {e}"))
-            # Colis
+            # Colis : cliquer le bouton du format (plus fiable que la case radio,
+            # qui ne se coche pas toujours quand Vinted recommande une autre taille).
             try:
-                page.get_by_role("radio", name=re.compile(colis)).check(timeout=3000)
+                page.get_by_role("button", name=re.compile(rf"^{re.escape(colis)}\b")).first.click(timeout=4000)
             except Exception:  # noqa: BLE001
-                self.stdout.write(self.style.WARNING(f"colis « {colis} » non coché (défaut conservé)"))
+                try:
+                    page.get_by_role("radio", name=re.compile(colis)).check(timeout=3000)
+                except Exception:  # noqa: BLE001
+                    self.stdout.write(self.style.WARNING(f"colis « {colis} » non coché (défaut conservé)"))
 
             shot = f"/tmp/vinted_{it.ref}.png"
             page.screenshot(path=shot)
