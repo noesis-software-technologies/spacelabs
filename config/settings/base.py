@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "apps.veille",
     "apps.comms",
     "apps.prospection",
+    "apps.vinted",
 ]
 
 MIDDLEWARE = [
