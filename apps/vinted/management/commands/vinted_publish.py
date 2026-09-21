@@ -107,7 +107,9 @@ class Command(BaseCommand):
             except Exception as e:  # noqa: BLE001
                 self.stdout.write(self.style.WARNING(f"catégorie non auto-sélectionnée : {e}"))
 
-            # Marque (autocomplete : ouvre + tape + clique la proposition correspondante)
+            # Marque : Vinted la PRÉ-DÉTECTE depuis les photos (franchise : One Piece,
+            # Dragon Ball…). On ne force donc rien par défaut (marque vide) ; on ne
+            # remplit que si un override explicite est fourni via it.marque/VINTED_MARQUE.
             if marque:
                 try:
                     page.get_by_role("textbox", name="Marque").click()
