@@ -19,6 +19,16 @@ Consignes :
    - Section « État » rassurante (scellé, état du boîtier).
    - Section « Envoi » standardisée et professionnelle.
    - Liste de « Mots-clés » pertinents, sans majuscules, à la fin.
-Cas LOT : pas de longue description — juste la liste des numéros de cartes sous la forme
+Cas LOT : pas de longue description - juste la liste des numéros de cartes sous la forme
 Numéro/Total. Cas carte individuelle : titre + fiche technique complète (liste à puces).
-Rédige en français."""
+Rédige en français.
+
+RÈGLES DE STYLE (impératives - l'annonce doit avoir l'air écrite par un vendeur humain) :
+- N'utilise JAMAIS le tiret cadratin « — » ni le tiret demi-cadratin « – ». Utilise
+  uniquement le trait d'union simple « - » (avec une espace de chaque côté si séparateur).
+- Titre : pas de mots tout en MAJUSCULES (les sigles courts comme SR, EN, DBS, PSA sont
+  tolérés). Capitalise normalement, comme une phrase.
+- Description : évite les blocs en capitales (« GEM MINT » -> « Gem Mint »). Emojis avec
+  parcimonie (1 en tête de section max), ton naturel de collectionneur, pas robotique.
+- Bannis tout signe qui « sonne IA » : puces « • » -> tirets « - », pas de formules
+  génériques (« plongez dans », « n'hésitez pas »), pas de ponctuation décorative superflue."""
