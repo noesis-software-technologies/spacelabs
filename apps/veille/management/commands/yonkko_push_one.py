@@ -29,6 +29,7 @@ class Command(BaseCommand):
         parser.add_argument("--meta", default="")
         parser.add_argument("--keywords", default="")
         parser.add_argument("--source", default="")
+        parser.add_argument("--cover-url", default="", help="URL image de couverture (og:image)")
 
     def handle(self, *args, **o):
         b = Blog.objects.filter(id=BLOG_ID).first()
@@ -57,6 +58,18 @@ class Command(BaseCommand):
         if not art:
             raise CommandError("pas d'article_id renvoyé")
 
+        # image de couverture (og:image) si fournie
+        cover_ok = ""
+        if o.get("cover_url"):
+            try:
+                mcp.rpc("tools/call", {"name": "set_cover_image",
+                                       "arguments": {"article_id": art,
+                                                     "image": {"url": o["cover_url"]}}},
+                        url=b.mcp_url, token=b.mcp_token, timeout=60, retries=2)
+                cover_ok = " +cover"
+            except Exception:  # noqa: BLE001
+                cover_ok = " (cover échec)"
+
         # trace locale (pour dédup/redate ultérieurs)
         it, _ = PressItem.objects.get_or_create(
             message_id=f"yonkko-url-{o['ref']}",
@@ -79,4 +92,4 @@ class Command(BaseCommand):
         except Exception:  # noqa: BLE001
             pass
         it.save()
-        self.stdout.write(self.style.SUCCESS(f"OK article_id={art} slug={sc.get('slug','')} ref={o['ref']}"))
+        self.stdout.write(self.style.SUCCESS(f"OK article_id={art} slug={sc.get('slug','')} ref={o['ref']}{cover_ok}"))
