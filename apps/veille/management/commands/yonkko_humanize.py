@@ -18,7 +18,7 @@ import subprocess
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from apps.veille.models import Blog, PressItem
-from apps.veille import mcp
+from apps.veille import mcp, detector
 
 BLOG_ID = 20
 CLAUDE = getattr(settings, "COCKPIT_CLAUDE_BIN", "claude")
@@ -73,6 +73,9 @@ class Command(BaseCommand):
         parser.add_argument("--recent", type=int, default=0, help="N derniers articles poussés")
         parser.add_argument("--apply", action="store_true")
         parser.add_argument("--backtranslate", action="store_true")
+        parser.add_argument("--target", type=int, default=40, help="score détecteur visé (<)")
+        parser.add_argument("--passes", type=int, default=3, help="tentatives max de réécriture")
+        parser.add_argument("--force", action="store_true", help="humaniser même si déjà sous le seuil")
 
     def handle(self, *args, **o):
         b = Blog.objects.get(id=BLOG_ID)
@@ -92,16 +95,29 @@ class Command(BaseCommand):
             rev = sc.get("revision")
             if not body or not rev:
                 err += 1; self.stdout.write(f"  #{aid} illisible"); continue
-            new = _json_body(_claude(HUMANIZE.format(body=body[:12000])))
-            if new and o["backtranslate"]:
-                en = _claude(BACKTRANSLATE.format(src="français", dst="anglais", text=new[:12000]))
-                if en:
-                    fr = _claude(BACKTRANSLATE.format(src="anglais", dst="français", text=en[:12000]))
-                    new = fr or new
-            if not new or len(new) < 200:
-                err += 1; self.stdout.write(f"  #{aid} réécriture vide"); continue
+            base_score = detector.score(body)["score"]
+            if base_score < o["target"] and not o["force"]:
+                self.stdout.write(f"  #{aid} déjà humain ({base_score}) — sauté"); continue
+            # boucle guidée par le détecteur : on garde la meilleure des N réécritures
+            best, best_s = None, base_score
+            for _ in range(max(1, o["passes"])):
+                cand = _json_body(_claude(HUMANIZE.format(body=body[:12000])))
+                if cand and o["backtranslate"]:
+                    en = _claude(BACKTRANSLATE.format(src="français", dst="anglais", text=cand[:12000]))
+                    if en:
+                        cand = _claude(BACKTRANSLATE.format(src="anglais", dst="français", text=en[:12000])) or cand
+                if not cand or len(cand) < 200:
+                    continue
+                sc = detector.score(cand)["score"]
+                if sc < best_s:
+                    best, best_s = cand, sc
+                if sc < o["target"]:
+                    break
+            new = best
+            if not new:
+                err += 1; self.stdout.write(f"  #{aid} pas d'amélioration ({base_score})"); continue
             if not o["apply"]:
-                self.stdout.write(f"  DRY #{aid} ok ({len(new)} car.)"); ok += 1; continue
+                self.stdout.write(f"  DRY #{aid} {base_score} -> {best_s}"); ok += 1; continue
             u = mcp.rpc("tools/call", {"name": "update_article",
                                        "arguments": {"article_id": int(aid), "expected_revision": rev,
                                                      "body_html": new}},
@@ -109,6 +125,6 @@ class Command(BaseCommand):
             if (u.get("result") or {}).get("isError"):
                 err += 1; self.stdout.write(f"  #{aid} update err")
             else:
-                ok += 1; self.stdout.write(f"  #{aid} humanisé")
+                ok += 1; self.stdout.write(f"  #{aid} humanisé ({base_score} -> {best_s})")
         self.stdout.write(self.style.SUCCESS(f"humanize: ok {ok} / err {err} "
                                              + ("(DRY-RUN)" if not o["apply"] else "")))
