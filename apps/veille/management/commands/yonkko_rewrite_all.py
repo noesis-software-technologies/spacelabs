@@ -24,11 +24,13 @@ BLOG_ID = 20
 CLAUDE = getattr(settings, "COCKPIT_CLAUDE_BIN", "claude")
 
 PROMPT = """Tu es rédacteur pour un blog de fans de One Piece (yonko.life). Réécris l'actualité ci-dessous en un article ORIGINAL en français, ton naturel et humain de passionné, 300 à 380 mots.
-RÈGLES STRICTES (l'article doit sembler écrit par un humain) :
+RÈGLES STRICTES (l'article doit passer pour écrit par un humain, aucune trace d'IA) :
 - Reformule tout, ne copie aucune phrase de la source.
+- BURSTINESS : varie fortement la longueur des phrases. Alterne des phrases très courtes (3-5 mots) avec des phrases longues. Rythme irrégulier, jamais monotone.
+- VOIX HUMAINE : glisse une opinion, une réaction ou une question rhétorique de fan ; une expression familière de temps en temps ; de petits apartés entre parenthèses.
+- Bannis les tics d'IA : pas de « plongez dans », « n'hésitez pas », « dans cet article » ; pas de conclusion en « En résumé / En conclusion / Pour finir » ; pas de transitions génériques répétées.
 - N'utilise JAMAIS le tiret cadratin « — » ni « – ». Uniquement le trait d'union simple « - ».
 - Aucun mot entièrement en MAJUSCULES (sigles courts comme OP tolérés).
-- Structure et rythme variés, pas de tics d'IA (« plongez dans », « n'hésitez pas »...).
 - Si c'est un leak/spoiler de chapitre ou d'épisode, ajoute une ligne <p><strong>Attention, spoilers.</strong></p> après l'intro.
 - body_html en HTML : des <p>, un <h2>, éventuellement des puces avec « - ». Termine par <p><em>Source : {source}</em></p>.
 - Ne fabrique pas de détails d'intrigue précis : si le contexte est mince, reste général.
