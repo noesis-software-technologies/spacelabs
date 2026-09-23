@@ -13,13 +13,21 @@ Exemples :
   CDP_URL=http://172.22.32.1:9222 python manage.py vinted_publish 12 --publish
 """
 import os
+import random
 import re
 import time
 
 from django.core.management.base import BaseCommand, CommandError
 from apps.vinted.models import VintedListing
 
-CDP_URL = os.environ.get("CDP_URL", "http://172.22.32.1:9222")
+
+def hpause(a=0.25, b=0.6):
+    """Micro-pause aléatoire : donne un rythme « humain » au remplissage tout en
+    restant rapide (industrialisable). Ajuster via VINTED_SPEED (0.5 = 2x plus vif)."""
+    k = float(os.environ.get("VINTED_SPEED", "1"))
+    time.sleep(random.uniform(a, b) * k)
+
+CDP_URL = os.environ.get("CDP_URL", "http://127.0.0.1:9222")
 # Catégorie par défaut : on vend surtout de la carte à collectionner.
 DEFAULT_CATEGORY_QUERY = os.environ.get("VINTED_CATEGORY", "Cartes à collectionner")
 ETAT_LABELS = {
@@ -80,6 +88,7 @@ class Command(BaseCommand):
         marque = (it.marque or os.environ.get("VINTED_MARQUE", "")).strip()
 
         from playwright.sync_api import sync_playwright
+        published_url = None
         with sync_playwright() as p:
             browser = p.chromium.connect_over_cdp(o["cdp"])
             ctx = browser.contexts[0]
@@ -88,49 +97,84 @@ class Command(BaseCommand):
             if "register" in page.url or "login" in page.url:
                 raise CommandError("Chrome CDP n'est pas connecté à Vinted (redirigé login).")
 
-            # Photos
+            # 1) PHOTOS D'ABORD : Vinted reconnaît le produit et PRÉ-SÉLECTIONNE la
+            # catégorie + sous-catégorie (ex. « Cartes à collectionner à l'unité »).
+            # On gagne toute l'étape de recherche/sélection de catégorie.
             if photos:
                 page.set_input_files("input[type=file]", photos)
                 self.stdout.write(f"photos: {len(photos)}")
+                # laisser l'auto-détection peupler les champs (catégorie, sous-catégorie)
+                time.sleep(float(os.environ.get("VINTED_DETECT_WAIT", "2.5")))
+
             # Titre / description / prix
-            page.get_by_role("textbox", name="Titre").fill(title)
-            page.get_by_role("textbox", name="Description").fill(desc)
-            page.get_by_role("textbox", name="Prix").fill(str(int(it.prix) if it.prix == int(it.prix) else it.prix))
+            page.get_by_role("textbox", name="Titre").fill(title); hpause()
+            page.get_by_role("textbox", name="Description").fill(desc); hpause()
+            page.get_by_role("textbox", name="Prix").fill(
+                str(int(it.prix) if it.prix == int(it.prix) else it.prix)); hpause()
 
-            # Catégorie (best effort : ouvre + tape + clique la 1re proposition)
+            # Catégorie : ne rien faire si déjà auto-détectée (cas nominal cartes).
+            # Fallback seulement si le champ est resté vide.
+            cat_set = False
             try:
-                page.get_by_role("textbox", name="Catégorie").click()
-                page.keyboard.type(o["category"], delay=30)
-                time.sleep(1.2)
-                opt = page.get_by_text(o["category"], exact=False).first
-                opt.click(timeout=4000)
-            except Exception as e:  # noqa: BLE001
-                self.stdout.write(self.style.WARNING(f"catégorie non auto-sélectionnée : {e}"))
+                cur = (page.get_by_role("textbox", name="Catégorie").input_value() or "").strip()
+                cat_set = bool(cur)
+                if cat_set:
+                    self.stdout.write(f"catégorie auto-détectée : {cur}")
+            except Exception:  # noqa: BLE001
+                pass
+            if not cat_set:
+                try:
+                    page.get_by_role("textbox", name="Catégorie").click(); hpause()
+                    page.keyboard.type(o["category"], delay=25)
+                    time.sleep(1.0)
+                    page.get_by_text(o["category"], exact=False).first.click(timeout=4000)
+                except Exception as e:  # noqa: BLE001
+                    self.stdout.write(self.style.WARNING(f"catégorie non auto-sélectionnée : {e}"))
 
-            # Marque : Vinted la PRÉ-DÉTECTE depuis les photos (franchise : One Piece,
-            # Dragon Ball…). On ne force donc rien par défaut (marque vide) ; on ne
-            # remplit que si un override explicite est fourni via it.marque/VINTED_MARQUE.
+            # Marque : le champ « Marque » est un display readonly (#brand) qui ouvre
+            # un menu (recherche + suggestions radio). ATTENTION : viser par rôle
+            # « textbox Marque » matche AUSSI la barre de recherche de l'entête et se
+            # fait intercepter par son overlay. On clique donc #brand en JS, on tape
+            # dans le vrai champ de recherche du menu, puis on clique l'option.
             if marque:
                 try:
-                    page.get_by_role("textbox", name="Marque").click()
-                    page.keyboard.type(marque, delay=30)
-                    time.sleep(1.0)
-                    page.get_by_text(marque, exact=False).first.click(timeout=4000)
-                    self.stdout.write(f"marque : {marque}")
+                    page.eval_on_selector("#brand", "el => el.scrollIntoView({block:'center'})")
+                    hpause()
+                    page.eval_on_selector("#brand", "el => el.click()")
+                    time.sleep(0.8)
+                    # champ de recherche du menu (exclut l'entête .js-header)
+                    for inp in page.locator("input:not([readonly])").all():
+                        try:
+                            if inp.is_visible() and not inp.evaluate(
+                                    "e => !!e.closest('.js-header')"):
+                                inp.fill(marque); break
+                        except Exception:  # noqa: BLE001
+                            continue
+                    time.sleep(1.2)
+                    # option : 1re occurrence exacte du nom dans le menu ouvert
+                    page.get_by_text(marque, exact=True).first.click(timeout=4000)
+                    time.sleep(0.5)
+                    val = (page.locator("#brand").input_value() or "").strip()
+                    if val:
+                        self.stdout.write(f"marque : {val}")
+                    else:
+                        self.stdout.write(self.style.WARNING("marque non confirmée (champ vide)"))
                 except Exception as e:  # noqa: BLE001
                     self.stdout.write(self.style.WARNING(f"marque « {marque} » non sélectionnée : {e}"))
 
             # État
             if etat:
                 try:
-                    page.get_by_role("textbox", name="État").click()
-                    page.get_by_text(etat, exact=True).first.click(timeout=4000)
+                    page.get_by_role("textbox", name="État").click(); hpause()
+                    page.get_by_text(etat, exact=True).first.click(timeout=4000); hpause()
                 except Exception as e:  # noqa: BLE001
                     self.stdout.write(self.style.WARNING(f"état non sélectionné : {e}"))
-            # Colis : cliquer le bouton du format (plus fiable que la case radio,
-            # qui ne se coche pas toujours quand Vinted recommande une autre taille).
+            # Colis : cliquer le bouton du format (plus fiable que la case radio, qui
+            # ne se coche pas toujours quand Vinted recommande une autre taille - le
+            # défaut bascule sur « Moyen » selon la catégorie, donc on force toujours).
             try:
                 page.get_by_role("button", name=re.compile(rf"^{re.escape(colis)}\b")).first.click(timeout=4000)
+                hpause()
             except Exception:  # noqa: BLE001
                 try:
                     page.get_by_role("radio", name=re.compile(colis)).check(timeout=3000)
@@ -143,11 +187,33 @@ class Command(BaseCommand):
             self.stdout.write(f"screenshot : {shot}")
 
             if o["publish"]:
-                page.get_by_role("button", name="Ajouter").click()
-                page.wait_for_timeout(4000)
-                it.vinted_url = page.url
-                it.statut = "publie"
-                it.save(update_fields=["vinted_url", "statut"])
-                self.stdout.write(self.style.SUCCESS(f"✓ publié : {page.url}"))
+                # Un bandeau cookies peut recouvrir le bouton et intercepter le clic.
+                for cta in ("Tout accepter", "Accepter tout"):
+                    try:
+                        btn = page.get_by_role("button", name=cta)
+                        if btn.count():
+                            btn.first.click(timeout=2500); hpause(); break
+                    except Exception:  # noqa: BLE001
+                        pass
+                # Bouton « Ajouter » ciblé par data-testid (fiable).
+                save = page.locator("[data-testid='upload-form-save-button']")
+                save.scroll_into_view_if_needed(); hpause()
+                save.click(timeout=6000)
+                # Attendre de quitter le formulaire (redirection profil = en ligne).
+                for _ in range(25):
+                    page.wait_for_timeout(700)
+                    if "items/new" not in page.url:
+                        break
+                # NE PAS appeler l'ORM Django ici : on est dans le contexte async de
+                # Playwright (sync_playwright ouvre une boucle) -> SynchronousOnlyOperation.
+                # On capture l'URL et on sauvegarde APRÈS le bloc `with`.
+                published_url = page.url
+                self.stdout.write(self.style.SUCCESS(f"✓ publié : {published_url}"))
             else:
                 self.stdout.write(self.style.NOTICE("rempli sans valider (ajoute --publish pour mettre en ligne)"))
+
+        # Sauvegarde ORM hors du contexte Playwright (évite SynchronousOnlyOperation).
+        if o["publish"] and published_url:
+            it.vinted_url = published_url
+            it.statut = "publie"
+            it.save(update_fields=["vinted_url", "statut"])
