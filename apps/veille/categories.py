@@ -18,6 +18,15 @@ DEFAULT_MAP = {
     "societe": "lifestyle",
     "events": "lifestyle",
     "autre": "lifestyle",
+    # Yonkko (yonko.life) — One Piece TCG : nos slugs veille → rubriques du blog.
+    "onepiece": "actualite",
+    "op-actu": "actualite",
+    "op-sorties": "sorties",
+    "op-meta": "meta",
+    "op-marche": "cotes",
+    "op-tournois": "tournois",
+    "op-collection": "collection",
+    "onepiece-tcg": "actualite",
 }
 
 
