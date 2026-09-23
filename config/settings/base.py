@@ -48,6 +48,26 @@ env = environ.Env(
     META_PAGE_TOKEN=(str, ""),      # Page access token (Messenger)
     META_IG_TOKEN=(str, ""),        # token Instagram (DM)
     META_GRAPH_VERSION=(str, "v22.0"),
+    # ── Places de marché (eBay, CardMarket) — secrets → .env.local ──
+    EBAY_ENV=(str, "sandbox"),                 # sandbox | production
+    EBAY_MARKETPLACE=(str, "EBAY_FR"),
+    EBAY_OAUTH_TOKEN=(str, ""),                # jeton d'accès utilisateur (simple)
+    EBAY_REFRESH_TOKEN=(str, ""),              # ou refresh token…
+    EBAY_CLIENT_ID=(str, ""),                  # …+ client id (App ID)
+    EBAY_CLIENT_SECRET=(str, ""),              # …+ client secret (Cert ID)
+    EBAY_TRADING_TOKEN=(str, ""),              # Auth'n'Auth token (enchères / Trading API)
+    EBAY_CATEGORY_ID=(str, ""),                # catégorie cartes à collectionner
+    EBAY_MERCHANT_LOCATION_KEY=(str, ""),      # requis Sell API
+    EBAY_FULFILLMENT_POLICY_ID=(str, ""),
+    EBAY_PAYMENT_POLICY_ID=(str, ""),
+    EBAY_RETURN_POLICY_ID=(str, ""),
+    MKM_ENV=(str, "sandbox"),                  # sandbox | production
+    MKM_APP_TOKEN=(str, ""),
+    MKM_APP_SECRET=(str, ""),
+    MKM_ACCESS_TOKEN=(str, ""),
+    MKM_ACCESS_SECRET=(str, ""),
+    MKM_GAME_ID=(int, 6),                      # 6 = Pokémon
+    MKM_LANGUAGE_ID=(int, 7),                  # 7 = japonais
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -87,6 +107,7 @@ INSTALLED_APPS = [
     "apps.comms",
     "apps.prospection",
     "apps.vinted",
+    "apps.marketplaces",
 ]
 
 MIDDLEWARE = [
@@ -153,6 +174,27 @@ WHATSAPP_PHONE_ID = env("WHATSAPP_PHONE_ID")
 META_PAGE_TOKEN = env("META_PAGE_TOKEN")
 META_IG_TOKEN = env("META_IG_TOKEN")
 META_GRAPH_VERSION = env("META_GRAPH_VERSION")
+
+# ── Places de marché (eBay, CardMarket) — secrets dans .env.local ──
+EBAY_ENV = env("EBAY_ENV")
+EBAY_MARKETPLACE = env("EBAY_MARKETPLACE")
+EBAY_OAUTH_TOKEN = env("EBAY_OAUTH_TOKEN")
+EBAY_REFRESH_TOKEN = env("EBAY_REFRESH_TOKEN")
+EBAY_CLIENT_ID = env("EBAY_CLIENT_ID")
+EBAY_CLIENT_SECRET = env("EBAY_CLIENT_SECRET")
+EBAY_TRADING_TOKEN = env("EBAY_TRADING_TOKEN")
+EBAY_CATEGORY_ID = env("EBAY_CATEGORY_ID")
+EBAY_MERCHANT_LOCATION_KEY = env("EBAY_MERCHANT_LOCATION_KEY")
+EBAY_FULFILLMENT_POLICY_ID = env("EBAY_FULFILLMENT_POLICY_ID")
+EBAY_PAYMENT_POLICY_ID = env("EBAY_PAYMENT_POLICY_ID")
+EBAY_RETURN_POLICY_ID = env("EBAY_RETURN_POLICY_ID")
+MKM_ENV = env("MKM_ENV")
+MKM_APP_TOKEN = env("MKM_APP_TOKEN")
+MKM_APP_SECRET = env("MKM_APP_SECRET")
+MKM_ACCESS_TOKEN = env("MKM_ACCESS_TOKEN")
+MKM_ACCESS_SECRET = env("MKM_ACCESS_SECRET")
+MKM_GAME_ID = env("MKM_GAME_ID")
+MKM_LANGUAGE_ID = env("MKM_LANGUAGE_ID")
 
 # Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
 VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})

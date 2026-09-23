@@ -20,6 +20,7 @@ local UI state, **SSE** for the anonymous observer.
 | `apps/veille` | Editorial monitoring — press releases → categorization → blog dispatch |
 | `apps/comms` | Unified multi-channel inbox (email/telegram/…) + AI triage |
 | `apps/vinted` | Vinted assist — photo→listing publishing (CDP) + order manager (buy/sell/profit + shipping dashboard). See [vinted.md](vinted.md) |
+| `apps/marketplaces` | eBay (fixed-price + auction) & CardMarket listing clients + commands. See [marketplaces.md](marketplaces.md) |
 
 ## Adding a pane type
 
