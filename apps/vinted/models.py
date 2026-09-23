@@ -180,6 +180,25 @@ class VintedOrder(models.Model):
         return dict(TRANSPORTEURS).get(self.transporteur, self.transporteur or "")
 
 
+class Fournisseur(models.Model):
+    """Fournisseur / source d'approvisionnement (ex. litsou, import_pokepoke)."""
+    nom = models.CharField(max_length=120, unique=True)
+    canal = models.CharField(max_length=60, blank=True,
+                             help_text="Vinted, TikTok, live, site… (où on achète)")
+    contact = models.CharField(max_length=200, blank=True, help_text="Pseudo, URL, contact")
+    notes = models.TextField(blank=True)
+    actif = models.BooleanField(default=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["nom"]
+        verbose_name = "Fournisseur"
+        verbose_name_plural = "Fournisseurs"
+
+    def __str__(self):
+        return self.nom
+
+
 # ── Entrepôt : achats/références pas encore listés sur Vinted ──
 STOCK_SOURCES = [
     ("tiktok", "TikTok"),
@@ -216,7 +235,10 @@ class StockItem(models.Model):
     vendu). Le coût unitaire alimentera le prix d'achat de la future vente."""
     nom = models.CharField(max_length=200)
     reference = models.CharField(max_length=120, blank=True, help_text="N°/set/ref carte")
-    source = models.CharField(max_length=20, choices=STOCK_SOURCES, default="autre")
+    fournisseur = models.ForeignKey(Fournisseur, null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name="articles")
+    source = models.CharField(max_length=20, choices=STOCK_SOURCES, default="autre",
+                              help_text="Canal d'achat")
     prix_achat = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
                                      help_text="Coût unitaire d'acquisition")
     quantite = models.PositiveIntegerField(default=1)

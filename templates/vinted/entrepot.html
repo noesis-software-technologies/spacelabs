@@ -44,6 +44,7 @@
         <input name="reference" placeholder="réf (n°/set)" style="width:120px">
         <input name="prix_achat" placeholder="achat €" style="width:80px">
         <input name="quantite" value="1" style="width:52px" title="quantité">
+        <select name="fournisseur" title="fournisseur"><option value="">— fournisseur —</option>{% for f in fournisseurs %}<option value="{{ f.pk }}">{{ f.nom }}</option>{% endfor %}</select>
         <select name="source">{% for v,l in sources %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
         <select name="destin">{% for v,l in destins %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
         <select name="statut">{% for v,l in statuts_stock %}<option value="{{ v }}" {% if v == 'en_transit' %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
@@ -55,7 +56,7 @@
     <div class="card">
       <table class="stk">
         <thead><tr>
-          <th>Nom</th><th>Réf</th><th>Source</th><th>Achat €</th><th>Qté</th><th>Coût</th>
+          <th>Nom</th><th>Réf</th><th>Fournisseur</th><th>Source</th><th>Achat €</th><th>Qté</th><th>Coût</th>
           <th>Devenir</th><th>Statut</th><th>Gradeur</th><th>Reçu le</th>
         </tr></thead>
         <tbody>
@@ -63,6 +64,9 @@
           <tr data-row="{{ i.pk }}">
             <td class="edit" data-pk="{{ i.pk }}" data-field="nom" contenteditable="true">{{ i.nom }}</td>
             <td class="edit" data-pk="{{ i.pk }}" data-field="reference" contenteditable="true">{{ i.reference }}</td>
+            <td>
+              <select data-pk="{{ i.pk }}" data-field="fournisseur"><option value="">—</option>{% for f in fournisseurs %}<option value="{{ f.pk }}" {% if i.fournisseur_id == f.pk %}selected{% endif %}>{{ f.nom }}</option>{% endfor %}</select>
+            </td>
             <td>
               <select data-pk="{{ i.pk }}" data-field="source">{% for v,l in sources %}<option value="{{ v }}" {% if i.source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
             </td>
@@ -79,7 +83,7 @@
             <td><input type="date" data-pk="{{ i.pk }}" data-field="date_reception" value="{{ i.date_reception|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="10" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
+          <tr><td colspan="11" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
         {% endfor %}
         </tbody>
       </table>

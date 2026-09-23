@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import StockItem, VintedListing, VintedOrder
+from .models import Fournisseur, StockItem, VintedListing, VintedOrder
+
+
+@admin.register(Fournisseur)
+class FournisseurAdmin(admin.ModelAdmin):
+    list_display = ("nom", "canal", "contact", "actif")
+    list_filter = ("actif", "canal")
+    search_fields = ("nom", "canal", "contact", "notes")
 
 
 @admin.register(VintedListing)
@@ -52,10 +59,11 @@ class VintedOrderAdmin(admin.ModelAdmin):
 
 @admin.register(StockItem)
 class StockItemAdmin(admin.ModelAdmin):
-    list_display = ("nom", "reference", "source", "prix_achat", "quantite",
-                    "destin", "statut", "gradeur", "date_achat", "date_reception")
-    list_filter = ("statut", "destin", "source")
+    list_display = ("nom", "reference", "fournisseur", "source", "prix_achat",
+                    "quantite", "destin", "statut", "gradeur", "date_reception")
+    list_filter = ("statut", "destin", "fournisseur", "source")
     search_fields = ("nom", "reference", "notes", "gradeur")
     list_editable = ("destin", "statut")
+    autocomplete_fields = ("fournisseur",)
     date_hierarchy = "date_achat"
     readonly_fields = ("cree_le", "maj_le")

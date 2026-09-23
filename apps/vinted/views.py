@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from .models import (PLATEFORMES, STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE,
                      STOCK_DESTINS, STOCK_SOURCES, STOCK_STATUTS, TRANSPORTEURS,
-                     StockItem, VintedOrder)
+                     Fournisseur, StockItem, VintedOrder)
 
 # Champs éditables en ligne (dashboard) + leur type pour la coercition.
 _EDIT_TEXT = {"titre", "acheteur", "numero", "tracking", "notes"}
@@ -190,6 +190,7 @@ def entrepot(request):
         "sources": STOCK_SOURCES,
         "destins": STOCK_DESTINS,
         "statuts_stock": STOCK_STATUTS,
+        "fournisseurs": list(Fournisseur.objects.filter(actif=True)),
         "active_nav": "vinted",
     })
 
@@ -207,11 +208,13 @@ def stock_add(request):
         pa = Decimal(prix) if prix else None
     except InvalidOperation:
         pa = None
+    fid = (request.POST.get("fournisseur") or "").strip()
     StockItem.objects.create(
         nom=nom, prix_achat=pa, quantite=int(qte) if qte.isdigit() else 1,
         source=request.POST.get("source") or "autre",
         destin=request.POST.get("destin") or "a_definir",
         statut=request.POST.get("statut") or "en_transit",
+        fournisseur_id=int(fid) if fid.isdigit() else None,
         reference=(request.POST.get("reference") or "").strip())
     return redirect("vinted:entrepot")
 
@@ -237,6 +240,13 @@ def stock_update(request, pk):
             if val not in _STK_CHOICE[field]:
                 return JsonResponse({"ok": False, "error": "valeur invalide"}, status=400)
             setattr(item, field, val)
+        elif field == "fournisseur":
+            if val == "":
+                item.fournisseur = None
+            elif val.isdigit() and Fournisseur.objects.filter(pk=int(val)).exists():
+                item.fournisseur_id = int(val)
+            else:
+                return JsonResponse({"ok": False, "error": "fournisseur inconnu"}, status=400)
         else:
             return JsonResponse({"ok": False, "error": "champ non éditable"}, status=400)
     except (InvalidOperation, ValueError):
