@@ -105,6 +105,9 @@ class VintedOrder(models.Model):
     est calculé, jamais saisi — source unique de vérité pour le suivi de marge."""
     plateforme = models.CharField(max_length=12, choices=PLATEFORMES, default="vinted",
                                   db_index=True, help_text="Place de marché de la vente")
+    fournisseur = models.ForeignKey("Fournisseur", null=True, blank=True,
+                                    on_delete=models.SET_NULL, related_name="ventes",
+                                    help_text="Source d'approvisionnement de l'article")
     numero = models.CharField(
         max_length=60, blank=True, db_index=True,
         help_text="N° de commande / transaction (identifiant public de la plateforme)")

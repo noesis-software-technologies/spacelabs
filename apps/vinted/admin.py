@@ -25,11 +25,11 @@ class VintedOrderAdmin(admin.ModelAdmin):
     list_display = ("numero", "plateforme", "titre", "acheteur", "prix_achat",
                     "prix_vente", "benefice_col", "marge_col", "statut_envoi",
                     "transporteur", "tracking", "suivi_col", "date_vente")
-    list_filter = ("plateforme", "statut_envoi", "transporteur", "date_vente")
+    list_filter = ("plateforme", "fournisseur", "statut_envoi", "transporteur", "date_vente")
     search_fields = ("numero", "titre", "acheteur", "tracking", "notes")
     list_editable = ("statut_envoi", "transporteur", "tracking")
     date_hierarchy = "date_vente"
-    autocomplete_fields = ("listing",)
+    autocomplete_fields = ("listing", "fournisseur")
     readonly_fields = ("benefice_col", "marge_col", "cree_le", "maj_le")
     fieldsets = (
         ("Article", {"fields": ("plateforme", "listing", "titre", "numero", "acheteur")}),

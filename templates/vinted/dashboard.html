@@ -138,7 +138,7 @@
       <div class="hint">✎ Clique une cellule pour l'éditer (enregistrement auto). Bénéfice & marge se recalculent.</div>
       <table class="orders">
         <thead><tr>
-          <th>Article</th><th>Plateforme</th><th>Acheteur</th><th>Achat €</th><th>Vente €</th>
+          <th>Article</th><th>Plateforme</th><th>Fournisseur</th><th>Acheteur</th><th>Achat €</th><th>Vente €</th>
           <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Transporteur</th><th>Suivi n°</th><th>Vendu le</th>
         </tr></thead>
         <tbody>
@@ -149,6 +149,9 @@
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
               </select>
+            </td>
+            <td>
+              <select data-pk="{{ o.pk }}" data-field="fournisseur"><option value="">—</option>{% for f in fournisseurs %}<option value="{{ f.pk }}" {% if o.fournisseur_id == f.pk %}selected{% endif %}>{{ f.nom }}</option>{% endfor %}</select>
             </td>
             <td class="edit" data-pk="{{ o.pk }}" data-field="acheteur" contenteditable="true">{{ o.acheteur }}</td>
             <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_achat" contenteditable="true">{{ o.prix_achat|default_if_none:"" }}</td>
@@ -170,7 +173,7 @@
             <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="11" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="12" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
         </tbody>
       </table>

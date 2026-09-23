@@ -79,6 +79,7 @@ def dashboard(request):
         "par_plateforme": par_plateforme,
         "statuts": STATUTS_ENVOI,
         "transporteurs": TRANSPORTEURS,
+        "fournisseurs": list(Fournisseur.objects.filter(actif=True)),
         "sans_suivi": [o for o in orders
                        if o.statut_envoi in ("expedie", "livre") and not o.tracking],
         "active_nav": "vinted",
@@ -135,6 +136,13 @@ def order_update(request, pk):
             if val not in _EDIT_CHOICE[field]:
                 return JsonResponse({"ok": False, "error": "valeur invalide"}, status=400)
             setattr(order, field, val)
+        elif field == "fournisseur":
+            if val == "":
+                order.fournisseur = None
+            elif val.isdigit() and Fournisseur.objects.filter(pk=int(val)).exists():
+                order.fournisseur_id = int(val)
+            else:
+                return JsonResponse({"ok": False, "error": "fournisseur inconnu"}, status=400)
         else:
             return JsonResponse({"ok": False, "error": "champ non éditable"}, status=400)
     except (InvalidOperation, ValueError):
