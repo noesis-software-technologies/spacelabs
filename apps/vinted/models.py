@@ -45,3 +45,85 @@ class VintedListing(models.Model):
 
     def __str__(self):
         return f"{self.titre or self.ref} ({self.get_statut_display()})"
+
+
+# Suivi d'envoi d'une commande vendue (du paiement à la livraison).
+STATUTS_ENVOI = [
+    ("a_preparer", "À préparer"),
+    ("etiquette", "Étiquette éditée"),
+    ("expedie", "Expédié"),
+    ("livre", "Livré"),
+    ("cloture", "Clôturé"),
+    ("probleme", "Problème / litige"),
+]
+# Statuts considérés « à traiter » dans le dashboard des envois.
+STATUTS_ENVOI_A_FAIRE = ("a_preparer", "etiquette")
+
+
+class VintedOrder(models.Model):
+    """Commande Vinted vendue : gestion achat/vente/bénéfice + suivi d'envoi.
+
+    Relie (si possible) l'annonce d'origine (`VintedListing`) et centralise le
+    prix d'achat (coût d'acquisition de la carte), le prix de vente (net vendeur
+    Vinted), les frais vendeur éventuels et le statut d'expédition. Le bénéfice
+    est calculé, jamais saisi — source unique de vérité pour le suivi de marge."""
+    numero = models.CharField(
+        max_length=60, blank=True, db_index=True,
+        help_text="N° de commande / transaction Vinted (identifiant public)")
+    listing = models.ForeignKey(
+        VintedListing, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="commandes", help_text="Annonce d'origine (si connue)")
+    titre = models.CharField(max_length=200, blank=True,
+                             help_text="Libellé de l'article (repli si l'annonce manque)")
+    acheteur = models.CharField(max_length=120, blank=True,
+                                help_text="Pseudo acheteur Vinted (pas de donnée perso)")
+
+    # Argent (Decimal : pas de flottant sur de la monnaie)
+    prix_achat = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                     help_text="Coût d'acquisition de la carte")
+    prix_vente = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                     help_text="Prix de vente (net vendeur Vinted)")
+    frais = models.DecimalField(max_digits=9, decimal_places=2, default=0,
+                                help_text="Frais vendeur (port à charge, mise en avant, gradation…)")
+
+    # Envoi
+    statut_envoi = models.CharField(max_length=12, choices=STATUTS_ENVOI, default="a_preparer",
+                                    db_index=True)
+    transporteur = models.CharField(max_length=60, blank=True,
+                                    help_text="Chronopost, Mondial Relay, Colissimo…")
+    tracking = models.CharField(max_length=80, blank=True, help_text="N° de suivi")
+
+    date_vente = models.DateField(null=True, blank=True)
+    date_expedition = models.DateField(null=True, blank=True)
+    date_livraison = models.DateField(null=True, blank=True)
+
+    notes = models.TextField(blank=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    maj_le = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_vente", "-id"]
+        verbose_name = "Commande Vinted"
+        verbose_name_plural = "Commandes Vinted"
+
+    def __str__(self):
+        return f"{self.numero or self.titre or self.pk} — {self.get_statut_envoi_display()}"
+
+    @property
+    def benefice(self):
+        """Bénéfice net = prix de vente - prix d'achat - frais vendeur."""
+        pv = self.prix_vente or 0
+        pa = self.prix_achat or 0
+        fr = self.frais or 0
+        return pv - pa - fr
+
+    @property
+    def marge_pct(self):
+        """Marge en % du coût d'acquisition (None si prix d'achat inconnu/0)."""
+        if not self.prix_achat:
+            return None
+        return round(self.benefice / self.prix_achat * 100, 1)
+
+    @property
+    def envoi_a_faire(self):
+        return self.statut_envoi in STATUTS_ENVOI_A_FAIRE

@@ -19,6 +19,7 @@ local UI state, **SSE** for the anonymous observer.
 | `apps/vitrine` | Animated product showcase |
 | `apps/veille` | Editorial monitoring — press releases → categorization → blog dispatch |
 | `apps/comms` | Unified multi-channel inbox (email/telegram/…) + AI triage |
+| `apps/vinted` | Vinted assist — photo→listing publishing (CDP) + order manager (buy/sell/profit + shipping dashboard). See [vinted.md](vinted.md) |
 
 ## Adding a pane type
 

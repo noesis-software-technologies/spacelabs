@@ -1,0 +1,114 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Commandes Vinted{% endblock %}
+{% block h1 %}Vinted — commandes & envois{% endblock %}
+{% block crumb %}$ vinted --orders --shipping{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.4rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1.1rem;font-size:.82rem;min-width:130px}
+    .kpi b{display:block;font-size:1.3rem;color:var(--accent);line-height:1.2}
+    .kpi.good b{color:var(--good)}
+    .kpi small{color:var(--faint);font:.62rem var(--mono)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.6rem}
+    .card h2{font:600 .82rem/1 var(--font);padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .card h2 .n{font:.62rem var(--mono);color:var(--faint)}
+    .row{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
+    .row:last-child{border-bottom:none}
+    .row .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .row .sub{font:.64rem var(--mono);color:var(--faint)}
+    .ship-form{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+    .ship-form input{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.28rem .5rem;font-size:.75rem;color:var(--ink)}
+    .ship-form input.tr{width:150px}.ship-form input.car{width:120px}
+    .btn{font:.7rem var(--mono);padding:.3rem .7rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer}
+    .btn.acc{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+    table.orders{width:100%;border-collapse:collapse;font-size:.8rem}
+    table.orders th{text-align:left;font:.62rem var(--mono);color:var(--faint);padding:.5rem 1rem;border-bottom:1px solid var(--border)}
+    table.orders td{padding:.45rem 1rem;border-bottom:1px solid var(--surface2)}
+    table.orders td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+    .benef{color:var(--good);font-weight:600}.benef.neg{color:var(--bad,#d9534f)}
+    .pill{display:inline-block;font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+    .alert{background:color-mix(in srgb,var(--bad,#d9534f) 12%,transparent);border-color:color-mix(in srgb,var(--bad,#d9534f) 35%,transparent)}
+    .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="kpi"><b>{{ total }}</b><small>commandes</small></div>
+      <div class="kpi"><b>{{ kpis.ca|floatformat:2 }} €</b><small>ventes cumulées</small></div>
+      <div class="kpi"><b>{{ kpis.cout|floatformat:2 }} €</b><small>coût d'achat</small></div>
+      <div class="kpi good"><b>{{ kpis.benefice|floatformat:2 }} €</b><small>bénéfice net</small></div>
+      <div class="kpi"><b>{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</b><small>marge moyenne</small></div>
+      <div class="kpi"><b>{{ a_expedier|length }}</b><small>à expédier</small></div>
+    </div>
+
+    {% if en_retard %}
+    <div class="card alert">
+      <h2>⚠ Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
+      {% for o in en_retard %}
+      <div class="row">
+        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+          <div class="sub">{{ o.transporteur }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m" }}</div></div>
+        <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+          <button class="btn acc" type="submit">Marquer livré</button></form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>À préparer / expédier <span class="n">{{ a_expedier|length }}</span></h2>
+      {% for o in a_expedier %}
+      <div class="row">
+        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+          <div class="sub">{{ o.acheteur|default:"—" }} · vendu {{ o.date_vente|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} € · {{ o.get_statut_envoi_display }}</div></div>
+        <form class="ship-form" method="post" action="{% url 'vinted:order_ship' o.pk %}">{% csrf_token %}
+          <input class="car" name="transporteur" placeholder="transporteur" value="{{ o.transporteur }}">
+          <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+          <button class="btn acc" type="submit">Expédié</button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="empty">Rien à expédier. Tout est parti 👍</div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
+      {% for o in en_transit %}
+      <div class="row">
+        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+          <div class="sub">{{ o.transporteur|default:"—" }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}</div></div>
+        <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+          <button class="btn" type="submit">Marquer livré</button></form>
+      </div>
+      {% empty %}
+      <div class="empty">Aucun colis en transit.</div>
+      {% endfor %}
+    </div>
+
+    <div class="card">
+      <h2>Dernières commandes <span class="n">{{ recents|length }}</span></h2>
+      <table class="orders">
+        <thead><tr>
+          <th>Article</th><th>Acheteur</th><th>Achat</th><th>Vente</th>
+          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Vendu le</th>
+        </tr></thead>
+        <tbody>
+        {% for o in recents %}
+          <tr>
+            <td class="tt">{{ o.titre|default:o.numero|default:o.pk }}</td>
+            <td>{{ o.acheteur|default:"—" }}</td>
+            <td class="num">{% if o.prix_achat != None %}{{ o.prix_achat }} €{% else %}—{% endif %}</td>
+            <td class="num">{% if o.prix_vente != None %}{{ o.prix_vente }} €{% else %}—{% endif %}</td>
+            <td class="num benef {% if o.benefice < 0 %}neg{% endif %}">{{ o.benefice|floatformat:2 }} €</td>
+            <td class="num">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
+            <td><span class="pill">{{ o.get_statut_envoi_display }}</span></td>
+            <td class="num">{{ o.date_vente|date:"d/m/y"|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+{% endblock %}

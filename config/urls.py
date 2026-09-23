@@ -35,6 +35,7 @@ urlpatterns = [
     path("routage/", include("apps.models_routing.urls")),
     path("vitrine/", include("apps.vitrine.urls")),
     path("veille/", include("apps.veille.urls")),
+    path("vinted/", include("apps.vinted.urls")),
     path("comms/", include("apps.comms.urls")),
     path("prospection/", include("apps.prospection.urls")),
     path("dashboard/", spacelabs_dashboard, name="dashboard"),
