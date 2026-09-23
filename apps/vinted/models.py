@@ -150,18 +150,20 @@ class VintedOrder(models.Model):
 
     @property
     def benefice(self):
-        """Bénéfice net = prix de vente - prix d'achat - frais vendeur."""
-        pv = self.prix_vente or 0
-        pa = self.prix_achat or 0
-        fr = self.frais or 0
-        return pv - pa - fr
+        """Bénéfice net = prix de vente - prix d'achat - frais vendeur.
+
+        Coerce en Decimal : les prix peuvent arriver en float (CLI argparse) et
+        Decimal - float lève TypeError."""
+        from decimal import Decimal
+        d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
+        return d(self.prix_vente) - d(self.prix_achat) - d(self.frais)
 
     @property
     def marge_pct(self):
         """Marge en % du coût d'acquisition (None si prix d'achat inconnu/0)."""
         if not self.prix_achat:
             return None
-        return round(self.benefice / self.prix_achat * 100, 1)
+        return round(float(self.benefice) / float(self.prix_achat) * 100, 1)
 
     @property
     def envoi_a_faire(self):
