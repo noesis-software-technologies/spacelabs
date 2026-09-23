@@ -178,3 +178,70 @@ class VintedOrder(models.Model):
     @property
     def transporteur_label(self):
         return dict(TRANSPORTEURS).get(self.transporteur, self.transporteur or "")
+
+
+# ── Entrepôt : achats/références pas encore listés sur Vinted ──
+STOCK_SOURCES = [
+    ("tiktok", "TikTok"),
+    ("import_pokepoke", "Vinted — import_pokepoke"),
+    ("live", "Live"),
+    ("vinted", "Vinted"),
+    ("autre", "Autre"),
+]
+# Devenir de l'article une fois reçu.
+STOCK_DESTINS = [
+    ("a_definir", "À définir"),
+    ("vente_directe", "Vendre à réception"),
+    ("grade_collectaura", "Grader — Collect Aura (Boulogne-Billancourt, express)"),
+    ("grade_ccc", "Grader — CCC (Malakoff, express)"),
+    ("garder", "Garder / collection"),
+]
+STOCK_STATUTS = [
+    ("en_transit", "En transit"),
+    ("recu", "Reçu"),
+    ("a_grader", "À grader"),
+    ("en_gradation", "En gradation"),
+    ("grade", "Gradé"),
+    ("a_lister", "À lister"),
+    ("liste", "Listé sur Vinted"),
+    ("vendu", "Vendu"),
+]
+
+
+class StockItem(models.Model):
+    """Article en stock/entrepôt : acheté mais pas encore listé sur Vinted.
+
+    Permet de définir son devenir (vendre à réception, grader chez Collect Aura
+    ou CCC en express) et de suivre son état (transit → reçu → gradé/listé →
+    vendu). Le coût unitaire alimentera le prix d'achat de la future vente."""
+    nom = models.CharField(max_length=200)
+    reference = models.CharField(max_length=120, blank=True, help_text="N°/set/ref carte")
+    source = models.CharField(max_length=20, choices=STOCK_SOURCES, default="autre")
+    prix_achat = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                     help_text="Coût unitaire d'acquisition")
+    quantite = models.PositiveIntegerField(default=1)
+    destin = models.CharField(max_length=20, choices=STOCK_DESTINS, default="a_definir",
+                              help_text="Devenir prévu à réception")
+    statut = models.CharField(max_length=14, choices=STOCK_STATUTS, default="en_transit",
+                              db_index=True)
+    gradeur = models.CharField(max_length=120, blank=True,
+                               help_text="Ex. Collect Aura (BB) / CCC (Malakoff)")
+    date_achat = models.DateField(null=True, blank=True)
+    date_reception = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    maj_le = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-id"]
+        verbose_name = "Article en stock (entrepôt)"
+        verbose_name_plural = "Entrepôt (stock)"
+
+    def __str__(self):
+        return f"{self.nom} ({self.get_statut_display()})"
+
+    @property
+    def cout_total(self):
+        from decimal import Decimal
+        pa = Decimal(str(self.prix_achat)) if self.prix_achat is not None else Decimal("0")
+        return pa * self.quantite

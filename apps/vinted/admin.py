@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import VintedListing, VintedOrder
+from .models import StockItem, VintedListing, VintedOrder
 
 
 @admin.register(VintedListing)
@@ -48,3 +48,14 @@ class VintedOrderAdmin(admin.ModelAdmin):
             return format_html('<a href="{}" target="_blank" rel="noopener">{} ↗</a>',
                                obj.tracking_url, obj.tracking)
         return obj.tracking or "—"
+
+
+@admin.register(StockItem)
+class StockItemAdmin(admin.ModelAdmin):
+    list_display = ("nom", "reference", "source", "prix_achat", "quantite",
+                    "destin", "statut", "gradeur", "date_achat", "date_reception")
+    list_filter = ("statut", "destin", "source")
+    search_fields = ("nom", "reference", "notes", "gradeur")
+    list_editable = ("destin", "statut")
+    date_hierarchy = "date_achat"
+    readonly_fields = ("cree_le", "maj_le")

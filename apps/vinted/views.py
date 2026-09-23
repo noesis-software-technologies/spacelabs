@@ -8,7 +8,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import (PLATEFORMES, STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE,
-                     TRANSPORTEURS, VintedOrder)
+                     STOCK_DESTINS, STOCK_SOURCES, STOCK_STATUTS, TRANSPORTEURS,
+                     StockItem, VintedOrder)
 
 # Champs éditables en ligne (dashboard) + leur type pour la coercition.
 _EDIT_TEXT = {"titre", "acheteur", "numero", "tracking", "notes"}
@@ -18,6 +19,17 @@ _EDIT_CHOICE = {
     "plateforme": {k for k, _ in PLATEFORMES},
     "statut_envoi": {k for k, _ in STATUTS_ENVOI},
     "transporteur": {k for k, _ in TRANSPORTEURS} | {""},
+}
+
+# Entrepôt : champs éditables en ligne.
+_STK_TEXT = {"nom", "reference", "gradeur", "notes"}
+_STK_DECIMAL = {"prix_achat"}
+_STK_INT = {"quantite"}
+_STK_DATE = {"date_achat", "date_reception"}
+_STK_CHOICE = {
+    "source": {k for k, _ in STOCK_SOURCES},
+    "destin": {k for k, _ in STOCK_DESTINS},
+    "statut": {k for k, _ in STOCK_STATUTS},
 }
 
 
@@ -154,3 +166,80 @@ def order_tracking(request, pk):
     order.save(update_fields=["transporteur", "tracking", "statut_envoi",
                               "date_expedition", "maj_le"])
     return redirect("vinted:dashboard")
+
+
+# ── Entrepôt (stock non listé) ──
+@login_required
+def entrepot(request):
+    """Vue entrepôt : articles achetés pas encore listés + leur devenir."""
+    items = list(StockItem.objects.all())
+    cout_total = sum(i.cout_total for i in items)
+    par_statut = dict(StockItem.objects.values_list("statut")
+                      .annotate(n=Count("id")).values_list("statut", "n"))
+    par_destin = dict(StockItem.objects.values_list("destin")
+                      .annotate(n=Count("id")).values_list("destin", "n"))
+    a_grader = [i for i in items if i.destin in ("grade_collectaura", "grade_ccc")
+                and i.statut not in ("grade", "vendu", "liste")]
+    return render(request, "vinted/entrepot.html", {
+        "items": items,
+        "cout_total": cout_total,
+        "nb": len(items),
+        "par_statut": par_statut,
+        "par_destin": par_destin,
+        "a_grader": a_grader,
+        "sources": STOCK_SOURCES,
+        "destins": STOCK_DESTINS,
+        "statuts_stock": STOCK_STATUTS,
+        "active_nav": "vinted",
+    })
+
+
+@login_required
+@require_POST
+def stock_add(request):
+    """Crée un article d'entrepôt (formulaire du haut de page)."""
+    nom = (request.POST.get("nom") or "").strip()
+    if not nom:
+        return redirect("vinted:entrepot")
+    qte = request.POST.get("quantite") or "1"
+    prix = (request.POST.get("prix_achat") or "").strip()
+    try:
+        pa = Decimal(prix) if prix else None
+    except InvalidOperation:
+        pa = None
+    StockItem.objects.create(
+        nom=nom, prix_achat=pa, quantite=int(qte) if qte.isdigit() else 1,
+        source=request.POST.get("source") or "autre",
+        destin=request.POST.get("destin") or "a_definir",
+        statut=request.POST.get("statut") or "en_transit",
+        reference=(request.POST.get("reference") or "").strip())
+    return redirect("vinted:entrepot")
+
+
+@login_required
+@require_POST
+def stock_update(request, pk):
+    """Édition inline d'un champ d'un article d'entrepôt."""
+    item = get_object_or_404(StockItem, pk=pk)
+    field = (request.POST.get("field") or "").strip()
+    val = (request.POST.get("value", "") or "").strip()
+    try:
+        if field in _STK_TEXT:
+            setattr(item, field, val)
+        elif field in _STK_DECIMAL:
+            setattr(item, field, Decimal(val) if val else None)
+        elif field in _STK_INT:
+            setattr(item, field, int(val) if val else 1)
+        elif field in _STK_DATE:
+            from datetime import date
+            setattr(item, field, date.fromisoformat(val) if val else None)
+        elif field in _STK_CHOICE:
+            if val not in _STK_CHOICE[field]:
+                return JsonResponse({"ok": False, "error": "valeur invalide"}, status=400)
+            setattr(item, field, val)
+        else:
+            return JsonResponse({"ok": False, "error": "champ non éditable"}, status=400)
+    except (InvalidOperation, ValueError):
+        return JsonResponse({"ok": False, "error": "format invalide"}, status=400)
+    item.save()
+    return JsonResponse({"ok": True, "cout_total": f"{item.cout_total:.2f}"})

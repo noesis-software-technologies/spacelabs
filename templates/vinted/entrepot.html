@@ -1,0 +1,119 @@
+{% extends "dashboard/shell.html" %}
+{% block page_title %}Entrepôt Vinted{% endblock %}
+{% block h1 %}Entrepôt — stock à venir{% endblock %}
+{% block crumb %}$ vinted --warehouse{% endblock %}
+
+{% block extra_css %}
+    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1rem}
+    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1.1rem;font-size:.82rem;min-width:120px}
+    .kpi b{display:block;font-size:1.25rem;color:var(--accent)}
+    .kpi small{color:var(--faint);font:.62rem var(--mono)}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.4rem}
+    .card h2{font:600 .82rem/1 var(--font);padding:.7rem 1rem;border-bottom:1px solid var(--border)}
+    .addf{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.8rem 1rem}
+    .addf input,.addf select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.35rem .5rem;font-size:.8rem;color:var(--ink)}
+    .addf input.nom{min-width:240px;flex:1}
+    .btn{font:.75rem var(--mono);padding:.4rem .9rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer}
+    .btn.acc{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+    .hint{font-size:.72rem;color:var(--faint);margin:.2rem 0 .6rem}
+    table.stk{width:100%;border-collapse:collapse;font-size:.8rem}
+    table.stk th{text-align:left;font:.62rem var(--mono);color:var(--faint);padding:.5rem .7rem;border-bottom:1px solid var(--border)}
+    table.stk td{padding:.4rem .7rem;border-bottom:1px solid var(--surface2);vertical-align:middle}
+    table.stk td.num{text-align:right;font-variant-numeric:tabular-nums}
+    td.edit{cursor:text;border-radius:5px}
+    td.edit:hover{background:var(--surface2)}
+    td.edit:focus{outline:1px solid var(--accent);background:var(--bg)}
+    td.edit.saved{background:color-mix(in srgb,var(--good) 22%,transparent)}
+    td.edit.err{background:color-mix(in srgb,var(--bad,#d9534f) 22%,transparent)}
+    table.stk select{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.72rem var(--mono);padding:.15rem .3rem}
+    .pill{display:inline-block;font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .empty{padding:1rem;color:var(--faint);font-style:italic}
+{% endblock %}
+
+{% block content %}
+    <div class="kpis">
+      <div class="kpi"><b>{{ nb }}</b><small>articles</small></div>
+      <div class="kpi"><b>{{ cout_total|floatformat:2 }} €</b><small>coût stock</small></div>
+      <div class="kpi"><b>{{ a_grader|length }}</b><small>à grader</small></div>
+    </div>
+
+    <div class="card">
+      <h2>Ajouter au stock</h2>
+      <form class="addf" method="post" action="{% url 'vinted:stock_add' %}">{% csrf_token %}
+        <input class="nom" name="nom" placeholder="Nom / carte" required>
+        <input name="reference" placeholder="réf (n°/set)" style="width:120px">
+        <input name="prix_achat" placeholder="achat €" style="width:80px">
+        <input name="quantite" value="1" style="width:52px" title="quantité">
+        <select name="source">{% for v,l in sources %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+        <select name="destin">{% for v,l in destins %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select>
+        <select name="statut">{% for v,l in statuts_stock %}<option value="{{ v }}" {% if v == 'en_transit' %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+        <button class="btn acc" type="submit">+ Ajouter</button>
+      </form>
+    </div>
+
+    <div class="hint">✎ Clique une cellule pour l'éditer (enregistrement auto). Devenir : vendre à réception / grader Collect Aura (BB) / grader CCC (Malakoff).</div>
+    <div class="card">
+      <table class="stk">
+        <thead><tr>
+          <th>Nom</th><th>Réf</th><th>Source</th><th>Achat €</th><th>Qté</th><th>Coût</th>
+          <th>Devenir</th><th>Statut</th><th>Gradeur</th><th>Reçu le</th>
+        </tr></thead>
+        <tbody>
+        {% for i in items %}
+          <tr data-row="{{ i.pk }}">
+            <td class="edit" data-pk="{{ i.pk }}" data-field="nom" contenteditable="true">{{ i.nom }}</td>
+            <td class="edit" data-pk="{{ i.pk }}" data-field="reference" contenteditable="true">{{ i.reference }}</td>
+            <td>
+              <select data-pk="{{ i.pk }}" data-field="source">{% for v,l in sources %}<option value="{{ v }}" {% if i.source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+            </td>
+            <td class="num edit" data-pk="{{ i.pk }}" data-field="prix_achat" contenteditable="true">{{ i.prix_achat|default_if_none:"" }}</td>
+            <td class="num edit" data-pk="{{ i.pk }}" data-field="quantite" contenteditable="true">{{ i.quantite }}</td>
+            <td class="num" data-cout="{{ i.pk }}">{{ i.cout_total|floatformat:2 }} €</td>
+            <td>
+              <select data-pk="{{ i.pk }}" data-field="destin">{% for v,l in destins %}<option value="{{ v }}" {% if i.destin == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+            </td>
+            <td>
+              <select data-pk="{{ i.pk }}" data-field="statut">{% for v,l in statuts_stock %}<option value="{{ v }}" {% if i.statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+            </td>
+            <td class="edit" data-pk="{{ i.pk }}" data-field="gradeur" contenteditable="true">{{ i.gradeur }}</td>
+            <td><input type="date" data-pk="{{ i.pk }}" data-field="date_reception" value="{{ i.date_reception|date:'Y-m-d' }}"></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="10" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  function csrf() { const m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ""; }
+  function flash(el, ok) { el.classList.remove("saved","err"); el.classList.add(ok?"saved":"err"); setTimeout(()=>el.classList.remove("saved","err"),1200); }
+  function save(el, field, value) {
+    const pk = el.dataset.pk;
+    return fetch(`/vinted/entrepot/${pk}/update/`, {
+      method:"POST",
+      headers:{ "X-CSRFToken":csrf(), "Content-Type":"application/x-www-form-urlencoded" },
+      body:new URLSearchParams({ field, value }),
+    }).then(r=>r.json()).then(d=>{
+      if(!d.ok){ flash(el,false); return; }
+      flash(el,true);
+      const row = el.closest("tr");
+      const c = row && row.querySelector("[data-cout]");
+      if(c && d.cout_total) c.textContent = d.cout_total + " €";
+    }).catch(()=>flash(el,false));
+  }
+  document.querySelectorAll("td.edit[contenteditable]").forEach(el=>{
+    let orig = el.textContent.trim();
+    el.addEventListener("focus",()=>{orig=el.textContent.trim();});
+    el.addEventListener("keydown",e=>{ if(e.key==="Enter"){e.preventDefault();el.blur();} });
+    el.addEventListener("blur",()=>{ const v=el.textContent.trim(); if(v!==orig) save(el, el.dataset.field, v); });
+  });
+  document.querySelectorAll("table.stk select[data-field], table.stk input[data-field]").forEach(el=>{
+    el.addEventListener("change",()=>save(el, el.dataset.field, el.value));
+  });
+})();
+</script>
+{% endblock %}
