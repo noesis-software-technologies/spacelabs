@@ -19,10 +19,12 @@ from datetime import date
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.vinted.models import (PLATEFORMES, STATUTS_ENVOI,
-                                STATUTS_ENVOI_A_FAIRE, VintedListing, VintedOrder)
+                                STATUTS_ENVOI_A_FAIRE, TRANSPORTEURS,
+                                VintedListing, VintedOrder)
 
 _STATUTS = {k for k, _ in STATUTS_ENVOI}
 _PLATEFORMES = {k for k, _ in PLATEFORMES}
+_TRANSPORTEURS = [k for k, _ in TRANSPORTEURS]
 
 
 def _d(s):
@@ -52,8 +54,9 @@ class Command(BaseCommand):
         parser.add_argument("--vente", type=float)
         parser.add_argument("--frais", type=float)
         parser.add_argument("--statut", choices=sorted(_STATUTS))
-        parser.add_argument("--transporteur")
-        parser.add_argument("--tracking")
+        parser.add_argument("--transporteur", choices=_TRANSPORTEURS,
+                            help="Code transporteur (mondial_relay, colissimo, chronopost…).")
+        parser.add_argument("--tracking", help="N° de suivi / ticket de référence.")
         parser.add_argument("--vendu", help="Date de vente AAAA-MM-JJ")
         parser.add_argument("--expedie", help="Date d'expédition AAAA-MM-JJ")
         parser.add_argument("--livre", help="Date de livraison AAAA-MM-JJ")

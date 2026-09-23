@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import VintedListing, VintedOrder
 
@@ -16,7 +17,7 @@ class VintedListingAdmin(admin.ModelAdmin):
 class VintedOrderAdmin(admin.ModelAdmin):
     list_display = ("numero", "plateforme", "titre", "acheteur", "prix_achat",
                     "prix_vente", "benefice_col", "marge_col", "statut_envoi",
-                    "transporteur", "tracking", "date_vente")
+                    "transporteur", "tracking", "suivi_col", "date_vente")
     list_filter = ("plateforme", "statut_envoi", "transporteur", "date_vente")
     search_fields = ("numero", "titre", "acheteur", "tracking", "notes")
     list_editable = ("statut_envoi", "transporteur", "tracking")
@@ -40,3 +41,10 @@ class VintedOrderAdmin(admin.ModelAdmin):
     @admin.display(description="Marge")
     def marge_col(self, obj):
         return "—" if obj.marge_pct is None else f"{obj.marge_pct} %"
+
+    @admin.display(description="Suivi")
+    def suivi_col(self, obj):
+        if obj.tracking_url:
+            return format_html('<a href="{}" target="_blank" rel="noopener">{} ↗</a>',
+                               obj.tracking_url, obj.tracking)
+        return obj.tracking or "—"

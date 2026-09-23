@@ -66,6 +66,35 @@ STATUTS_ENVOI = [
 # Statuts considérés « à traiter » dans le dashboard des envois.
 STATUTS_ENVOI_A_FAIRE = ("a_preparer", "etiquette")
 
+# Transporteurs courants (le champ reste libre : « autre » possible).
+TRANSPORTEURS = [
+    ("mondial_relay", "Mondial Relay"),
+    ("colissimo", "Colissimo"),
+    ("chronopost", "Chronopost"),
+    ("shop2shop", "Chronopost Shop2Shop"),
+    ("relais_colis", "Relais Colis"),
+    ("vinted_go", "Vinted Go"),
+    ("lettre_suivie", "Lettre suivie (La Poste)"),
+    ("ups", "UPS"),
+    ("dpd", "DPD"),
+    ("gls", "GLS"),
+    ("dhl", "DHL"),
+    ("autre", "Autre"),
+]
+# Modèle d'URL de suivi par transporteur ({t} = n° de suivi).
+TRACKING_URLS = {
+    "mondial_relay": "https://www.mondialrelay.fr/suivi-de-colis/?numeroExpedition={t}",
+    "colissimo": "https://www.laposte.fr/outils/suivre-vos-envois?code={t}",
+    "lettre_suivie": "https://www.laposte.fr/outils/suivre-vos-envois?code={t}",
+    "chronopost": "https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT={t}",
+    "shop2shop": "https://www.chronopost.fr/tracking-no-cms/suivi-page?listeNumerosLT={t}",
+    "relais_colis": "https://www.relaiscolis.com/suivi-de-colis/?numero={t}",
+    "ups": "https://www.ups.com/track?tracknum={t}",
+    "dpd": "https://www.dpd.fr/trace/{t}",
+    "gls": "https://gls-group.com/FR/fr/suivi-colis?match={t}",
+    "dhl": "https://www.dhl.com/fr-fr/home/tracking.html?tracking-id={t}",
+}
+
 
 class VintedOrder(models.Model):
     """Commande Vinted vendue : gestion achat/vente/bénéfice + suivi d'envoi.
@@ -98,9 +127,10 @@ class VintedOrder(models.Model):
     # Envoi
     statut_envoi = models.CharField(max_length=12, choices=STATUTS_ENVOI, default="a_preparer",
                                     db_index=True)
-    transporteur = models.CharField(max_length=60, blank=True,
-                                    help_text="Chronopost, Mondial Relay, Colissimo…")
-    tracking = models.CharField(max_length=80, blank=True, help_text="N° de suivi")
+    transporteur = models.CharField(max_length=60, blank=True, choices=TRANSPORTEURS,
+                                    help_text="Mondial Relay, Colissimo, Chronopost…")
+    tracking = models.CharField(max_length=80, blank=True,
+                                help_text="N° de suivi / ticket de référence")
 
     date_vente = models.DateField(null=True, blank=True)
     date_expedition = models.DateField(null=True, blank=True)
@@ -136,3 +166,13 @@ class VintedOrder(models.Model):
     @property
     def envoi_a_faire(self):
         return self.statut_envoi in STATUTS_ENVOI_A_FAIRE
+
+    @property
+    def tracking_url(self):
+        """Lien de suivi cliquable (selon transporteur + n° de suivi), sinon ''."""
+        tmpl = TRACKING_URLS.get(self.transporteur)
+        return tmpl.format(t=self.tracking.strip()) if tmpl and self.tracking else ""
+
+    @property
+    def transporteur_label(self):
+        return dict(TRANSPORTEURS).get(self.transporteur, self.transporteur or "")

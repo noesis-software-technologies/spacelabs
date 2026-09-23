@@ -101,6 +101,10 @@ python manage.py vinted_order --list --a-expedier   # reste à expédier
   marge moyenne, nombre à expédier ;
 - **À préparer / expédier** : chaque ligne a un mini-formulaire (transporteur +
   n° de suivi) qui passe la commande en « Expédié » ;
+- **Suivi colis** : transporteur en liste (Mondial Relay, Colissimo, Chronopost,
+  Relais Colis, UPS, DPD, GLS, DHL, Vinted Go, Lettre suivie, Autre) + n° de suivi,
+  avec **lien de suivi cliquable** généré par transporteur ; carte « suivi
+  manquant » pour compléter les commandes passées « expédié » sans n° ;
 - **En transit** + alerte **> 7 jours sans livraison** ;
 - **Dernières commandes** : tableau achat / vente / bénéfice / marge / envoi.
 

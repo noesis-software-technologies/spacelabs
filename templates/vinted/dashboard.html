@@ -66,7 +66,10 @@
         <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
           <div class="sub">{{ o.acheteur|default:"—" }} · vendu {{ o.date_vente|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} € · {{ o.get_statut_envoi_display }}</div></div>
         <form class="ship-form" method="post" action="{% url 'vinted:order_ship' o.pk %}">{% csrf_token %}
-          <input class="car" name="transporteur" placeholder="transporteur" value="{{ o.transporteur }}">
+          <select class="car" name="transporteur">
+            <option value="">— transporteur —</option>
+            {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+          </select>
           <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
           <button class="btn acc" type="submit">Expédié</button>
         </form>
@@ -76,14 +79,46 @@
       {% endfor %}
     </div>
 
+    {% if sans_suivi %}
+    <div class="card alert">
+      <h2>⚠ Suivi manquant (expédié sans transporteur / n° de suivi) <span class="n">{{ sans_suivi|length }}</span></h2>
+      {% for o in sans_suivi %}
+      <div class="row">
+        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+          <div class="sub">expédié {{ o.date_expedition|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} €</div></div>
+        <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
+          <select class="car" name="transporteur">
+            <option value="">— transporteur —</option>
+            {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+          </select>
+          <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+          <button class="btn acc" type="submit">Enregistrer</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="card">
       <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
       {% for o in en_transit %}
       <div class="row">
         <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-          <div class="sub">{{ o.transporteur|default:"—" }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}</div></div>
-        <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-          <button class="btn" type="submit">Marquer livré</button></form>
+          <div class="sub">{{ o.transporteur_label|default:"—" }} ·
+            {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener">{{ o.tracking }} ↗</a>{% else %}{{ o.tracking|default:"pas de suivi" }}{% endif %}
+            · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}</div></div>
+        <div style="display:flex;gap:.4rem;align-items:center">
+          <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
+            <select class="car" name="transporteur">
+              <option value="">— transporteur —</option>
+              {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+            </select>
+            <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+            <button class="btn" type="submit">MAJ suivi</button>
+          </form>
+          <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+            <button class="btn acc" type="submit">Livré</button></form>
+        </div>
       </div>
       {% empty %}
       <div class="empty">Aucun colis en transit.</div>
@@ -95,7 +130,7 @@
       <table class="orders">
         <thead><tr>
           <th>Article</th><th>Plateforme</th><th>Acheteur</th><th>Achat</th><th>Vente</th>
-          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Vendu le</th>
+          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Suivi</th><th>Vendu le</th>
         </tr></thead>
         <tbody>
         {% for o in recents %}
@@ -108,10 +143,11 @@
             <td class="num benef {% if o.benefice < 0 %}neg{% endif %}">{{ o.benefice|floatformat:2 }} €</td>
             <td class="num">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
             <td><span class="pill">{{ o.get_statut_envoi_display }}</span></td>
+            <td>{% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener">{{ o.transporteur_label }} ↗</a>{% elif o.tracking %}{{ o.transporteur_label }} · {{ o.tracking }}{% else %}—{% endif %}</td>
             <td class="num">{{ o.date_vente|date:"d/m/y"|default:"—" }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="9" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="10" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
         </tbody>
       </table>

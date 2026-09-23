@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE, VintedOrder
+from .models import (STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE, TRANSPORTEURS,
+                     VintedOrder)
 
 
 def _kpis(orders):
@@ -54,6 +55,9 @@ def dashboard(request):
         "par_statut": par_statut,
         "par_plateforme": par_plateforme,
         "statuts": STATUTS_ENVOI,
+        "transporteurs": TRANSPORTEURS,
+        "sans_suivi": [o for o in orders
+                       if o.statut_envoi in ("expedie", "livre") and not o.tracking],
         "active_nav": "vinted",
     })
 
@@ -82,4 +86,22 @@ def order_delivered(request, pk):
     if not order.date_livraison:
         order.date_livraison = timezone.localdate()
     order.save(update_fields=["statut_envoi", "date_livraison", "maj_le"])
+    return redirect("vinted:dashboard")
+
+
+@login_required
+@require_POST
+def order_tracking(request, pk):
+    """Renseigne / corrige le transporteur et le n° de suivi d'une commande
+    (utile pour compléter une commande déjà passée « expédié » sans suivi)."""
+    order = get_object_or_404(VintedOrder, pk=pk)
+    order.transporteur = request.POST.get("transporteur", order.transporteur).strip()
+    order.tracking = request.POST.get("tracking", order.tracking).strip()
+    # Si on ajoute un suivi à une commande encore à préparer, on la passe expédiée.
+    if order.tracking and order.statut_envoi in STATUTS_ENVOI_A_FAIRE:
+        order.statut_envoi = "expedie"
+        if not order.date_expedition:
+            order.date_expedition = timezone.localdate()
+    order.save(update_fields=["transporteur", "tracking", "statut_envoi",
+                              "date_expedition", "maj_le"])
     return redirect("vinted:dashboard")
