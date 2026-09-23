@@ -47,6 +47,13 @@ class VintedListing(models.Model):
         return f"{self.titre or self.ref} ({self.get_statut_display()})"
 
 
+# Plateformes de vente (le module démarre sur Vinted, extensible CardMarket/eBay).
+PLATEFORMES = [
+    ("vinted", "Vinted"),
+    ("cardmarket", "CardMarket"),
+    ("ebay", "eBay"),
+]
+
 # Suivi d'envoi d'une commande vendue (du paiement à la livraison).
 STATUTS_ENVOI = [
     ("a_preparer", "À préparer"),
@@ -67,9 +74,11 @@ class VintedOrder(models.Model):
     prix d'achat (coût d'acquisition de la carte), le prix de vente (net vendeur
     Vinted), les frais vendeur éventuels et le statut d'expédition. Le bénéfice
     est calculé, jamais saisi — source unique de vérité pour le suivi de marge."""
+    plateforme = models.CharField(max_length=12, choices=PLATEFORMES, default="vinted",
+                                  db_index=True, help_text="Place de marché de la vente")
     numero = models.CharField(
         max_length=60, blank=True, db_index=True,
-        help_text="N° de commande / transaction Vinted (identifiant public)")
+        help_text="N° de commande / transaction (identifiant public de la plateforme)")
     listing = models.ForeignKey(
         VintedListing, null=True, blank=True, on_delete=models.SET_NULL,
         related_name="commandes", help_text="Annonce d'origine (si connue)")

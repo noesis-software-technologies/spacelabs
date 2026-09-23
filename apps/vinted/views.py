@@ -35,6 +35,10 @@ def dashboard(request):
         VintedOrder.objects.values_list("statut_envoi")
         .annotate(n=Count("id")).values_list("statut_envoi", "n")
     )
+    par_plateforme = dict(
+        VintedOrder.objects.values_list("plateforme")
+        .annotate(n=Count("id")).values_list("plateforme", "n")
+    )
     # Alerte : expédié depuis > 7 jours sans livraison confirmée.
     limite = timezone.localdate() - timezone.timedelta(days=7)
     en_retard = [o for o in en_transit
@@ -48,6 +52,7 @@ def dashboard(request):
         "en_retard": en_retard,
         "recents": recents,
         "par_statut": par_statut,
+        "par_plateforme": par_plateforme,
         "statuts": STATUTS_ENVOI,
         "active_nav": "vinted",
     })

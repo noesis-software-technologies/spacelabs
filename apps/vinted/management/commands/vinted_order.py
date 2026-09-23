@@ -18,10 +18,11 @@ from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
 
-from apps.vinted.models import (STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE,
-                                VintedListing, VintedOrder)
+from apps.vinted.models import (PLATEFORMES, STATUTS_ENVOI,
+                                STATUTS_ENVOI_A_FAIRE, VintedListing, VintedOrder)
 
 _STATUTS = {k for k, _ in STATUTS_ENVOI}
+_PLATEFORMES = {k for k, _ in PLATEFORMES}
 
 
 def _d(s):
@@ -41,6 +42,8 @@ class Command(BaseCommand):
         parser.add_argument("--a-expedier", action="store_true",
                             help="Avec --list : seulement les envois à faire.")
         # Champs
+        parser.add_argument("--plateforme", choices=sorted(_PLATEFORMES),
+                            help="vinted (défaut) / cardmarket / ebay.")
         parser.add_argument("--titre")
         parser.add_argument("--numero")
         parser.add_argument("--acheteur")
@@ -66,9 +69,9 @@ class Command(BaseCommand):
         return it
 
     def _apply(self, o, opts):
-        m = {"titre": "titre", "numero": "numero", "acheteur": "acheteur",
-             "statut": "statut_envoi", "transporteur": "transporteur", "tracking": "tracking",
-             "notes": "notes"}
+        m = {"plateforme": "plateforme", "titre": "titre", "numero": "numero",
+             "acheteur": "acheteur", "statut": "statut_envoi",
+             "transporteur": "transporteur", "tracking": "tracking", "notes": "notes"}
         for arg, field in m.items():
             if opts.get(arg) is not None:
                 setattr(o, field, opts[arg])
@@ -97,8 +100,8 @@ class Command(BaseCommand):
                 total_benef += c.benefice
                 marge = "—" if c.marge_pct is None else f"{c.marge_pct}%"
                 self.stdout.write(
-                    f"#{c.pk:>4} [{c.get_statut_envoi_display():<16}] "
-                    f"{(c.titre or c.numero or '?')[:38]:<38} "
+                    f"#{c.pk:>4} {c.plateforme:<10} [{c.get_statut_envoi_display():<16}] "
+                    f"{(c.titre or c.numero or '?')[:34]:<34} "
                     f"achat {c.prix_achat or 0}€ / vente {c.prix_vente or 0}€ "
                     f"→ bénéf {c.benefice}€ ({marge})"
                     + (f" · {c.transporteur} {c.tracking}" if c.tracking else ""))

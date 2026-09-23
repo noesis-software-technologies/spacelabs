@@ -62,6 +62,7 @@ c'est une propriété calculée, source unique de vérité.
 
 | Champ | Rôle |
 |---|---|
+| `plateforme` | place de marché : `vinted` (défaut), `cardmarket`, `ebay` |
 | `listing` | FK optionnelle vers l'annonce d'origine |
 | `prix_achat` | coût d'acquisition |
 | `prix_vente` | prix de vente (net vendeur) |
@@ -104,6 +105,19 @@ python manage.py vinted_order --list --a-expedier   # reste à expédier
 - **Dernières commandes** : tableau achat / vente / bénéfice / marge / envoi.
 
 ---
+
+## Multi-plateforme (CardMarket / eBay)
+
+Le gestionnaire de commandes est déjà **agnostique** grâce au champ `plateforme`
+(admin, CLI `--plateforme`, dashboard : compteurs + colonne par plateforme). Le
+suivi achat/vente/bénéfice/envoi fonctionne donc à l'identique pour Vinted,
+CardMarket et eBay dès aujourd'hui.
+
+Restent à brancher, plateforme par plateforme, deux volets côté publication :
+- **import des ventes** (récupérer les commandes payées : API/CSV CardMarket,
+  API eBay Sell) pour alimenter les `VintedOrder` automatiquement ;
+- **publication d'annonces** (équivalent de `vinted_publish` : API CardMarket /
+  API eBay, sans pilotage navigateur puisque ces plateformes exposent une API).
 
 ## Sécurité
 

@@ -41,6 +41,10 @@
       <div class="kpi"><b>{{ a_expedier|length }}</b><small>à expédier</small></div>
     </div>
 
+    <div style="margin-bottom:1.4rem">
+      {% for plat, n in par_plateforme.items %}<span class="pill">{{ plat }} · <b>{{ n }}</b></span> {% endfor %}
+    </div>
+
     {% if en_retard %}
     <div class="card alert">
       <h2>⚠ Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
@@ -90,13 +94,14 @@
       <h2>Dernières commandes <span class="n">{{ recents|length }}</span></h2>
       <table class="orders">
         <thead><tr>
-          <th>Article</th><th>Acheteur</th><th>Achat</th><th>Vente</th>
+          <th>Article</th><th>Plateforme</th><th>Acheteur</th><th>Achat</th><th>Vente</th>
           <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Vendu le</th>
         </tr></thead>
         <tbody>
         {% for o in recents %}
           <tr>
             <td class="tt">{{ o.titre|default:o.numero|default:o.pk }}</td>
+            <td><span class="pill">{{ o.get_plateforme_display }}</span></td>
             <td>{{ o.acheteur|default:"—" }}</td>
             <td class="num">{% if o.prix_achat != None %}{{ o.prix_achat }} €{% else %}—{% endif %}</td>
             <td class="num">{% if o.prix_vente != None %}{{ o.prix_vente }} €{% else %}—{% endif %}</td>
@@ -106,7 +111,7 @@
             <td class="num">{{ o.date_vente|date:"d/m/y"|default:"—" }}</td>
           </tr>
         {% empty %}
-          <tr><td colspan="8" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="9" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
         </tbody>
       </table>
