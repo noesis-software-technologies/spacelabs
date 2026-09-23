@@ -1,13 +1,24 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import (STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE, TRANSPORTEURS,
-                     VintedOrder)
+from .models import (PLATEFORMES, STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE,
+                     TRANSPORTEURS, VintedOrder)
+
+# Champs éditables en ligne (dashboard) + leur type pour la coercition.
+_EDIT_TEXT = {"titre", "acheteur", "numero", "tracking", "notes"}
+_EDIT_DECIMAL = {"prix_achat", "prix_vente", "frais"}
+_EDIT_DATE = {"date_vente", "date_expedition", "date_livraison"}
+_EDIT_CHOICE = {
+    "plateforme": {k for k, _ in PLATEFORMES},
+    "statut_envoi": {k for k, _ in STATUTS_ENVOI},
+    "transporteur": {k for k, _ in TRANSPORTEURS} | {""},
+}
 
 
 def _kpis(orders):
@@ -87,6 +98,44 @@ def order_delivered(request, pk):
         order.date_livraison = timezone.localdate()
     order.save(update_fields=["statut_envoi", "date_livraison", "maj_le"])
     return redirect("vinted:dashboard")
+
+
+@login_required
+@require_POST
+def order_update(request, pk):
+    """Édition inline d'un champ d'une commande (dashboard JS).
+
+    Reçoit `field` + `value`, valide/coerce selon le type, sauvegarde, et
+    renvoie le bénéfice/marge recalculés."""
+    order = get_object_or_404(VintedOrder, pk=pk)
+    field = (request.POST.get("field") or "").strip()
+    raw = request.POST.get("value", "")
+    val = raw.strip()
+    try:
+        if field in _EDIT_TEXT:
+            setattr(order, field, val)
+        elif field in _EDIT_DECIMAL:
+            setattr(order, field, Decimal(val) if val != "" else (Decimal("0") if field == "frais" else None))
+        elif field in _EDIT_DATE:
+            from datetime import date
+            setattr(order, field, date.fromisoformat(val) if val else None)
+        elif field in _EDIT_CHOICE:
+            if val not in _EDIT_CHOICE[field]:
+                return JsonResponse({"ok": False, "error": "valeur invalide"}, status=400)
+            setattr(order, field, val)
+        else:
+            return JsonResponse({"ok": False, "error": "champ non éditable"}, status=400)
+    except (InvalidOperation, ValueError):
+        return JsonResponse({"ok": False, "error": "format invalide"}, status=400)
+    order.save()
+    return JsonResponse({
+        "ok": True,
+        "benefice": f"{order.benefice:.2f}",
+        "marge": "—" if order.marge_pct is None else f"{order.marge_pct} %",
+        "statut_display": order.get_statut_envoi_display(),
+        "transporteur_label": order.transporteur_label,
+        "tracking_url": order.tracking_url,
+    })
 
 
 @login_required

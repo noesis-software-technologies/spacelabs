@@ -29,6 +29,13 @@
     .pill{display:inline-block;font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
     .alert{background:color-mix(in srgb,var(--bad,#d9534f) 12%,transparent);border-color:color-mix(in srgb,var(--bad,#d9534f) 35%,transparent)}
     .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+    .hint{font-size:.72rem;color:var(--faint);margin:.2rem 0 .6rem}
+    td.edit{cursor:text;border-radius:5px}
+    td.edit:hover{background:var(--surface2)}
+    td.edit:focus{outline:1px solid var(--accent);background:var(--bg)}
+    td.edit.saved{background:color-mix(in srgb,var(--good) 22%,transparent)}
+    td.edit.err{background:color-mix(in srgb,var(--bad,#d9534f) 22%,transparent)}
+    table.orders select,table.orders input[type=date]{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.2rem .3rem}
 {% endblock %}
 
 {% block content %}
@@ -128,28 +135,92 @@
     <div class="card">
       <h2>Dernières commandes <span class="n">{{ recents|length }}</span></h2>
       <table class="orders">
+      <div class="hint">✎ Clique une cellule pour l'éditer (enregistrement auto). Bénéfice & marge se recalculent.</div>
+      <table class="orders">
         <thead><tr>
-          <th>Article</th><th>Plateforme</th><th>Acheteur</th><th>Achat</th><th>Vente</th>
-          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Suivi</th><th>Vendu le</th>
+          <th>Article</th><th>Plateforme</th><th>Acheteur</th><th>Achat €</th><th>Vente €</th>
+          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Transporteur</th><th>Suivi n°</th><th>Vendu le</th>
         </tr></thead>
         <tbody>
         {% for o in recents %}
-          <tr>
-            <td class="tt">{{ o.titre|default:o.numero|default:o.pk }}</td>
-            <td><span class="pill">{{ o.get_plateforme_display }}</span></td>
-            <td>{{ o.acheteur|default:"—" }}</td>
-            <td class="num">{% if o.prix_achat != None %}{{ o.prix_achat }} €{% else %}—{% endif %}</td>
-            <td class="num">{% if o.prix_vente != None %}{{ o.prix_vente }} €{% else %}—{% endif %}</td>
-            <td class="num benef {% if o.benefice < 0 %}neg{% endif %}">{{ o.benefice|floatformat:2 }} €</td>
-            <td class="num">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
-            <td><span class="pill">{{ o.get_statut_envoi_display }}</span></td>
-            <td>{% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener">{{ o.transporteur_label }} ↗</a>{% elif o.tracking %}{{ o.transporteur_label }} · {{ o.tracking }}{% else %}—{% endif %}</td>
-            <td class="num">{{ o.date_vente|date:"d/m/y"|default:"—" }}</td>
+          <tr data-row="{{ o.pk }}">
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true">{{ o.titre }}</td>
+            <td>
+              <select data-pk="{{ o.pk }}" data-field="plateforme">
+                {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+              </select>
+            </td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="acheteur" contenteditable="true">{{ o.acheteur }}</td>
+            <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_achat" contenteditable="true">{{ o.prix_achat|default_if_none:"" }}</td>
+            <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_vente" contenteditable="true">{{ o.prix_vente|default_if_none:"" }}</td>
+            <td class="num benef {% if o.benefice < 0 %}neg{% endif %}" data-bene="{{ o.pk }}">{{ o.benefice|floatformat:2 }} €</td>
+            <td class="num" data-marge="{{ o.pk }}">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
+            <td>
+              <select data-pk="{{ o.pk }}" data-field="statut_envoi">
+                {% for val, lbl in statuts %}<option value="{{ val }}" {% if o.statut_envoi == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+              </select>
+            </td>
+            <td>
+              <select data-pk="{{ o.pk }}" data-field="transporteur">
+                <option value="">—</option>
+                {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+              </select>
+            </td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="tracking" contenteditable="true">{{ o.tracking }}</td>
+            <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="10" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="11" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
         </tbody>
       </table>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  function csrf() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : "";
+  }
+  function flash(el, ok) {
+    el.classList.remove("saved", "err");
+    el.classList.add(ok ? "saved" : "err");
+    setTimeout(() => el.classList.remove("saved", "err"), 1200);
+  }
+  function save(el, field, value) {
+    const pk = el.dataset.pk;
+    return fetch(`/vinted/commandes/${pk}/update/`, {
+      method: "POST",
+      headers: { "X-CSRFToken": csrf(), "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ field, value }),
+    }).then(r => r.json()).then(d => {
+      if (!d.ok) { flash(el, false); return; }
+      flash(el, true);
+      const row = el.closest("tr");
+      if (row) {
+        const b = row.querySelector("[data-bene]");
+        const m = row.querySelector("[data-marge]");
+        if (b) { b.textContent = d.benefice + " €"; b.classList.toggle("neg", parseFloat(d.benefice) < 0); }
+        if (m) m.textContent = d.marge;
+      }
+    }).catch(() => flash(el, false));
+  }
+  // Cellules contenteditable : sauvegarde à la perte de focus.
+  document.querySelectorAll("td.edit[contenteditable]").forEach(el => {
+    let orig = el.textContent.trim();
+    el.addEventListener("focus", () => { orig = el.textContent.trim(); });
+    el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); el.blur(); } });
+    el.addEventListener("blur", () => {
+      const v = el.textContent.trim();
+      if (v !== orig) save(el, el.dataset.field, v);
+    });
+  });
+  // Selects + date : sauvegarde au changement.
+  document.querySelectorAll("table.orders select[data-field], table.orders input[data-field]").forEach(el => {
+    el.addEventListener("change", () => save(el, el.dataset.field, el.value));
+  });
+})();
+</script>
 {% endblock %}
