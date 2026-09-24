@@ -52,6 +52,7 @@ PLATEFORMES = [
     ("vinted", "Vinted"),
     ("cardmarket", "CardMarket"),
     ("ebay", "eBay"),
+    ("direct", "Vente directe"),
 ]
 
 # Suivi d'envoi d'une commande vendue (du paiement à la livraison).
@@ -97,12 +98,11 @@ TRACKING_URLS = {
 
 
 class VintedOrder(models.Model):
-    """Commande Vinted vendue : gestion achat/vente/bénéfice + suivi d'envoi.
+    """Commande omnicanal : Vinted, eBay, CardMarket, vente directe, e-commerce.
 
-    Relie (si possible) l'annonce d'origine (`VintedListing`) et centralise le
-    prix d'achat (coût d'acquisition de la carte), le prix de vente (net vendeur
-    Vinted), les frais vendeur éventuels et le statut d'expédition. Le bénéfice
-    est calculé, jamais saisi — source unique de vérité pour le suivi de marge."""
+    La commande est l'en-tête ; le détail article-par-article est dans `lignes`
+    (SaleOrderLine). prix_vente / prix_achat restent des champs pour la lecture
+    rapide — mis à jour par recalculer_totaux() depuis les lignes."""
     plateforme = models.CharField(max_length=12, choices=PLATEFORMES, default="vinted",
                                   db_index=True, help_text="Place de marché de la vente")
     fournisseur = models.ForeignKey("Fournisseur", null=True, blank=True,
@@ -126,6 +126,8 @@ class VintedOrder(models.Model):
                                      help_text="Prix de vente (net vendeur Vinted)")
     frais = models.DecimalField(max_digits=9, decimal_places=2, default=0,
                                 help_text="Frais vendeur (port à charge, mise en avant, gradation…)")
+    remise = models.DecimalField(max_digits=9, decimal_places=2, default=0,
+                                 help_text="Remise accordée à l'acheteur (lot/bundle — déduite du prix nominal)")
 
     # Envoi
     statut_envoi = models.CharField(max_length=12, choices=STATUTS_ENVOI, default="a_preparer",
@@ -139,6 +141,13 @@ class VintedOrder(models.Model):
     date_expedition = models.DateField(null=True, blank=True)
     date_livraison = models.DateField(null=True, blank=True)
 
+    # Lien vers le(s) article(s) d'entrepôt correspondants (M2M : un lot peut
+    # regrouper plusieurs StockItems ; un StockItem peut n'apparaître que dans
+    # une seule commande active).
+    stock_items = models.ManyToManyField(
+        "StockItem", blank=True, related_name="commandes",
+        help_text="Article(s) d'entrepôt vendus dans cette commande")
+
     notes = models.TextField(blank=True)
     cree_le = models.DateTimeField(auto_now_add=True)
     maj_le = models.DateTimeField(auto_now=True)
@@ -151,15 +160,43 @@ class VintedOrder(models.Model):
     def __str__(self):
         return f"{self.numero or self.titre or self.pk} — {self.get_statut_envoi_display()}"
 
+    def recalculer_totaux(self):
+        """Recompute prix_vente / prix_achat depuis les SaleOrderLines."""
+        from decimal import Decimal
+        lignes = list(self.lignes.all())
+        if not lignes:
+            return
+        self.prix_vente = sum((l.total_vente for l in lignes), Decimal("0"))
+        if all(l.prix_achat_unitaire is not None for l in lignes):
+            self.prix_achat = sum((l.total_achat for l in lignes), Decimal("0"))
+        self.save(update_fields=["prix_vente", "prix_achat", "maj_le"])
+
     @property
     def benefice(self):
-        """Bénéfice net = prix de vente - prix d'achat - frais vendeur.
+        """Bénéfice net.
 
-        Coerce en Decimal : les prix peuvent arriver en float (CLI argparse) et
-        Decimal - float lève TypeError."""
+        Si des lignes existent : sum(benefice_ligne) - remise - frais.
+        Sinon fallback sur les champs agrégés (commandes sans lignes)."""
         from decimal import Decimal
         d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
-        return d(self.prix_vente) - d(self.prix_achat) - d(self.frais)
+        lignes = self.lignes.all()
+        if lignes.exists():
+            return sum((l.benefice_ligne for l in lignes), Decimal("0")) - d(self.remise) - d(self.frais)
+        return d(self.prix_vente) - d(self.prix_achat) - d(self.frais) - d(self.remise)
+
+    @property
+    def prix_nominal(self):
+        """Prix avant remise = prix_vente + remise."""
+        from decimal import Decimal
+        d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
+        return d(self.prix_vente) + d(self.remise)
+
+    @property
+    def remise_pct(self):
+        """Remise en % du prix nominal (None si pas de remise ou prix inconnu)."""
+        if not self.remise or not self.prix_vente:
+            return None
+        return round(float(self.remise) / float(self.prix_nominal) * 100, 1)
 
     @property
     def marge_pct(self):
@@ -231,11 +268,16 @@ STOCK_STATUTS = [
 
 
 class StockItem(models.Model):
-    """Article en stock/entrepôt : acheté mais pas encore listé sur Vinted.
+    """Article physique : de l'achat jusqu'à la vente.
 
-    Permet de définir son devenir (vendre à réception, grader chez Collect Aura
-    ou CCC en express) et de suivre son état (transit → reçu → gradé/listé →
-    vendu). Le coût unitaire alimentera le prix d'achat de la future vente."""
+    Entité canonique du cycle de vie d'un produit :
+      achat → [transit] → reçu → [gradation] → listé → vendu.
+
+    Quand il est publié sur Vinted, `listing` pointe vers la VintedListing
+    correspondante (source de la fiche commerciale : titre, photos, URL).
+    Quand il est vendu, il apparaît dans `commandes` via la M2M de VintedOrder.
+    Le champ `statut` reste la vérité terrain ; `pipeline_statut` enrichit la
+    lecture avec l'état de la commande liée."""
     nom = models.CharField(max_length=200)
     reference = models.CharField(max_length=120, blank=True, help_text="N°/set/ref carte")
     fournisseur = models.ForeignKey(Fournisseur, null=True, blank=True, on_delete=models.SET_NULL,
@@ -251,6 +293,11 @@ class StockItem(models.Model):
                               db_index=True)
     gradeur = models.CharField(max_length=120, blank=True,
                                help_text="Ex. Collect Aura (BB) / CCC (Malakoff)")
+    # Lien vers la fiche commerciale Vinted (rempli quand l'article est listé).
+    listing = models.OneToOneField(
+        "VintedListing", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="stock_item",
+        help_text="Annonce Vinted associée à cet article (remplie à la publication)")
     date_achat = models.DateField(null=True, blank=True)
     date_reception = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)
@@ -270,3 +317,128 @@ class StockItem(models.Model):
         from decimal import Decimal
         pa = Decimal(str(self.prix_achat)) if self.prix_achat is not None else Decimal("0")
         return pa * self.quantite
+
+    def _get_ligne(self):
+        """Retourne la SaleOrderLine liée (OneToOne), ou None."""
+        try:
+            return self.ligne
+        except Exception:
+            return None
+
+    @property
+    def commande_active(self):
+        """VintedOrder liée via SaleOrderLine (ou M2M en fallback)."""
+        ligne = self._get_ligne()
+        if ligne:
+            return ligne.order
+        return self.commandes.first()
+
+    @property
+    def vinted_url(self):
+        """URL de l'annonce Vinted (via listing lié), sinon ''."""
+        return self.listing.vinted_url if self.listing else ""
+
+    @property
+    def pipeline_statut(self):
+        """Lecture unifiée du cycle de vie :
+        entrepôt → listé → [statut commande] → vendu."""
+        commande = self.commande_active
+        if commande:
+            return commande.get_statut_envoi_display()
+        if self.listing:
+            return f"Listé ({self.listing.get_statut_display()})"
+        return self.get_statut_display()
+
+    @property
+    def est_en_entrepot(self):
+        """True si l'article est toujours en entrepôt (non listé, non vendu)."""
+        if self._get_ligne():
+            return False
+        return not self.listing and not self.commandes.exists()
+
+    @property
+    def est_vendu(self):
+        """True si lié à une commande expédiée/livrée/clôturée, ou statut=vendu."""
+        if self.statut == "vendu":
+            return True
+        ligne = self._get_ligne()
+        if ligne:
+            return ligne.order.statut_envoi in ("expedie", "livre", "cloture")
+        return self.commandes.filter(statut_envoi__in=("expedie", "livre", "cloture")).exists()
+
+    def lier_commande(self, order, prix_vente=None, prix_achat=None):
+        """Lie cet article à une commande via SaleOrderLine + passe statut=vendu."""
+        SaleOrderLine.objects.update_or_create(
+            stock_item=self,
+            defaults=dict(
+                order=order,
+                designation=self.nom,
+                prix_vente_unitaire=prix_vente,
+                prix_achat_unitaire=prix_achat if prix_achat is not None else self.prix_achat,
+            ),
+        )
+        order.stock_items.add(self)
+        self.statut = "vendu"
+        self.save(update_fields=["statut", "maj_le"])
+
+
+class SaleOrderLine(models.Model):
+    """Ligne de commande omnicanal : un article vendu, son prix unitaire, son coût.
+
+    Chaque ligne = 1 StockItem physique (ou une référence libre) avec son prix
+    de vente et d'achat unitaires. La commande mère (VintedOrder) agrège les
+    lignes pour le CA / bénéfice total via recalculer_totaux()."""
+
+    order = models.ForeignKey(
+        VintedOrder, on_delete=models.CASCADE, related_name="lignes",
+        help_text="Commande parente")
+    stock_item = models.OneToOneField(
+        StockItem, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="ligne",
+        help_text="Article physique correspondant (optionnel pour lignes libres)")
+    designation = models.CharField(
+        max_length=200, blank=True,
+        help_text="Libellé affiché (auto depuis stock_item.nom à la création)")
+    prix_vente_unitaire = models.DecimalField(
+        max_digits=9, decimal_places=2, null=True, blank=True,
+        help_text="Prix de vente par unité (avant remise globale du lot)")
+    prix_achat_unitaire = models.DecimalField(
+        max_digits=9, decimal_places=2, null=True, blank=True,
+        help_text="Coût d'acquisition par unité")
+    quantite = models.PositiveIntegerField(default=1)
+    cree_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = "Ligne de commande"
+        verbose_name_plural = "Lignes de commande"
+
+    def __str__(self):
+        label = self.designation or (self.stock_item.nom if self.stock_item else f"Ligne {self.pk}")
+        return f"{label} × {self.quantite}"
+
+    def save(self, *args, **kwargs):
+        if not self.designation and self.stock_item_id:
+            try:
+                self.designation = StockItem.objects.get(pk=self.stock_item_id).nom
+            except StockItem.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+    @property
+    def total_vente(self):
+        from decimal import Decimal
+        d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
+        return d(self.prix_vente_unitaire) * self.quantite
+
+    @property
+    def total_achat(self):
+        from decimal import Decimal
+        d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
+        return d(self.prix_achat_unitaire) * self.quantite
+
+    @property
+    def benefice_ligne(self):
+        from decimal import Decimal
+        d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
+        return (d(self.prix_vente_unitaire) - d(self.prix_achat_unitaire)) * self.quantite

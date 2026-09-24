@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from .models import (PLATEFORMES, STATUTS_ENVOI, STATUTS_ENVOI_A_FAIRE,
                      STOCK_DESTINS, STOCK_SOURCES, STOCK_STATUTS, TRANSPORTEURS,
-                     Fournisseur, StockItem, VintedOrder)
+                     Fournisseur, SaleOrderLine, StockItem, VintedOrder)
 
 # Champs éditables en ligne (dashboard) + leur type pour la coercition.
 _EDIT_TEXT = {"titre", "acheteur", "numero", "tracking", "notes"}
@@ -49,7 +49,7 @@ def _kpis(orders):
 @login_required
 def dashboard(request):
     """Dashboard de vérification des envois + suivi achat/vente/bénéfice."""
-    orders = list(VintedOrder.objects.select_related("listing").all())
+    orders = list(VintedOrder.objects.select_related("listing").prefetch_related("lignes__stock_item").all())
 
     a_expedier = [o for o in orders if o.statut_envoi in STATUTS_ENVOI_A_FAIRE]
     en_transit = [o for o in orders if o.statut_envoi == "expedie"]
@@ -289,3 +289,81 @@ def stock_update(request, pk):
         return JsonResponse({"ok": False, "error": "format invalide"}, status=400)
     item.save()
     return JsonResponse({"ok": True, "cout_total": f"{item.cout_total:.2f}"})
+
+
+# ── Duesenberg — Telegram Mini-App ──────────────────────────────────────────
+
+def duesenberg(request):
+    """Telegram Mini-App : dashboard KPI SpaceLabs (lecture publique, no login)."""
+    return render(request, "vinted/duesenberg.html")
+
+
+def duesenberg_api(request):
+    """API JSON pour la mini-app Duesenberg."""
+    orders = list(
+        VintedOrder.objects
+        .prefetch_related("lignes")
+        .order_by("-date_vente", "-id")
+    )
+
+    ca = Decimal("0")
+    cout = Decimal("0")
+    benef = Decimal("0")
+    for o in orders:
+        ca += o.prix_vente or Decimal("0")
+        cout += o.prix_achat or Decimal("0")
+        benef += o.benefice
+
+    marge = round(float(benef) / float(cout) * 100, 1) if cout else None
+    a_preparer = [o for o in orders if o.statut_envoi in STATUTS_ENVOI_A_FAIRE]
+    en_transit_envoi = [o for o in orders if o.statut_envoi == "expedie"]
+
+    stock_entrepot = StockItem.objects.filter(
+        statut__in=["en_transit", "recu", "a_grader", "en_gradation", "grade", "a_lister", "liste"]
+    ).count()
+
+    statut_labels = dict(STATUTS_ENVOI)
+    plat_labels = dict(PLATEFORMES)
+
+    def ligne_repr(l):
+        pv = float(l.prix_vente_unitaire) if l.prix_vente_unitaire else None
+        pa = float(l.prix_achat_unitaire) if l.prix_achat_unitaire else None
+        benef_l = float(l.benefice_ligne) if l.prix_achat_unitaire else None
+        return {
+            "designation": l.designation or "—",
+            "prix_vente": round(pv, 2) if pv is not None else None,
+            "prix_achat": round(pa, 2) if pa is not None else None,
+            "benefice": round(benef_l, 2) if benef_l is not None else None,
+            "quantite": l.quantite,
+        }
+
+    def order_repr(o):
+        lignes = list(o.lignes.all())
+        return {
+            "id": o.pk,
+            "titre": o.titre or f"#{o.pk}",
+            "plateforme": plat_labels.get(o.plateforme, o.plateforme),
+            "prix_vente": str(o.prix_vente or ""),
+            "prix_achat": str(o.prix_achat or ""),
+            "remise": str(o.remise) if o.remise else "",
+            "benefice": str(o.benefice),
+            "statut": o.statut_envoi,
+            "statut_label": statut_labels.get(o.statut_envoi, o.statut_envoi),
+            "date": str(o.date_vente) if o.date_vente else "",
+            "lignes": [ligne_repr(l) for l in lignes],
+        }
+
+    return JsonResponse({
+        "kpis": {
+            "ca": str(ca),
+            "benefice": str(benef),
+            "cout": str(cout),
+            "marge": marge,
+            "nb_commandes": len(orders),
+            "stock_entrepot": stock_entrepot,
+            "a_preparer": len(a_preparer),
+            "en_transit": len(en_transit_envoi),
+        },
+        "a_preparer": [order_repr(o) for o in a_preparer[:5]],
+        "recentes": [order_repr(o) for o in orders[:10]],
+    })

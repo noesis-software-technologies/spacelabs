@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0b">
+<title>Duesenberg — SpaceLabs</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg:       #0a0a0b;
+    --surface:  #121214;
+    --surface2: #1a1a1d;
+    --border:   #222226;
+    --ink:      #e8e8ea;
+    --muted:    #8888a0;
+    --faint:    #48485a;
+    --accent:   #f77615;
+    --ok:       #7ece4e;
+    --warn:     #e0c34a;
+    --crit:     #ec5f57;
+    --blue:     #60a5fa;
+    --purple:   #a78bfa;
+    --font:     "Inter", system-ui, -apple-system, sans-serif;
+    --mono:     "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+    --r:        10px;
+    --r-sm:     6px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+
+  .page{padding:max(env(safe-area-inset-top,0px),16px) 12px env(safe-area-inset-bottom,24px);max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+  /* ── Header ── */
+  .hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:2px}
+  .hdr-brand{display:flex;align-items:center;gap:8px}
+  .hdr-brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px var(--accent)}
+  .hdr-brand h1{font:700 1rem/1 var(--font);letter-spacing:-.025em}
+  .hdr-brand .sub{font:.58rem var(--mono);color:var(--faint);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+  .hdr-date{font:.6rem var(--mono);color:var(--faint);text-align:right;line-height:1.6}
+
+  /* ── KPI grid ── */
+  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .kpi-grid .full{grid-column:1/-1}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;inset:0;border-radius:var(--r);opacity:.05;pointer-events:none}
+  .kpi.c-accent::before{background:var(--accent)}
+  .kpi.c-ok::before{background:var(--ok)}
+  .kpi.c-warn::before{background:var(--warn)}
+  .kpi.c-crit::before{background:var(--crit)}
+  .kpi-val{font:700 1.45rem/1 var(--font);letter-spacing:-.04em;margin-bottom:3px}
+  .c-accent .kpi-val,.kv-accent{color:var(--accent)}
+  .c-ok .kpi-val,.kv-ok{color:var(--ok)}
+  .c-warn .kpi-val,.kv-warn{color:var(--warn)}
+  .c-crit .kpi-val,.kv-crit{color:var(--crit)}
+  .kpi-lbl{font:.58rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .kpi-sub{font:.62rem var(--mono);color:var(--muted);margin-top:3px}
+
+  /* ── Section ── */
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+  .section-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid var(--border)}
+  .section-hdr h2{font:600 .76rem/1 var(--font)}
+  .badge{font:.56rem var(--mono);padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+  .badge.alert{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
+
+  /* ── Order row ── */
+  .order-row{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+  .order-row:last-child{border-bottom:none}
+  .order-row:active .order-summary{background:var(--surface2)}
+  .order-summary{display:flex;flex-direction:column;gap:3px;padding:10px 13px}
+  .order-title{font:.77rem var(--font);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .order-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .order-price{font:.66rem var(--mono);color:var(--muted)}
+  .order-benef{font:.66rem var(--mono)}
+  .order-benef.pos{color:var(--ok)}
+  .order-benef.neg{color:var(--crit)}
+  .order-date{font:.58rem var(--mono);color:var(--faint);margin-left:auto}
+  .chevron{font:.6rem var(--mono);color:var(--faint);margin-left:4px;transition:transform .2s;display:inline-block}
+  .order-row.open .chevron{transform:rotate(90deg)}
+
+  /* ── Lines detail ── */
+  .order-lines{display:none;border-top:1px solid var(--border);background:var(--surface2)}
+  .order-row.open .order-lines{display:block}
+  .line-hdr{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 13px;border-bottom:1px solid var(--border)}
+  .line-hdr span{font:.55rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;text-align:right}
+  .line-hdr span:first-child{text-align:left}
+  .line-item{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:7px 13px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);align-items:center}
+  .line-item:last-child{border-bottom:none}
+  .line-name{font:.72rem var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .line-num{font:.68rem var(--mono);text-align:right;white-space:nowrap}
+  .line-num.pv{color:var(--muted)}
+  .line-num.pa{color:var(--faint)}
+  .line-num.benef{color:var(--ok)}
+  .line-num.benef.neg{color:var(--crit)}
+  .line-num.na{color:var(--faint);font-style:italic}
+  .line-remise{padding:6px 13px;display:flex;justify-content:space-between;border-top:1px solid var(--border)}
+  .line-remise span{font:.65rem var(--mono);color:var(--warn)}
+  .line-total{padding:6px 13px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 4%,transparent)}
+  .line-total .lbl{font:.62rem var(--mono);color:var(--faint);text-transform:uppercase}
+  .line-total .val{font:600 .8rem var(--mono);color:var(--accent)}
+
+  /* ── Status pill ── */
+  .pill{font:.56rem var(--mono);padding:2px 6px;border-radius:4px;border:1px solid transparent;white-space:nowrap}
+  .pill.a_preparer{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 28%,transparent)}
+  .pill.etiquette{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);border-color:color-mix(in srgb,var(--blue) 28%,transparent)}
+  .pill.expedie{background:color-mix(in srgb,var(--purple) 12%,transparent);color:var(--purple);border-color:color-mix(in srgb,var(--purple) 28%,transparent)}
+  .pill.livre{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 28%,transparent)}
+  .pill.cloture{background:color-mix(in srgb,var(--faint) 12%,transparent);color:var(--faint);border-color:color-mix(in srgb,var(--faint) 28%,transparent)}
+  .pill.probleme{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 28%,transparent)}
+
+  /* ── Empty ── */
+  .empty{padding:14px;font:.7rem var(--mono);color:var(--faint);text-align:center}
+
+  /* ── Loading / Error ── */
+  .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:var(--faint)}
+  .spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error-msg{color:var(--crit);font:.75rem var(--mono);text-align:center;padding:24px 16px}
+  .refresh-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;font:.63rem var(--mono);color:var(--muted);cursor:pointer;width:100%}
+  .refresh-btn:active{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="loading"><div class="spinner"></div><span style="font:.63rem var(--mono)">chargement…</span></div>
+</div>
+<script>
+const API = "{% url 'vinted:duesenberg_api' %}";
+
+function fmt(n, d=2) {
+  const v = parseFloat(n);
+  return isNaN(v) ? '—' : v.toLocaleString('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d});
+}
+
+function pill(statut, label) {
+  return `<span class="pill ${statut}">${label}</span>`;
+}
+
+function linesHtml(order) {
+  if (!order.lignes || !order.lignes.length) return '';
+  const rows = order.lignes.map(l => {
+    const pv = l.prix_vente != null ? `${fmt(l.prix_vente)}€` : `<span class="na">—</span>`;
+    const pa = l.prix_achat != null ? `${fmt(l.prix_achat)}€` : `<span class="na">?</span>`;
+    const b  = l.benefice != null
+      ? `<span class="${l.benefice >= 0 ? '' : 'neg'}">${l.benefice >= 0 ? '+' : ''}${fmt(l.benefice)}€</span>`
+      : `<span class="na">?</span>`;
+    return `<div class="line-item">
+      <span class="line-name">${l.designation}</span>
+      <span class="line-num pv">${pv}</span>
+      <span class="line-num pa">${pa}</span>
+      <span class="line-num benef${l.benefice < 0 ? ' neg' : ''}">${b}</span>
+    </div>`;
+  }).join('');
+
+  const remise = order.remise && parseFloat(order.remise) > 0
+    ? `<div class="line-remise"><span>Remise lot</span><span>−${fmt(order.remise)}€</span></div>` : '';
+
+  const benef = parseFloat(order.benefice);
+  const benefColor = benef >= 0 ? 'var(--ok)' : 'var(--crit)';
+
+  return `<div class="order-lines">
+    <div class="line-hdr">
+      <span>Article</span><span>Vente</span><span>Achat</span><span>Bénéf.</span>
+    </div>
+    ${rows}
+    ${remise}
+    <div class="line-total">
+      <span class="lbl">Total encaissé</span>
+      <span class="val">${fmt(order.prix_vente)}€</span>
+    </div>
+  </div>`;
+}
+
+function orderRow(o) {
+  const benef = parseFloat(o.benefice);
+  const benefHtml = isNaN(benef) ? '' :
+    `<span class="order-benef ${benef >= 0 ? 'pos' : 'neg'}">${benef >= 0 ? '+' : ''}${fmt(benef)}€</span>`;
+  const multi = o.lignes && o.lignes.length > 1;
+  const chev = multi ? `<span class="chevron">›</span>` : '';
+  const dateHtml = o.date ? `<span class="order-date">${o.date.slice(5)}</span>` : '';
+
+  return `<div class="order-row" onclick="toggleOrder(this)">
+    <div class="order-summary">
+      <div class="order-title">${o.titre}${chev}</div>
+      <div class="order-meta">
+        ${pill(o.statut, o.statut_label)}
+        <span class="order-price">${fmt(o.prix_vente)}€</span>
+        ${benefHtml}
+        ${dateHtml}
+      </div>
+    </div>
+    ${linesHtml(o)}
+  </div>`;
+}
+
+function toggleOrder(el) {
+  if (!el.querySelector('.order-lines')) return;
+  el.classList.toggle('open');
+}
+
+function render(data) {
+  const k = data.kpis;
+  const now = new Date();
+  const ds = now.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'});
+  const ts = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+  const benefColor = parseFloat(k.benefice) >= 0 ? 'c-ok' : 'c-crit';
+  const margeColor = k.marge >= 30 ? 'c-ok' : k.marge >= 10 ? 'c-warn' : 'c-crit';
+
+  const aPrepRows = data.a_preparer.length
+    ? data.a_preparer.map(orderRow).join('')
+    : `<div class="empty">aucune commande en attente ✓</div>`;
+  const recentRows = data.recentes.map(orderRow).join('');
+
+  document.getElementById('root').innerHTML = `<div class="page">
+
+    <div class="hdr">
+      <div class="hdr-brand">
+        <div class="dot"></div>
+        <div><h1>Duesenberg</h1><div class="sub">SpaceLabs · Ventes</div></div>
+      </div>
+      <div class="hdr-date">${ds}<br><span style="color:var(--muted)">${ts}</span></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi c-accent full">
+        <div class="kpi-val">${fmt(k.ca)} €</div>
+        <div class="kpi-lbl">Chiffre d'affaires</div>
+        <div class="kpi-sub">${k.nb_commandes} commande${k.nb_commandes > 1 ? 's' : ''}</div>
+      </div>
+      <div class="kpi ${benefColor}">
+        <div class="kpi-val">${fmt(k.benefice)} €</div>
+        <div class="kpi-lbl">Bénéfice net</div>
+      </div>
+      <div class="kpi ${margeColor}">
+        <div class="kpi-val">${k.marge != null ? k.marge + ' %' : '—'}</div>
+        <div class="kpi-lbl">Marge</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-val">${k.stock_entrepot}</div>
+        <div class="kpi-lbl">Entrepôt</div>
+      </div>
+      <div class="kpi ${k.a_preparer > 0 ? 'c-warn' : ''}">
+        <div class="kpi-val">${k.a_preparer}</div>
+        <div class="kpi-lbl">À préparer</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-hdr">
+        <h2>À préparer / expédier</h2>
+        <span class="badge ${k.a_preparer > 0 ? 'alert' : ''}">${k.a_preparer}</span>
+      </div>
+      ${aPrepRows}
+    </div>
+
+    <div class="section">
+      <div class="section-hdr">
+        <h2>Dernières ventes</h2>
+        <span class="badge">${data.recentes.length}</span>
+      </div>
+      ${recentRows}
+    </div>
+
+    <button class="refresh-btn" onclick="load()">↻ Actualiser</button>
+
+  </div>`;
+
+  // Auto-ouvrir la commande avec le plus de lignes (lot Vinted 239€)
+  const rows = document.querySelectorAll('.order-row');
+  rows.forEach(r => {
+    if (r.querySelector('.order-lines .line-item:nth-child(2)')) r.classList.add('open');
+  });
+}
+
+async function load() {
+  document.getElementById('root').innerHTML =
+    `<div class="loading"><div class="spinner"></div><span style="font:.63rem var(--mono)">chargement…</span></div>`;
+  try {
+    const r = await fetch(API);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    render(await r.json());
+  } catch(e) {
+    document.getElementById('root').innerHTML = `<div class="error-msg">Erreur : ${e.message}</div>`;
+  }
+}
+
+if (window.Telegram?.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+  Telegram.WebApp.setHeaderColor('#0a0a0b');
+  Telegram.WebApp.setBackgroundColor('#0a0a0b');
+}
+
+load();
+</script>
+</body>
+</html>

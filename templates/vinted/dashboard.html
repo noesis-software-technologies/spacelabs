@@ -63,6 +63,23 @@
   }
   table.orders tbody tr{transition:background .1s}
   table.orders tbody tr:hover td{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+  /* ── Lignes de commande (détail expandable) ── */
+  tr.lines-row{display:none}
+  tr.lines-row.open{display:table-row}
+  tr.lines-row td{padding:0;background:var(--surface2) !important;border-bottom:2px solid var(--border)}
+  .lines-inner{padding:.5rem 1rem}
+  table.lines-tbl{width:100%;border-collapse:collapse;font-size:.72rem;margin:.2rem 0}
+  table.lines-tbl th{font:.58rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;padding:.3rem .5rem;text-align:right;border-bottom:1px solid var(--border)}
+  table.lines-tbl th:first-child{text-align:left}
+  table.lines-tbl td{padding:.3rem .5rem;text-align:right;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);font-variant-numeric:tabular-nums}
+  table.lines-tbl td:first-child{text-align:left;color:var(--ink);font-weight:500}
+  table.lines-tbl tr:last-child td{border-bottom:none}
+  .lines-remise{display:flex;justify-content:space-between;padding:.3rem .5rem;font:.65rem var(--mono);color:var(--warn);border-top:1px solid var(--border)}
+  .lines-total{display:flex;justify-content:space-between;padding:.35rem .5rem;font:.68rem var(--mono);border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+  .lines-total .lv{font-weight:600;color:var(--accent)}
+  .tri-btn{cursor:pointer;font:.58rem var(--mono);color:var(--faint);background:none;border:none;padding:0;margin-left:4px}
+  .tri-btn::after{content:"▸";display:inline-block;transition:transform .2s}
+  tr[data-open="1"] .tri-btn::after{transform:rotate(90deg)}
   table.orders td{padding:.42rem .8rem;border-bottom:1px solid var(--surface2);vertical-align:middle}
   table.orders tbody tr:last-child td{border-bottom:none}
   table.orders tfoot td{padding:.5rem .8rem;border-top:2px solid var(--border);font-weight:600;background:var(--surface2);font-size:.78rem}
@@ -274,9 +291,9 @@
         </thead>
         <tbody>
         {% for o in recents %}
-          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-four="{{ o.fournisseur_id|default:'' }}">
+          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-four="{{ o.fournisseur_id|default:'' }}" {% if o.lignes.count > 1 %}data-multiline="1"{% endif %}>
             <td style="color:var(--faint);font:.6rem var(--mono)">{{ forloop.counter }}</td>
-            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="min-width:160px;max-width:220px">{{ o.titre }}</td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="min-width:160px;max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles"> {{ o.lignes.count }}</button>{% endif %}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
@@ -307,6 +324,29 @@
             </td>
             <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
+          {% if o.lignes.count > 1 %}
+          <tr class="lines-row" id="lines-{{ o.pk }}">
+            <td colspan="13">
+              <div class="lines-inner">
+                <table class="lines-tbl">
+                  <thead><tr><th>Article</th><th>Vente €</th><th>Achat €</th><th>Bénéfice</th></tr></thead>
+                  <tbody>
+                  {% for l in o.lignes.all %}
+                    <tr>
+                      <td>{{ l.designation|default:"—" }}</td>
+                      <td>{% if l.prix_vente_unitaire %}{{ l.prix_vente_unitaire|floatformat:2 }}{% else %}—{% endif %}</td>
+                      <td style="color:var(--faint)">{% if l.prix_achat_unitaire %}{{ l.prix_achat_unitaire|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
+                      <td class="benef {% if l.benefice_ligne < 0 %}neg{% endif %}">{% if l.prix_achat_unitaire %}{% if l.benefice_ligne >= 0 %}+{% endif %}{{ l.benefice_ligne|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+                </table>
+                {% if o.remise %}<div class="lines-remise"><span>Remise lot</span><span>−{{ o.remise|floatformat:2 }} €</span></div>{% endif %}
+                <div class="lines-total"><span>Total encaissé</span><span class="lv">{{ o.prix_vente|floatformat:2 }} €</span></div>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
         {% empty %}
           <tr><td colspan="13" class="empty">Aucune commande. Ajoute-en via <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
@@ -449,5 +489,15 @@
     return raw.toLowerCase();
   }
 })();
+
+function toggleLines(pk, btn) {
+  const row = document.getElementById('lines-' + pk);
+  if (!row) return;
+  const open = row.classList.toggle('open');
+  const tr = document.querySelector(`tr[data-row="${pk}"]`);
+  if (tr) tr.dataset.open = open ? '1' : '0';
+  // Prevent contenteditable from stealing focus
+  if (btn) btn.blur();
+}
 </script>
 {% endblock %}
