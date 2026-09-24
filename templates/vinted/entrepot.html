@@ -28,6 +28,9 @@
     table.stk select{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.72rem var(--mono);padding:.15rem .3rem}
     .pill{display:inline-block;font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
     .empty{padding:1rem;color:var(--faint);font-style:italic}
+    th.th-img,td.td-img{width:44px;padding:.2rem .5rem !important}
+    .stk-thumb{width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid var(--border);background:var(--surface2);display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;color:var(--faint);vertical-align:middle;overflow:hidden}
+    .stk-thumb img{width:36px;height:36px;object-fit:cover;border-radius:5px;display:block}
 {% endblock %}
 
 {% block content %}
@@ -56,12 +59,16 @@
     <div class="card">
       <table class="stk">
         <thead><tr>
+          <th class="th-img"></th>
           <th>Nom</th><th>Réf</th><th>Fournisseur</th><th>Source</th><th>Achat €</th><th>Qté</th><th>Coût</th>
           <th>Devenir</th><th>Statut</th><th>Gradeur</th><th>Reçu le</th>
         </tr></thead>
         <tbody>
         {% for i in items %}
           <tr data-row="{{ i.pk }}">
+            <td class="td-img">
+              <span class="stk-thumb">{% if i.photo %}<img src="{{ i.photo }}" alt="" loading="lazy">{% else %}🃏{% endif %}</span>
+            </td>
             <td class="edit" data-pk="{{ i.pk }}" data-field="nom" contenteditable="true">{{ i.nom }}</td>
             <td class="edit" data-pk="{{ i.pk }}" data-field="reference" contenteditable="true">{{ i.reference }}</td>
             <td>
@@ -83,7 +90,7 @@
             <td><input type="date" data-pk="{{ i.pk }}" data-field="date_reception" value="{{ i.date_reception|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="11" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
+          <tr><td colspan="12" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
         {% endfor %}
         </tbody>
       </table>
