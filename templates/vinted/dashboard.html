@@ -1,23 +1,24 @@
 {% extends "dashboard/shell.html" %}
-{% block page_title %}Commandes Vinted{% endblock %}
-{% block h1 %}Vinted — commandes & envois{% endblock %}
-{% block crumb %}$ vinted --orders --shipping{% endblock %}
+{% block page_title %}Commandes{% endblock %}
+{% block h1 %}Pipeline de ventes{% endblock %}
+{% block crumb %}$ vinted --pipeline{% endblock %}
 
 {% block extra_css %}
+  /* ── Variables locales ── */
+  :root{--thumb:40px}
+
   /* ── KPIs ── */
-  .kpis{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.4rem}
-  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem 1.1rem;min-width:130px;position:relative;overflow:hidden}
+  .kpis{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem;min-width:110px;position:relative;overflow:hidden}
   .kpi::before{content:"";position:absolute;inset:0;opacity:.06;border-radius:10px}
-  .kpi b{display:block;font-size:1.3rem;letter-spacing:-.03em;color:var(--ink);line-height:1.2;margin-bottom:.1rem}
-  .kpi small{font:.62rem var(--mono);color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
-  .kpi.good b{color:var(--good)}
-  .kpi.warn b{color:var(--warn)}
-  .kpi.crit b{color:var(--crit)}
-  .kpi.good::before{background:var(--good)}
-  .kpi.warn::before{background:var(--warn)}
+  .kpi b{display:block;font-size:1.2rem;letter-spacing:-.03em;color:var(--ink);line-height:1.2;margin-bottom:.1rem}
+  .kpi small{font:.6rem var(--mono);color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+  .kpi.good b{color:var(--good)} .kpi.good::before{background:var(--good)}
+  .kpi.warn b{color:var(--warn)} .kpi.warn::before{background:var(--warn)}
+  .kpi.crit b{color:var(--crit)} .kpi.crit::before{background:var(--crit)}
 
   /* ── Statut pills ── */
-  .spill{display:inline-flex;align-items:center;gap:.3rem;font:.6rem var(--mono);padding:.1rem .45rem;border-radius:5px;white-space:nowrap;border:1px solid transparent}
+  .spill{display:inline-flex;align-items:center;font:.58rem var(--mono);padding:.15rem .5rem;border-radius:5px;white-space:nowrap;border:1px solid transparent;letter-spacing:.02em}
   .spill[data-s="a_preparer"]{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
   .spill[data-s="etiquette"]{background:color-mix(in srgb,#60a5fa 12%,transparent);color:#60a5fa;border-color:color-mix(in srgb,#60a5fa 25%,transparent)}
   .spill[data-s="expedie"]{background:color-mix(in srgb,#a78bfa 12%,transparent);color:#a78bfa;border-color:color-mix(in srgb,#a78bfa 25%,transparent)}
@@ -25,68 +26,54 @@
   .spill[data-s="cloture"]{background:color-mix(in srgb,var(--faint) 12%,transparent);color:var(--faint);border-color:color-mix(in srgb,var(--faint) 25%,transparent)}
   .spill[data-s="probleme"]{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
 
-  /* ── Cards & lignes d'action ── */
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.4rem}
-  .card h2{font:600 .8rem/1 var(--font);padding:.7rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-  .card h2 .n{font:.6rem var(--mono);color:var(--faint)}
+  /* ── Cards & rows ── */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.2rem}
+  .card h2{font:600 .78rem/1 var(--font);padding:.65rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  .card h2 .n{font:.58rem var(--mono);color:var(--faint);margin-left:auto}
   .card.alert{border-color:color-mix(in srgb,var(--crit) 35%,transparent)}
   .card.alert h2{background:color-mix(in srgb,var(--crit) 8%,transparent);color:var(--crit)}
-  .row{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;padding:.55rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
+  .row{display:grid;grid-template-columns:var(--thumb) 1fr auto;gap:.7rem;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
   .row:last-child{border-bottom:none}
   .row:hover{background:color-mix(in srgb,var(--accent) 4%,transparent)}
-  .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
-  .sub{font:.64rem var(--mono);color:var(--faint);margin-top:.1rem}
+  .row .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+  .row .sub{font:.62rem var(--mono);color:var(--faint);margin-top:.12rem}
+  .thumb-sq{width:var(--thumb);height:var(--thumb);border-radius:6px;object-fit:cover;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .thumb-sq img{width:100%;height:100%;object-fit:cover;border-radius:5px}
+  .thumb-sq .ph{font:1rem serif;opacity:.35}
   .ship-form{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
-  .ship-form input,.ship-form select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.28rem .5rem;font-size:.75rem;color:var(--ink)}
-  .ship-form input.tr{width:150px}.ship-form select.car{width:130px}
-  .btn{font:.7rem var(--mono);padding:.3rem .7rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .ship-form input,.ship-form select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.26rem .5rem;font-size:.73rem;color:var(--ink)}
+  .ship-form input.tr{width:140px}.ship-form select.car{width:125px}
+  .btn{font:.68rem var(--mono);padding:.28rem .65rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer;white-space:nowrap}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
   .btn.acc{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
   .btn.acc:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
-  .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+  .empty{padding:1rem;color:var(--faint);font:.8rem/1.5 var(--font);font-style:italic}
 
-  /* ── Barre de filtre ── */
-  .tbl-filter{display:flex;gap:.6rem;align-items:center;padding:.5rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
-  .tbl-filter label{font:.62rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
-  .tbl-filter select,.tbl-filter input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.72rem var(--mono);padding:.2rem .4rem}
-  #tbl-search{width:180px}
-  .tbl-count{margin-left:auto;font:.62rem var(--mono);color:var(--faint)}
+  /* ── Filtre ── */
+  .tbl-filter{display:flex;gap:.5rem;align-items:center;padding:.45rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tbl-filter label{font:.6rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .tbl-filter select,.tbl-filter input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.7rem var(--mono);padding:.18rem .38rem}
+  #tbl-search{width:170px}
+  .tbl-count{margin-left:auto;font:.6rem var(--mono);color:var(--faint)}
 
-  /* ── Table commandes ── */
+  /* ── Table commandes (allégée 8 colonnes) ── */
   .card-scroll{overflow-x:auto}
   table.orders{width:100%;border-collapse:collapse;font-size:.78rem}
   table.orders thead th{
-    text-align:left;font:.6rem var(--mono);color:var(--faint);padding:.5rem .8rem;
+    text-align:left;font:.58rem var(--mono);color:var(--faint);padding:.45rem .7rem;
     border-bottom:2px solid var(--border);
     position:sticky;top:0;background:var(--surface);z-index:2;
     white-space:nowrap;letter-spacing:.04em;text-transform:uppercase
   }
   table.orders tbody tr{transition:background .1s}
   table.orders tbody tr:hover td{background:color-mix(in srgb,var(--accent) 5%,transparent)}
-  /* ── Lignes de commande (détail expandable) ── */
-  tr.lines-row{display:none}
-  tr.lines-row.open{display:table-row}
-  tr.lines-row td{padding:0;background:var(--surface2) !important;border-bottom:2px solid var(--border)}
-  .lines-inner{padding:.5rem 1rem}
-  table.lines-tbl{width:100%;border-collapse:collapse;font-size:.72rem;margin:.2rem 0}
-  table.lines-tbl th{font:.58rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;padding:.3rem .5rem;text-align:right;border-bottom:1px solid var(--border)}
-  table.lines-tbl th:first-child{text-align:left}
-  table.lines-tbl td{padding:.3rem .5rem;text-align:right;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);font-variant-numeric:tabular-nums}
-  table.lines-tbl td:first-child{text-align:left;color:var(--ink);font-weight:500}
-  table.lines-tbl tr:last-child td{border-bottom:none}
-  .lines-remise{display:flex;justify-content:space-between;padding:.3rem .5rem;font:.65rem var(--mono);color:var(--warn);border-top:1px solid var(--border)}
-  .lines-total{display:flex;justify-content:space-between;padding:.35rem .5rem;font:.68rem var(--mono);border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 6%,transparent)}
-  .lines-total .lv{font-weight:600;color:var(--accent)}
-  .tri-btn{cursor:pointer;font:.58rem var(--mono);color:var(--faint);background:none;border:none;padding:0;margin-left:4px}
-  .tri-btn::after{content:"▸";display:inline-block;transition:transform .2s}
-  tr[data-open="1"] .tri-btn::after{transform:rotate(90deg)}
-  table.orders td{padding:.42rem .8rem;border-bottom:1px solid var(--surface2);vertical-align:middle}
+  table.orders td{padding:.38rem .7rem;border-bottom:1px solid var(--surface2);vertical-align:middle}
   table.orders tbody tr:last-child td{border-bottom:none}
-  table.orders tfoot td{padding:.5rem .8rem;border-top:2px solid var(--border);font-weight:600;background:var(--surface2);font-size:.78rem}
+  table.orders tfoot td{padding:.45rem .7rem;border-top:2px solid var(--border);font-weight:600;background:var(--surface2);font-size:.78rem}
   table.orders td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
   table.orders tfoot td.num{text-align:right}
   .benef{color:var(--good);font-weight:600}.benef.neg{color:var(--crit)}
-  a.track{color:var(--accent);text-decoration:none;font:.68rem var(--mono)}
+  a.track{color:var(--accent);text-decoration:none;font:.66rem var(--mono)}
   a.track:hover{text-decoration:underline}
   td.edit{cursor:text;border-radius:4px}
   td.edit:hover{background:var(--surface2) !important}
@@ -95,14 +82,18 @@
   td.edit.err{background:color-mix(in srgb,var(--crit) 18%,transparent) !important}
   table.orders select,table.orders input[type=date]{
     background:var(--bg);border:1px solid var(--border);border-radius:5px;
-    color:var(--ink);font:.72rem var(--mono);padding:.18rem .3rem;max-width:100%
+    color:var(--ink);font:.7rem var(--mono);padding:.16rem .28rem;max-width:100%
   }
-  .pill{display:inline-block;font:.58rem var(--mono);padding:.1rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
-  .hint{font-size:.7rem;color:var(--faint);padding:.4rem 1rem;border-bottom:1px solid var(--surface2);background:var(--surface2)}
+
+  /* ── Thumbnail col ── */
+  th.th-img,td.td-img{width:46px;padding:.2rem .5rem !important;text-align:center}
+  .tbl-thumb{width:36px;height:36px;border-radius:5px;object-fit:cover;background:var(--surface2);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;font-size:.9rem;opacity:.4}
+  .tbl-thumb img{width:36px;height:36px;object-fit:cover;border-radius:4px;display:block}
 
   /* ── Sticky col #1 ── */
-  table.orders th:first-child,table.orders td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;border-right:1px solid var(--border)}
-  table.orders tbody tr:hover td:first-child{background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+  table.orders th:nth-child(2),table.orders td:nth-child(2){position:sticky;left:46px;background:var(--surface);z-index:1;border-right:1px solid var(--border)}
+  table.orders tbody tr:hover td:nth-child(2){background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+  table.orders th:first-child,table.orders td:first-child{position:sticky;left:0;background:var(--surface);z-index:1}
 
   /* ── Tri ── */
   th.sort{cursor:pointer;user-select:none}
@@ -115,12 +106,32 @@
   .mg-warn{color:var(--warn);font-weight:600}
   .mg-crit{color:var(--crit);font-weight:600}
 
+  /* ── Ligne détail expandable ── */
+  tr.lines-row{display:none}
+  tr.lines-row.open{display:table-row}
+  tr.lines-row td{padding:0;background:var(--surface2) !important;border-bottom:2px solid var(--border)}
+  .lines-inner{padding:.5rem 1rem .6rem}
+  table.lines-tbl{width:100%;border-collapse:collapse;font-size:.72rem;margin:.2rem 0}
+  table.lines-tbl th{font:.56rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;padding:.28rem .5rem;text-align:right;border-bottom:1px solid var(--border)}
+  table.lines-tbl th:first-child{text-align:left}
+  table.lines-tbl td{padding:.28rem .5rem;text-align:right;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);font-variant-numeric:tabular-nums}
+  table.lines-tbl td:first-child{text-align:left;color:var(--ink);font-weight:500;display:flex;align-items:center;gap:.5rem}
+  table.lines-tbl tr:last-child td{border-bottom:none}
+  .lines-remise{display:flex;justify-content:space-between;padding:.28rem .5rem;font:.63rem var(--mono);color:var(--warn);border-top:1px solid var(--border)}
+  .lines-total{display:flex;justify-content:space-between;padding:.3rem .5rem;font:.66rem var(--mono);border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+  .lines-total .lv{font-weight:600;color:var(--accent)}
+  .line-thumb{width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+  .tri-btn{cursor:pointer;font:.56rem var(--mono);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);border-radius:4px;padding:.1rem .35rem;margin-left:4px;white-space:nowrap}
+  .tri-btn::after{content:" ▸";font-size:.8em;transition:transform .15s;display:inline-block}
+  tr[data-open="1"] .tri-btn::after{transform:rotate(90deg)}
+
   /* ── Ajout rapide ── */
-  .add-form{display:flex;gap:.4rem;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface)}
-  .add-form input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.22rem .45rem}
-  .add-form input.af-titre{width:260px}
-  .add-form input.af-num{width:90px}
-  .add-form select.af-plat{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.22rem .45rem;width:110px}
+  .add-form{display:flex;gap:.4rem;align-items:center;padding:.45rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface)}
+  .add-form input,.add-form select{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.72rem var(--mono);padding:.2rem .42rem}
+  .add-form input.af-titre{width:240px}
+  .add-form input.af-num{width:82px}
+  .add-form select.af-plat{width:105px}
+  .hint{font:.68rem/1.5 var(--font);color:var(--faint);padding:.35rem 1rem;border-bottom:1px solid var(--surface2);background:var(--surface2)}
 {% endblock %}
 
 {% block content %}
@@ -129,7 +140,7 @@
   <div class="kpis">
     <div class="kpi"><b>{{ total }}</b><small>commandes</small></div>
     <div class="kpi"><b>{{ kpis.ca|floatformat:2 }} €</b><small>CA total</small></div>
-    <div class="kpi"><b>{{ kpis.cout|floatformat:2 }} €</b><small>coût d'achat</small></div>
+    <div class="kpi"><b>{{ kpis.cout|floatformat:2 }} €</b><small>coût achat</small></div>
     <div class="kpi good"><b>{{ kpis.benefice|floatformat:2 }} €</b><small>bénéfice net</small></div>
     <div class="kpi {% if kpis.marge is None %}{% elif kpis.marge < 20 %}warn{% else %}good{% endif %}">
       <b>{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</b><small>marge moy.</small>
@@ -138,23 +149,19 @@
     <div class="kpi {% if en_retard %}crit{% endif %}"><b>{{ en_retard|length }}</b><small>en retard</small></div>
   </div>
 
-  {# ── Répartition plateformes ── #}
-  <div style="margin-bottom:1.2rem;display:flex;gap:.4rem;flex-wrap:wrap">
-    {% for plat, n in par_plateforme.items %}<span class="pill">{{ plat }} · <b>{{ n }}</b></span>{% endfor %}
-  </div>
-
   {# ── Alerte retard ── #}
   {% if en_retard %}
   <div class="card alert">
     <h2>Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
     {% for o in en_retard %}
     <div class="row">
+      <div class="thumb-sq">{% if o.lignes.count == 1 and o.lignes.all.0.stock_item and o.lignes.all.0.stock_item.photo %}<img src="{{ o.lignes.all.0.stock_item.photo }}" alt="">{% else %}<span class="ph">📦</span>{% endif %}</div>
       <div>
         <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-        <div class="sub">{{ o.transporteur }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m" }}</div>
+        <div class="sub">{{ o.transporteur_label|default:"—" }} · exp. {{ o.date_expedition|date:"d/m" }}</div>
       </div>
       <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-        <button class="btn acc" type="submit">Marquer livré</button>
+        <button class="btn acc" type="submit">Livré ✓</button>
       </form>
     </div>
     {% endfor %}
@@ -166,9 +173,18 @@
     <h2>À préparer / expédier <span class="n">{{ a_expedier|length }}</span></h2>
     {% for o in a_expedier %}
     <div class="row">
+      <div class="thumb-sq">
+        {% with l0=o.lignes.all.0 %}
+          {% if l0 and l0.stock_item and l0.stock_item.photo %}
+            <img src="{{ l0.stock_item.photo }}" alt="">
+          {% else %}
+            <span class="ph">🃏</span>
+          {% endif %}
+        {% endwith %}
+      </div>
       <div>
-        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-        <div class="sub">{{ o.acheteur|default:"—" }} · vendu {{ o.date_vente|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} € · <span class="spill" data-s="{{ o.statut_envoi }}">{{ o.get_statut_envoi_display }}</span></div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}{% if o.lignes.count > 1 %} <span style="font:.6rem var(--mono);color:var(--faint)">({{ o.lignes.count }} art.)</span>{% endif %}</div>
+        <div class="sub">{{ o.acheteur|default:"—" }} · {{ o.prix_vente|default:0 }} € · vendu {{ o.date_vente|date:"d/m"|default:"?" }}</div>
       </div>
       <form class="ship-form" method="post" action="{% url 'vinted:order_ship' o.pk %}">{% csrf_token %}
         <select class="car" name="transporteur">
@@ -184,15 +200,51 @@
     {% endfor %}
   </div>
 
-  {# ── Suivi manquant ── #}
+  {# ── En transit ── #}
+  {% if en_transit %}
+  <div class="card">
+    <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
+    {% for o in en_transit %}
+    <div class="row">
+      <div class="thumb-sq">
+        {% with l0=o.lignes.all.0 %}
+          {% if l0 and l0.stock_item and l0.stock_item.photo %}
+            <img src="{{ l0.stock_item.photo }}" alt="">
+          {% else %}<span class="ph">📦</span>{% endif %}
+        {% endwith %}
+      </div>
+      <div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+        <div class="sub">
+          {{ o.transporteur_label|default:"—" }} ·
+          {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track">{{ o.tracking }} ↗</a>{% else %}{{ o.tracking|default:"pas de suivi" }}{% endif %}
+          · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}
+        </div>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center">
+        <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
+          <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+          <button class="btn" type="submit">MAJ</button>
+        </form>
+        <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+          <button class="btn acc" type="submit">Livré ✓</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── Suivi manquant (alerte discrète) ── #}
   {% if sans_suivi %}
   <div class="card alert">
     <h2>Suivi manquant <span class="n">{{ sans_suivi|length }}</span></h2>
     {% for o in sans_suivi %}
     <div class="row">
+      <div class="thumb-sq"><span class="ph">⚠️</span></div>
       <div>
         <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-        <div class="sub">expédié {{ o.date_expedition|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} €</div>
+        <div class="sub">expédié {{ o.date_expedition|date:"d/m"|default:"?" }}</div>
       </div>
       <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
         <select class="car" name="transporteur">
@@ -206,38 +258,6 @@
     {% endfor %}
   </div>
   {% endif %}
-
-  {# ── En transit ── #}
-  <div class="card">
-    <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
-    {% for o in en_transit %}
-    <div class="row">
-      <div>
-        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-        <div class="sub">
-          {{ o.transporteur_label|default:"—" }} ·
-          {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track">{{ o.tracking }} ↗</a>{% else %}{{ o.tracking|default:"pas de suivi" }}{% endif %}
-          · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}
-        </div>
-      </div>
-      <div style="display:flex;gap:.4rem;align-items:center">
-        <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
-          <select class="car" name="transporteur">
-            <option value="">— transporteur —</option>
-            {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-          </select>
-          <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
-          <button class="btn" type="submit">MAJ suivi</button>
-        </form>
-        <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-          <button class="btn acc" type="submit">Livré ✓</button>
-        </form>
-      </div>
-    </div>
-    {% empty %}
-    <div class="empty">Aucun colis en transit.</div>
-    {% endfor %}
-  </div>
 
   {# ── Table toutes commandes ── #}
   <div class="card">
@@ -253,7 +273,8 @@
       </form>
     </div>
 
-    <div class="hint">✎ Cliquer une cellule pour l'éditer — enregistrement auto. Bénéfice & marge se recalculent.</div>
+    <div class="hint">✎ Cliquer une cellule pour l'éditer (enregistrement auto). Bénéf. & marge se recalculent.
+    Bouton <strong>▸</strong> = détail par article.</div>
 
     <div class="tbl-filter">
       <label>Statut</label>
@@ -261,10 +282,10 @@
         <option value="">Tous</option>
         {% for val, lbl in statuts %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
       </select>
-      <label>Fournisseur</label>
-      <select id="filter-four">
-        <option value="">Tous</option>
-        {% for f in fournisseurs %}<option value="{{ f.pk }}">{{ f.nom }}</option>{% endfor %}
+      <label>Plateforme</label>
+      <select id="filter-plat">
+        <option value="">Toutes</option>
+        {% for val, lbl in plateformes %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
       </select>
       <input id="tbl-search" type="search" placeholder="Rechercher…">
       <span class="tbl-count" id="tbl-count"></span>
@@ -274,66 +295,65 @@
       <table class="orders" id="orders-table">
         <thead>
           <tr>
-            <th>#</th>
-            <th class="sort" data-col="1">Article</th>
+            <th class="th-img"></th>
+            <th class="sort" data-col="1" style="min-width:160px">Article</th>
             <th class="sort" data-col="2">Plateforme</th>
-            <th class="sort" data-col="3">Fournisseur</th>
-            <th class="sort" data-col="4">Acheteur</th>
-            <th class="sort" data-col="5" data-type="num">Achat €</th>
-            <th class="sort" data-col="6" data-type="num">Vente €</th>
-            <th class="sort" data-col="7" data-type="num">Bénéfice</th>
-            <th class="sort" data-col="8" data-type="num">Marge</th>
-            <th class="sort" data-col="9">Statut envoi</th>
-            <th class="sort" data-col="10">Transporteur</th>
-            <th>Suivi</th>
-            <th class="sort" data-col="12" data-type="date">Vendu le</th>
+            <th class="sort" data-col="3" data-type="num">Vente €</th>
+            <th class="sort" data-col="4" data-type="num">Bénéfice</th>
+            <th class="sort" data-col="5">Statut</th>
+            <th>Tracking</th>
+            <th class="sort" data-col="7" data-type="date">Date</th>
           </tr>
         </thead>
         <tbody>
         {% for o in recents %}
-          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-four="{{ o.fournisseur_id|default:'' }}" {% if o.lignes.count > 1 %}data-multiline="1"{% endif %}>
-            <td style="color:var(--faint);font:.6rem var(--mono)">{{ forloop.counter }}</td>
-            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="min-width:160px;max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles"> {{ o.lignes.count }}</button>{% endif %}</td>
+          {% with first_photo="" %}
+          {%  with l0=o.lignes.all.0 %}
+          {%    if l0 and l0.stock_item and l0.stock_item.photo %}
+          {%      with first_photo=l0.stock_item.photo %}
+          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-plat="{{ o.plateforme }}" {% if o.lignes.count > 1 %}data-multiline="1"{% endif %}>
+            <td class="td-img">
+              <span class="tbl-thumb">{% if first_photo %}<img src="{{ first_photo }}" alt="" loading="lazy">{% else %}🃏{% endif %}</span>
+            </td>
+          {%      endwith %}
+          {%    else %}
+          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-plat="{{ o.plateforme }}" {% if o.lignes.count > 1 %}data-multiline="1"{% endif %}>
+            <td class="td-img"><span class="tbl-thumb">🃏</span></td>
+          {%    endif %}
+          {%  endwith %}
+          {%  endwith %}
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles">{{ o.lignes.count }}</button>{% endif %}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
               </select>
             </td>
-            <td>
-              <select data-pk="{{ o.pk }}" data-field="fournisseur"><option value="">—</option>{% for f in fournisseurs %}<option value="{{ f.pk }}" {% if o.fournisseur_id == f.pk %}selected{% endif %}>{{ f.nom }}</option>{% endfor %}</select>
-            </td>
-            <td class="edit" data-pk="{{ o.pk }}" data-field="acheteur" contenteditable="true">{{ o.acheteur }}</td>
-            <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_achat" contenteditable="true">{{ o.prix_achat|default_if_none:"" }}</td>
             <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_vente" contenteditable="true">{{ o.prix_vente|default_if_none:"" }}</td>
             <td class="num benef {% if o.benefice < 0 %}neg{% endif %}" data-bene="{{ o.pk }}">{{ o.benefice|floatformat:2 }} €</td>
-            <td class="num {% if o.marge_pct is not None %}{% if o.marge_pct >= 25 %}mg-good{% elif o.marge_pct >= 10 %}mg-warn{% else %}mg-crit{% endif %}{% endif %}" data-marge="{{ o.pk }}">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="statut_envoi" data-spill="{{ o.pk }}">
                 {% for val, lbl in statuts %}<option value="{{ val }}" {% if o.statut_envoi == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
               </select>
             </td>
-            <td>
-              <select data-pk="{{ o.pk }}" data-field="transporteur">
-                <option value="">—</option>
-                {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-              </select>
-            </td>
-            <td style="white-space:nowrap">
-              <span class="edit" data-pk="{{ o.pk }}" data-field="tracking" contenteditable="true" style="min-width:110px;display:inline-block">{{ o.tracking }}</span>
-              {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track" title="Suivre le colis"> ↗</a>{% endif %}
+            <td style="white-space:nowrap;min-width:130px">
+              <span class="edit" data-pk="{{ o.pk }}" data-field="tracking" contenteditable="true" style="display:inline-block;min-width:90px">{{ o.tracking }}</span>
+              {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track" title="{{ o.transporteur_label }}"> ↗</a>{% endif %}
             </td>
             <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
           {% if o.lignes.count > 1 %}
           <tr class="lines-row" id="lines-{{ o.pk }}">
-            <td colspan="13">
+            <td colspan="8">
               <div class="lines-inner">
                 <table class="lines-tbl">
                   <thead><tr><th>Article</th><th>Vente €</th><th>Achat €</th><th>Bénéfice</th></tr></thead>
                   <tbody>
                   {% for l in o.lignes.all %}
                     <tr>
-                      <td>{{ l.designation|default:"—" }}</td>
+                      <td>
+                        {% if l.stock_item and l.stock_item.photo %}<img class="line-thumb" src="{{ l.stock_item.photo }}" alt="" loading="lazy">{% endif %}
+                        {{ l.designation|default:"—" }}
+                      </td>
                       <td>{% if l.prix_vente_unitaire %}{{ l.prix_vente_unitaire|floatformat:2 }}{% else %}—{% endif %}</td>
                       <td style="color:var(--faint)">{% if l.prix_achat_unitaire %}{{ l.prix_achat_unitaire|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
                       <td class="benef {% if l.benefice_ligne < 0 %}neg{% endif %}">{% if l.prix_achat_unitaire %}{% if l.benefice_ligne >= 0 %}+{% endif %}{{ l.benefice_ligne|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
@@ -348,18 +368,16 @@
           </tr>
           {% endif %}
         {% empty %}
-          <tr><td colspan="13" class="empty">Aucune commande. Ajoute-en via <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="8" class="empty">Aucune commande. Ajoute-en via le formulaire ci-dessus.</td></tr>
         {% endfor %}
         </tbody>
         {% if recents %}
         <tfoot>
           <tr>
-            <td colspan="5">Total</td>
-            <td class="num">{{ kpis.cout|floatformat:2 }} €</td>
+            <td colspan="3">Total</td>
             <td class="num">{{ kpis.ca|floatformat:2 }} €</td>
             <td class="num benef {% if kpis.benefice < 0 %}neg{% endif %}">{{ kpis.benefice|floatformat:2 }} €</td>
-            <td class="num">{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</td>
-            <td colspan="4"></td>
+            <td colspan="3"></td>
           </tr>
         </tfoot>
         {% endif %}
@@ -372,7 +390,6 @@
 {% block extra_js %}
 <script>
 (function () {
-  /* ── Inline edit ── */
   function csrf() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
     return m ? m[1] : "";
@@ -394,17 +411,9 @@
       const row = el.closest("tr");
       if (row) {
         const b = row.querySelector("[data-bene]");
-        const m = row.querySelector("[data-marge]");
         if (b) { b.textContent = d.benefice + " €"; b.classList.toggle("neg", parseFloat(d.benefice) < 0); }
-        if (m) {
-          m.textContent = d.marge;
-          m.classList.remove("mg-good", "mg-warn", "mg-crit");
-          const pct = parseFloat(d.marge);
-          if (!isNaN(pct)) m.classList.add(pct >= 25 ? "mg-good" : pct >= 10 ? "mg-warn" : "mg-crit");
-        }
-        /* update row filter attr */
         if (field === "statut_envoi") row.dataset.statut = value;
-        if (field === "fournisseur") row.dataset.four = value;
+        if (field === "plateforme") row.dataset.plat = value;
       }
       if (d.tracking_url !== undefined) {
         const trackCell = row && row.querySelector(`[data-field="tracking"]`);
@@ -419,7 +428,6 @@
     }).catch(() => flash(el, false));
   }
 
-  /* Cellules contenteditable : save on blur */
   document.querySelectorAll("td.edit[contenteditable], span.edit[contenteditable]").forEach(el => {
     let orig = el.textContent.trim();
     el.addEventListener("focus", () => { orig = el.textContent.trim(); });
@@ -427,36 +435,32 @@
     el.addEventListener("blur", () => { const v = el.textContent.trim(); if (v !== orig) save(el, el.dataset.field, v); });
   });
 
-  /* Selects + dates : save on change */
   document.querySelectorAll("table.orders select[data-field], table.orders input[data-field]").forEach(el => {
     el.addEventListener("change", () => save(el, el.dataset.field, el.value));
   });
 
-  /* ── Filtre / recherche table ── */
+  /* ── Filtre / recherche ── */
   const tbody = document.querySelector("#orders-table tbody");
   const countEl = document.getElementById("tbl-count");
   function applyFilter() {
     const s = (document.getElementById("filter-statut").value || "").toLowerCase();
-    const f = (document.getElementById("filter-four").value || "").toLowerCase();
+    const p = (document.getElementById("filter-plat").value || "").toLowerCase();
     const q = (document.getElementById("tbl-search").value || "").toLowerCase();
     let vis = 0;
     tbody.querySelectorAll("tr[data-row]").forEach(row => {
-      const matchS = !s || row.dataset.statut === s;
-      const matchF = !f || row.dataset.four === f;
-      const matchQ = !q || row.textContent.toLowerCase().includes(q);
-      const show = matchS && matchF && matchQ;
+      const show = (!s || row.dataset.statut === s) && (!p || row.dataset.plat === p) && (!q || row.textContent.toLowerCase().includes(q));
       row.style.display = show ? "" : "none";
       if (show) vis++;
     });
     if (countEl) countEl.textContent = `${vis} ligne${vis > 1 ? "s" : ""}`;
   }
-  ["filter-statut", "filter-four", "tbl-search"].forEach(id => {
+  ["filter-statut", "filter-plat", "tbl-search"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener("input", applyFilter);
   });
   applyFilter();
 
-  /* ── Tri des colonnes ── */
+  /* ── Tri ── */
   let sortState = { col: -1, dir: 1 };
   document.querySelectorAll("th.sort").forEach(th => {
     th.addEventListener("click", () => {
@@ -469,8 +473,7 @@
       const rows = [...tbody.querySelectorAll("tr[data-row]")];
       rows.sort((a, b) => {
         const av = cellVal(a, col, type), bv = cellVal(b, col, type);
-        if (av === bv) return 0;
-        return (av < bv ? -1 : 1) * sortState.dir;
+        return (av === bv ? 0 : av < bv ? -1 : 1) * sortState.dir;
       });
       rows.forEach(r => tbody.appendChild(r));
     });
@@ -491,12 +494,11 @@
 })();
 
 function toggleLines(pk, btn) {
-  const row = document.getElementById('lines-' + pk);
+  const row = document.getElementById("lines-" + pk);
   if (!row) return;
-  const open = row.classList.toggle('open');
+  const open = row.classList.toggle("open");
   const tr = document.querySelector(`tr[data-row="${pk}"]`);
-  if (tr) tr.dataset.open = open ? '1' : '0';
-  // Prevent contenteditable from stealing focus
+  if (tr) tr.dataset.open = open ? "1" : "0";
   if (btn) btn.blur();
 }
 </script>

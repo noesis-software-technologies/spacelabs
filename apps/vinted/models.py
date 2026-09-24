@@ -298,6 +298,7 @@ class StockItem(models.Model):
         "VintedListing", null=True, blank=True, on_delete=models.SET_NULL,
         related_name="stock_item",
         help_text="Annonce Vinted associée à cet article (remplie à la publication)")
+    photo = models.URLField(blank=True, help_text="URL thumbnail de la carte (Pokellector, scan perso…)")
     date_achat = models.DateField(null=True, blank=True)
     date_reception = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)

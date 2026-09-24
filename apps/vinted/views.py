@@ -302,7 +302,7 @@ def duesenberg_api(request):
     """API JSON pour la mini-app Duesenberg."""
     orders = list(
         VintedOrder.objects
-        .prefetch_related("lignes")
+        .prefetch_related("lignes__stock_item")
         .order_by("-date_vente", "-id")
     )
 
@@ -329,12 +329,14 @@ def duesenberg_api(request):
         pv = float(l.prix_vente_unitaire) if l.prix_vente_unitaire else None
         pa = float(l.prix_achat_unitaire) if l.prix_achat_unitaire else None
         benef_l = float(l.benefice_ligne) if l.prix_achat_unitaire else None
+        photo = (l.stock_item.photo if l.stock_item and l.stock_item.photo else "")
         return {
             "designation": l.designation or "—",
             "prix_vente": round(pv, 2) if pv is not None else None,
             "prix_achat": round(pa, 2) if pa is not None else None,
             "benefice": round(benef_l, 2) if benef_l is not None else None,
             "quantite": l.quantite,
+            "photo": photo,
         }
 
     def order_repr(o):

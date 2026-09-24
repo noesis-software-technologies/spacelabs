@@ -1,298 +1,408 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0a0b">
-<title>Duesenberg — SpaceLabs</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root {
-    --bg:       #0a0a0b;
-    --surface:  #121214;
-    --surface2: #1a1a1d;
-    --border:   #222226;
-    --ink:      #e8e8ea;
-    --muted:    #8888a0;
-    --faint:    #48485a;
-    --accent:   #f77615;
-    --ok:       #7ece4e;
-    --warn:     #e0c34a;
-    --crit:     #ec5f57;
-    --blue:     #60a5fa;
-    --purple:   #a78bfa;
-    --font:     "Inter", system-ui, -apple-system, sans-serif;
-    --mono:     "JetBrains Mono", "SF Mono", ui-monospace, monospace;
-    --r:        10px;
-    --r-sm:     6px;
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Duesenberg — SpaceLabs</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --surface:#f8f8f9;
+      --card:#ffffff;
+      --border:#e8e8ec;
+      --ink:#111113;
+      --muted:#6b6b78;
+      --faint:#a0a0ad;
+      --accent:#f77615;
+      --accent-soft:#fff4ec;
+      --accent-border:#fde0c7;
+      --good:#15a159;
+      --good-soft:#edfaf4;
+      --warn:#d4790a;
+      --warn-soft:#fff8ec;
+      --crit:#dc2626;
+      --crit-soft:#fff1f1;
+      --font:Inter,-apple-system,system-ui,sans-serif;
+      --mono:"SF Mono","JetBrains Mono",ui-monospace,monospace;
+      --radius:12px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overscroll-behavior:none}
+    body{
+      font-family:var(--font);
+      background:var(--bg);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      min-height:100vh;
+    }
+    #app{
+      max-width:480px;
+      margin:0 auto;
+      padding:env(safe-area-inset-top,12px) 0 40px;
+    }
 
-  .page{padding:max(env(safe-area-inset-top,0px),16px) 12px env(safe-area-inset-bottom,24px);max-width:420px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+    /* ── Header ── */
+    .hdr{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:14px 16px 10px;
+      border-bottom:1px solid var(--border);
+      background:var(--bg);
+      position:sticky;top:0;z-index:10;
+    }
+    .hdr-brand{display:flex;align-items:center;gap:8px}
+    .hdr-logo{
+      width:30px;height:30px;border-radius:8px;
+      background:var(--accent);
+      display:flex;align-items:center;justify-content:center;
+      font:700 13px var(--font);color:#fff;letter-spacing:-.02em
+    }
+    .hdr-title{font:700 15px/1 var(--font);letter-spacing:-.02em;color:var(--ink)}
+    .hdr-sub{font:400 11px var(--mono);color:var(--faint);margin-top:2px}
+    .refresh-btn{
+      width:32px;height:32px;border-radius:8px;
+      background:var(--surface);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;color:var(--muted);
+    }
+    .refresh-btn:active{background:var(--border)}
+    .refresh-btn svg{width:15px;height:15px}
 
-  /* ── Header ── */
-  .hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:2px}
-  .hdr-brand{display:flex;align-items:center;gap:8px}
-  .hdr-brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 7px var(--accent)}
-  .hdr-brand h1{font:700 1rem/1 var(--font);letter-spacing:-.025em}
-  .hdr-brand .sub{font:.58rem var(--mono);color:var(--faint);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
-  .hdr-date{font:.6rem var(--mono);color:var(--faint);text-align:right;line-height:1.6}
+    /* ── KPI grid ── */
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:8px;
+      padding:14px 12px 0;
+    }
+    .kpi{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 11px;
+      min-height:62px;
+    }
+    .kpi b{
+      display:block;
+      font:700 17px/1.2 var(--font);
+      letter-spacing:-.03em;
+      color:var(--ink);
+      margin-bottom:3px;
+    }
+    .kpi span{
+      font:500 10px var(--mono);
+      color:var(--faint);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+    .kpi.accent b{color:var(--accent)}
+    .kpi.good{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 20%,transparent)}
+    .kpi.good b{color:var(--good)}
+    .kpi.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 20%,transparent)}
+    .kpi.warn b{color:var(--warn)}
+    .kpi.crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 20%,transparent)}
+    .kpi.crit b{color:var(--crit)}
+    .kpi.wide{grid-column:span 2}
+    .kpi-row2{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+      padding:8px 12px 0;
+    }
 
-  /* ── KPI grid ── */
-  .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .kpi-grid .full{grid-column:1/-1}
-  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 13px;position:relative;overflow:hidden}
-  .kpi::before{content:"";position:absolute;inset:0;border-radius:var(--r);opacity:.05;pointer-events:none}
-  .kpi.c-accent::before{background:var(--accent)}
-  .kpi.c-ok::before{background:var(--ok)}
-  .kpi.c-warn::before{background:var(--warn)}
-  .kpi.c-crit::before{background:var(--crit)}
-  .kpi-val{font:700 1.45rem/1 var(--font);letter-spacing:-.04em;margin-bottom:3px}
-  .c-accent .kpi-val,.kv-accent{color:var(--accent)}
-  .c-ok .kpi-val,.kv-ok{color:var(--ok)}
-  .c-warn .kpi-val,.kv-warn{color:var(--warn)}
-  .c-crit .kpi-val,.kv-crit{color:var(--crit)}
-  .kpi-lbl{font:.58rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
-  .kpi-sub{font:.62rem var(--mono);color:var(--muted);margin-top:3px}
+    /* ── Section ── */
+    .section{margin-top:18px;padding:0 12px}
+    .sec-title{
+      font:700 11px var(--mono);
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--faint);
+      margin-bottom:8px;
+    }
 
-  /* ── Section ── */
-  .section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-  .section-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;border-bottom:1px solid var(--border)}
-  .section-hdr h2{font:600 .76rem/1 var(--font)}
-  .badge{font:.56rem var(--mono);padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
-  .badge.alert{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
+    /* ── Order card ── */
+    .order-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      margin-bottom:8px;
+    }
+    .order-head{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .order-head:active{background:var(--surface)}
+    .order-thumb{
+      width:38px;height:38px;border-radius:7px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font:20px serif;
+      overflow:hidden;
+    }
+    .order-thumb img{width:100%;height:100%;object-fit:cover}
+    .order-info{flex:1;min-width:0}
+    .order-titre{
+      font:600 13px/1.3 var(--font);
+      color:var(--ink);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .order-meta{
+      display:flex;align-items:center;gap:6px;
+      margin-top:3px;
+      flex-wrap:wrap;
+    }
+    .order-date{font:400 11px var(--mono);color:var(--faint)}
+    .spill{
+      font:500 10px var(--mono);
+      padding:2px 6px;
+      border-radius:4px;
+      border:1px solid transparent;
+      white-space:nowrap;
+    }
+    .spill-prep{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 20%,transparent)}
+    .spill-exp{background:#f0edff;color:#7c3aed;border-color:#ddd6fe}
+    .spill-liv{background:var(--good-soft);color:var(--good);border-color:color-mix(in srgb,var(--good) 20%,transparent)}
+    .spill-clo{background:var(--surface);color:var(--faint);border-color:var(--border)}
+    .order-right{text-align:right;flex-shrink:0}
+    .order-pv{font:700 14px var(--font);color:var(--ink)}
+    .order-benef{font:500 11px var(--mono);color:var(--good);margin-top:2px}
+    .order-benef.neg{color:var(--crit)}
+    .order-expand{
+      color:var(--faint);
+      font:500 11px var(--mono);
+      margin-top:2px;
+    }
+    .order-expand::after{content:" ▸";font-size:.85em;display:inline-block;transition:transform .15s}
+    .order-card.open .order-expand::after{transform:rotate(90deg)}
 
-  /* ── Order row ── */
-  .order-row{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
-  .order-row:last-child{border-bottom:none}
-  .order-row:active .order-summary{background:var(--surface2)}
-  .order-summary{display:flex;flex-direction:column;gap:3px;padding:10px 13px}
-  .order-title{font:.77rem var(--font);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .order-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-  .order-price{font:.66rem var(--mono);color:var(--muted)}
-  .order-benef{font:.66rem var(--mono)}
-  .order-benef.pos{color:var(--ok)}
-  .order-benef.neg{color:var(--crit)}
-  .order-date{font:.58rem var(--mono);color:var(--faint);margin-left:auto}
-  .chevron{font:.6rem var(--mono);color:var(--faint);margin-left:4px;transition:transform .2s;display:inline-block}
-  .order-row.open .chevron{transform:rotate(90deg)}
+    /* ── Lines detail ── */
+    .order-lines{
+      display:none;
+      border-top:1px solid var(--border);
+      background:var(--surface);
+      padding:0;
+    }
+    .order-card.open .order-lines{display:block}
+    .line-row{
+      display:flex;align-items:center;gap:8px;
+      padding:7px 12px;
+      border-bottom:1px solid var(--border);
+      font:400 12px var(--font);
+    }
+    .line-row:last-child{border-bottom:none}
+    .line-thumb{
+      width:26px;height:26px;border-radius:5px;
+      background:var(--border);border:1px solid var(--border);
+      flex-shrink:0;display:flex;align-items:center;justify-content:center;
+      font:12px serif;overflow:hidden;
+    }
+    .line-thumb img{width:100%;height:100%;object-fit:cover}
+    .line-name{flex:1;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .line-pv{font:500 12px var(--mono);color:var(--muted);min-width:38px;text-align:right}
+    .line-benef{font:600 12px var(--mono);color:var(--good);min-width:38px;text-align:right}
+    .line-benef.neg{color:var(--crit)}
+    .line-benef.unk{color:var(--faint);font-weight:400}
+    .remise-row{
+      display:flex;justify-content:space-between;
+      padding:6px 12px;
+      font:500 11px var(--mono);
+      color:var(--warn);
+      background:var(--warn-soft);
+      border-top:1px solid color-mix(in srgb,var(--warn) 15%,transparent);
+    }
+    .total-row{
+      display:flex;justify-content:space-between;
+      padding:7px 12px;
+      font:600 12px var(--mono);
+      color:var(--accent);
+      background:var(--accent-soft);
+      border-top:1px solid var(--accent-border);
+    }
 
-  /* ── Lines detail ── */
-  .order-lines{display:none;border-top:1px solid var(--border);background:var(--surface2)}
-  .order-row.open .order-lines{display:block}
-  .line-hdr{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:6px 13px;border-bottom:1px solid var(--border)}
-  .line-hdr span{font:.55rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.05em;text-align:right}
-  .line-hdr span:first-child{text-align:left}
-  .line-item{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;padding:7px 13px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);align-items:center}
-  .line-item:last-child{border-bottom:none}
-  .line-name{font:.72rem var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .line-num{font:.68rem var(--mono);text-align:right;white-space:nowrap}
-  .line-num.pv{color:var(--muted)}
-  .line-num.pa{color:var(--faint)}
-  .line-num.benef{color:var(--ok)}
-  .line-num.benef.neg{color:var(--crit)}
-  .line-num.na{color:var(--faint);font-style:italic}
-  .line-remise{padding:6px 13px;display:flex;justify-content:space-between;border-top:1px solid var(--border)}
-  .line-remise span{font:.65rem var(--mono);color:var(--warn)}
-  .line-total{padding:6px 13px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 4%,transparent)}
-  .line-total .lbl{font:.62rem var(--mono);color:var(--faint);text-transform:uppercase}
-  .line-total .val{font:600 .8rem var(--mono);color:var(--accent)}
+    /* ── Empty / loading ── */
+    .loading{text-align:center;padding:40px 16px;color:var(--faint);font:.85rem var(--font)}
+    .spinner{
+      width:20px;height:20px;border-radius:50%;
+      border:2px solid var(--border);
+      border-top-color:var(--accent);
+      animation:spin .7s linear infinite;
+      display:inline-block;vertical-align:middle;margin-right:8px;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
 
-  /* ── Status pill ── */
-  .pill{font:.56rem var(--mono);padding:2px 6px;border-radius:4px;border:1px solid transparent;white-space:nowrap}
-  .pill.a_preparer{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 28%,transparent)}
-  .pill.etiquette{background:color-mix(in srgb,var(--blue) 12%,transparent);color:var(--blue);border-color:color-mix(in srgb,var(--blue) 28%,transparent)}
-  .pill.expedie{background:color-mix(in srgb,var(--purple) 12%,transparent);color:var(--purple);border-color:color-mix(in srgb,var(--purple) 28%,transparent)}
-  .pill.livre{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 28%,transparent)}
-  .pill.cloture{background:color-mix(in srgb,var(--faint) 12%,transparent);color:var(--faint);border-color:color-mix(in srgb,var(--faint) 28%,transparent)}
-  .pill.probleme{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 28%,transparent)}
-
-  /* ── Empty ── */
-  .empty{padding:14px;font:.7rem var(--mono);color:var(--faint);text-align:center}
-
-  /* ── Loading / Error ── */
-  .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:var(--faint)}
-  .spinner{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .error-msg{color:var(--crit);font:.75rem var(--mono);text-align:center;padding:24px 16px}
-  .refresh-btn{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;font:.63rem var(--mono);color:var(--muted);cursor:pointer;width:100%}
-  .refresh-btn:active{border-color:var(--accent);color:var(--accent)}
-</style>
+    /* ── Tracking ── */
+    .tracking-row{
+      padding:6px 12px;
+      font:400 11px var(--mono);
+      color:var(--muted);
+      background:var(--surface);
+      border-top:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+    }
+    .tracking-link{color:var(--accent);text-decoration:none;font-weight:500}
+    .tracking-link:hover{text-decoration:underline}
+  </style>
 </head>
 <body>
-<div id="root">
-  <div class="loading"><div class="spinner"></div><span style="font:.63rem var(--mono)">chargement…</span></div>
+<div id="app">
+  <header class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">SL</div>
+      <div>
+        <div class="hdr-title">Duesenberg</div>
+        <div class="hdr-sub" id="hdr-update">Chargement…</div>
+      </div>
+    </div>
+    <button class="refresh-btn" id="refreshBtn" title="Actualiser">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+    </button>
+  </header>
+
+  <div id="content"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
 </div>
+
 <script>
-const API = "{% url 'vinted:duesenberg_api' %}";
-
-function fmt(n, d=2) {
-  const v = parseFloat(n);
-  return isNaN(v) ? '—' : v.toLocaleString('fr-FR', {minimumFractionDigits:d, maximumFractionDigits:d});
-}
-
-function pill(statut, label) {
-  return `<span class="pill ${statut}">${label}</span>`;
-}
-
-function linesHtml(order) {
-  if (!order.lignes || !order.lignes.length) return '';
-  const rows = order.lignes.map(l => {
-    const pv = l.prix_vente != null ? `${fmt(l.prix_vente)}€` : `<span class="na">—</span>`;
-    const pa = l.prix_achat != null ? `${fmt(l.prix_achat)}€` : `<span class="na">?</span>`;
-    const b  = l.benefice != null
-      ? `<span class="${l.benefice >= 0 ? '' : 'neg'}">${l.benefice >= 0 ? '+' : ''}${fmt(l.benefice)}€</span>`
-      : `<span class="na">?</span>`;
-    return `<div class="line-item">
-      <span class="line-name">${l.designation}</span>
-      <span class="line-num pv">${pv}</span>
-      <span class="line-num pa">${pa}</span>
-      <span class="line-num benef${l.benefice < 0 ? ' neg' : ''}">${b}</span>
-    </div>`;
-  }).join('');
-
-  const remise = order.remise && parseFloat(order.remise) > 0
-    ? `<div class="line-remise"><span>Remise lot</span><span>−${fmt(order.remise)}€</span></div>` : '';
-
-  const benef = parseFloat(order.benefice);
-  const benefColor = benef >= 0 ? 'var(--ok)' : 'var(--crit)';
-
-  return `<div class="order-lines">
-    <div class="line-hdr">
-      <span>Article</span><span>Vente</span><span>Achat</span><span>Bénéf.</span>
-    </div>
-    ${rows}
-    ${remise}
-    <div class="line-total">
-      <span class="lbl">Total encaissé</span>
-      <span class="val">${fmt(order.prix_vente)}€</span>
-    </div>
-  </div>`;
-}
-
-function orderRow(o) {
-  const benef = parseFloat(o.benefice);
-  const benefHtml = isNaN(benef) ? '' :
-    `<span class="order-benef ${benef >= 0 ? 'pos' : 'neg'}">${benef >= 0 ? '+' : ''}${fmt(benef)}€</span>`;
-  const multi = o.lignes && o.lignes.length > 1;
-  const chev = multi ? `<span class="chevron">›</span>` : '';
-  const dateHtml = o.date ? `<span class="order-date">${o.date.slice(5)}</span>` : '';
-
-  return `<div class="order-row" onclick="toggleOrder(this)">
-    <div class="order-summary">
-      <div class="order-title">${o.titre}${chev}</div>
-      <div class="order-meta">
-        ${pill(o.statut, o.statut_label)}
-        <span class="order-price">${fmt(o.prix_vente)}€</span>
-        ${benefHtml}
-        ${dateHtml}
-      </div>
-    </div>
-    ${linesHtml(o)}
-  </div>`;
-}
-
-function toggleOrder(el) {
-  if (!el.querySelector('.order-lines')) return;
-  el.classList.toggle('open');
-}
-
-function render(data) {
-  const k = data.kpis;
-  const now = new Date();
-  const ds = now.toLocaleDateString('fr-FR', {day:'2-digit', month:'short'});
-  const ts = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-
-  const benefColor = parseFloat(k.benefice) >= 0 ? 'c-ok' : 'c-crit';
-  const margeColor = k.marge >= 30 ? 'c-ok' : k.marge >= 10 ? 'c-warn' : 'c-crit';
-
-  const aPrepRows = data.a_preparer.length
-    ? data.a_preparer.map(orderRow).join('')
-    : `<div class="empty">aucune commande en attente ✓</div>`;
-  const recentRows = data.recentes.map(orderRow).join('');
-
-  document.getElementById('root').innerHTML = `<div class="page">
-
-    <div class="hdr">
-      <div class="hdr-brand">
-        <div class="dot"></div>
-        <div><h1>Duesenberg</h1><div class="sub">SpaceLabs · Ventes</div></div>
-      </div>
-      <div class="hdr-date">${ds}<br><span style="color:var(--muted)">${ts}</span></div>
-    </div>
-
-    <div class="kpi-grid">
-      <div class="kpi c-accent full">
-        <div class="kpi-val">${fmt(k.ca)} €</div>
-        <div class="kpi-lbl">Chiffre d'affaires</div>
-        <div class="kpi-sub">${k.nb_commandes} commande${k.nb_commandes > 1 ? 's' : ''}</div>
-      </div>
-      <div class="kpi ${benefColor}">
-        <div class="kpi-val">${fmt(k.benefice)} €</div>
-        <div class="kpi-lbl">Bénéfice net</div>
-      </div>
-      <div class="kpi ${margeColor}">
-        <div class="kpi-val">${k.marge != null ? k.marge + ' %' : '—'}</div>
-        <div class="kpi-lbl">Marge</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-val">${k.stock_entrepot}</div>
-        <div class="kpi-lbl">Entrepôt</div>
-      </div>
-      <div class="kpi ${k.a_preparer > 0 ? 'c-warn' : ''}">
-        <div class="kpi-val">${k.a_preparer}</div>
-        <div class="kpi-lbl">À préparer</div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-hdr">
-        <h2>À préparer / expédier</h2>
-        <span class="badge ${k.a_preparer > 0 ? 'alert' : ''}">${k.a_preparer}</span>
-      </div>
-      ${aPrepRows}
-    </div>
-
-    <div class="section">
-      <div class="section-hdr">
-        <h2>Dernières ventes</h2>
-        <span class="badge">${data.recentes.length}</span>
-      </div>
-      ${recentRows}
-    </div>
-
-    <button class="refresh-btn" onclick="load()">↻ Actualiser</button>
-
-  </div>`;
-
-  // Auto-ouvrir la commande avec le plus de lignes (lot Vinted 239€)
-  const rows = document.querySelectorAll('.order-row');
-  rows.forEach(r => {
-    if (r.querySelector('.order-lines .line-item:nth-child(2)')) r.classList.add('open');
-  });
-}
-
-async function load() {
-  document.getElementById('root').innerHTML =
-    `<div class="loading"><div class="spinner"></div><span style="font:.63rem var(--mono)">chargement…</span></div>`;
-  try {
-    const r = await fetch(API);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    render(await r.json());
-  } catch(e) {
-    document.getElementById('root').innerHTML = `<div class="error-msg">Erreur : ${e.message}</div>`;
+(function(){
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if(tg){
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor && tg.setHeaderColor('#ffffff');
+    tg.setBackgroundColor && tg.setBackgroundColor('#ffffff');
   }
-}
 
-if (window.Telegram?.WebApp) {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.expand();
-  Telegram.WebApp.setHeaderColor('#0a0a0b');
-  Telegram.WebApp.setBackgroundColor('#0a0a0b');
-}
+  const STATUT_LABEL = {a_preparer:'À préparer',etiquette:'Étiquette',expedie:'Expédié',livre:'Livré',cloture:'Clôturé',probleme:'Problème'};
+  const STATUT_CLASS = {a_preparer:'spill-prep',etiquette:'spill-exp',expedie:'spill-exp',livre:'spill-liv',cloture:'spill-clo',probleme:'spill-clo'};
 
-load();
+  function fmt(v){return v?parseFloat(v).toFixed(2):'—'}
+  function fmtDate(s){if(!s)return'';const d=new Date(s);return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}
+
+  function renderKpis(kpis){
+    const warnA = kpis.a_preparer > 0;
+    return `
+    <div class="kpi-grid">
+      <div class="kpi good wide"><b>${fmt(kpis.ca)} €</b><span>CA total</span></div>
+      <div class="kpi"><b>${kpis.nb_commandes}</b><span>Commandes</span></div>
+    </div>
+    <div class="kpi-row2">
+      <div class="kpi good"><b>${fmt(kpis.benefice)} €</b><span>Bénéfice net</span></div>
+      <div class="kpi ${kpis.marge !== null && kpis.marge >= 20 ? 'good' : kpis.marge !== null ? 'warn' : ''}"><b>${kpis.marge !== null ? kpis.marge + ' %' : '—'}</b><span>Marge moy.</span></div>
+      <div class="kpi ${warnA ? 'warn' : ''}"><b>${kpis.a_preparer}</b><span>À expédier</span></div>
+      <div class="kpi"><b>${kpis.en_transit}</b><span>En transit</span></div>
+    </div>`;
+  }
+
+  function renderOrder(o, forceOpen){
+    const statClass = STATUT_CLASS[o.statut] || 'spill-clo';
+    const statLabel = STATUT_LABEL[o.statut] || o.statut_label || o.statut;
+    const pv = o.prix_vente ? fmt(o.prix_vente) + ' €' : '—';
+    const bv = parseFloat(o.benefice);
+    const bvStr = isNaN(bv) ? '—' : (bv >= 0 ? '+' : '') + bv.toFixed(2) + ' €';
+    const bvNeg = !isNaN(bv) && bv < 0;
+    const multiligne = o.lignes && o.lignes.length > 1;
+
+    // thumbnail: first line with photo
+    let thumb = '🃏';
+    if(o.lignes){
+      const withPhoto = o.lignes.find(l => l.photo);
+      if(withPhoto) thumb = `<img src="${withPhoto.photo}" alt="" loading="lazy">`;
+    }
+
+    let linesHtml = '';
+    if(o.lignes && o.lignes.length > 0){
+      const rows = o.lignes.map(l => {
+        const lpv = l.prix_vente ? fmt(l.prix_vente) + ' €' : '—';
+        const lb = l.benefice !== null ? (l.benefice >= 0 ? '+' : '') + parseFloat(l.benefice).toFixed(2) + ' €' : '?';
+        const lbClass = l.benefice === null ? 'unk' : l.benefice < 0 ? 'neg' : '';
+        const lthumb = l.photo ? `<img src="${l.photo}" alt="">` : '🃏';
+        return `<div class="line-row">
+          <div class="line-thumb">${lthumb}</div>
+          <span class="line-name">${l.designation}</span>
+          <span class="line-pv">${lpv}</span>
+          <span class="line-benef ${lbClass}">${lb}</span>
+        </div>`;
+      }).join('');
+
+      const remise = o.remise ? `<div class="remise-row"><span>Remise lot</span><span>−${fmt(o.remise)} €</span></div>` : '';
+      const total = `<div class="total-row"><span>Total encaissé</span><span>${pv}</span></div>`;
+      linesHtml = `<div class="order-lines">${rows}${remise}${total}</div>`;
+    }
+
+    const expandHint = multiligne ? `<div class="order-expand">${o.lignes.length} articles</div>` : '';
+    const openClass = (forceOpen || multiligne) && o.lignes && o.lignes.length > 1 ? ' open' : '';
+
+    return `<div class="order-card${openClass}" data-id="${o.id}">
+      <div class="order-head">
+        <div class="order-thumb">${thumb}</div>
+        <div class="order-info">
+          <div class="order-titre">${o.titre}</div>
+          <div class="order-meta">
+            <span class="order-date">${fmtDate(o.date)}</span>
+            <span class="spill ${statClass}">${statLabel}</span>
+          </div>
+          ${expandHint}
+        </div>
+        <div class="order-right">
+          <div class="order-pv">${pv}</div>
+          <div class="order-benef ${bvNeg ? 'neg' : ''}">${bvStr}</div>
+        </div>
+      </div>
+      ${linesHtml}
+    </div>`;
+  }
+
+  function render(data){
+    const {kpis, a_preparer, recentes} = data;
+    let html = renderKpis(kpis);
+
+    if(a_preparer && a_preparer.length){
+      html += `<div class="section"><div class="sec-title">À expédier · ${a_preparer.length}</div>`;
+      a_preparer.forEach(o => { html += renderOrder(o, true); });
+      html += '</div>';
+    }
+
+    html += `<div class="section"><div class="sec-title">Dernières ventes</div>`;
+    if(recentes && recentes.length){
+      recentes.forEach(o => { html += renderOrder(o, false); });
+    } else {
+      html += '<div class="loading">Aucune vente enregistrée.</div>';
+    }
+    html += '</div>';
+
+    document.getElementById('content').innerHTML = html;
+    document.getElementById('hdr-update').textContent = 'Mis à jour ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+    // toggles
+    document.querySelectorAll('.order-card[data-id]').forEach(card => {
+      const head = card.querySelector('.order-head');
+      if(!head) return;
+      head.addEventListener('click', () => {
+        const hasLines = card.querySelector('.order-lines');
+        if(hasLines) card.classList.toggle('open');
+      });
+    });
+  }
+
+  function load(){
+    document.getElementById('hdr-update').textContent = 'Actualisation…';
+    fetch('/vinted/duesenberg/api/')
+      .then(r => r.json())
+      .then(render)
+      .catch(() => {
+        document.getElementById('content').innerHTML = '<div class="loading">Erreur de chargement. Réessaie.</div>';
+        document.getElementById('hdr-update').textContent = 'Erreur';
+      });
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', load);
+  load();
+})();
 </script>
 </body>
 </html>
