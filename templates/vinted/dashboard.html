@@ -4,147 +4,279 @@
 {% block crumb %}$ vinted --orders --shipping{% endblock %}
 
 {% block extra_css %}
-    .kpis{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:1.4rem}
-    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1.1rem;font-size:.82rem;min-width:130px}
-    .kpi b{display:block;font-size:1.3rem;color:var(--accent);line-height:1.2}
-    .kpi.good b{color:var(--good)}
-    .kpi small{color:var(--faint);font:.62rem var(--mono)}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.6rem}
-    .card h2{font:600 .82rem/1 var(--font);padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-    .card h2 .n{font:.62rem var(--mono);color:var(--faint)}
-    .row{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;padding:.6rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
-    .row:last-child{border-bottom:none}
-    .row .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .row .sub{font:.64rem var(--mono);color:var(--faint)}
-    .ship-form{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
-    .ship-form input{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.28rem .5rem;font-size:.75rem;color:var(--ink)}
-    .ship-form input.tr{width:150px}.ship-form input.car{width:120px}
-    .btn{font:.7rem var(--mono);padding:.3rem .7rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer}
-    .btn.acc{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
-    table.orders{width:100%;border-collapse:collapse;font-size:.8rem}
-    table.orders th{text-align:left;font:.62rem var(--mono);color:var(--faint);padding:.5rem 1rem;border-bottom:1px solid var(--border)}
-    table.orders td{padding:.45rem 1rem;border-bottom:1px solid var(--surface2)}
-    table.orders td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-    .benef{color:var(--good);font-weight:600}.benef.neg{color:var(--bad,#d9534f)}
-    .pill{display:inline-block;font:.58rem var(--mono);padding:.12rem .5rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
-    .alert{background:color-mix(in srgb,var(--bad,#d9534f) 12%,transparent);border-color:color-mix(in srgb,var(--bad,#d9534f) 35%,transparent)}
-    .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
-    .hint{font-size:.72rem;color:var(--faint);margin:.2rem 0 .6rem}
-    td.edit{cursor:text;border-radius:5px}
-    td.edit:hover{background:var(--surface2)}
-    td.edit:focus{outline:1px solid var(--accent);background:var(--bg)}
-    td.edit.saved{background:color-mix(in srgb,var(--good) 22%,transparent)}
-    td.edit.err{background:color-mix(in srgb,var(--bad,#d9534f) 22%,transparent)}
-    table.orders select,table.orders input[type=date]{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.2rem .3rem}
+  /* ── KPIs ── */
+  .kpis{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.4rem}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem 1.1rem;min-width:130px;position:relative;overflow:hidden}
+  .kpi::before{content:"";position:absolute;inset:0;opacity:.06;border-radius:10px}
+  .kpi b{display:block;font-size:1.3rem;letter-spacing:-.03em;color:var(--ink);line-height:1.2;margin-bottom:.1rem}
+  .kpi small{font:.62rem var(--mono);color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+  .kpi.good b{color:var(--good)}
+  .kpi.warn b{color:var(--warn)}
+  .kpi.crit b{color:var(--crit)}
+  .kpi.good::before{background:var(--good)}
+  .kpi.warn::before{background:var(--warn)}
+
+  /* ── Statut pills ── */
+  .spill{display:inline-flex;align-items:center;gap:.3rem;font:.6rem var(--mono);padding:.1rem .45rem;border-radius:5px;white-space:nowrap;border:1px solid transparent}
+  .spill[data-s="a_preparer"]{background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 25%,transparent)}
+  .spill[data-s="etiquette"]{background:color-mix(in srgb,#60a5fa 12%,transparent);color:#60a5fa;border-color:color-mix(in srgb,#60a5fa 25%,transparent)}
+  .spill[data-s="expedie"]{background:color-mix(in srgb,#a78bfa 12%,transparent);color:#a78bfa;border-color:color-mix(in srgb,#a78bfa 25%,transparent)}
+  .spill[data-s="livre"]{background:color-mix(in srgb,var(--good) 12%,transparent);color:var(--good);border-color:color-mix(in srgb,var(--good) 25%,transparent)}
+  .spill[data-s="cloture"]{background:color-mix(in srgb,var(--faint) 12%,transparent);color:var(--faint);border-color:color-mix(in srgb,var(--faint) 25%,transparent)}
+  .spill[data-s="probleme"]{background:color-mix(in srgb,var(--crit) 12%,transparent);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 25%,transparent)}
+
+  /* ── Cards & lignes d'action ── */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1.4rem}
+  .card h2{font:600 .8rem/1 var(--font);padding:.7rem 1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+  .card h2 .n{font:.6rem var(--mono);color:var(--faint)}
+  .card.alert{border-color:color-mix(in srgb,var(--crit) 35%,transparent)}
+  .card.alert h2{background:color-mix(in srgb,var(--crit) 8%,transparent);color:var(--crit)}
+  .row{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;padding:.55rem 1rem;border-bottom:1px solid var(--surface2);font-size:.82rem}
+  .row:last-child{border-bottom:none}
+  .row:hover{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+  .tt{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+  .sub{font:.64rem var(--mono);color:var(--faint);margin-top:.1rem}
+  .ship-form{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+  .ship-form input,.ship-form select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:.28rem .5rem;font-size:.75rem;color:var(--ink)}
+  .ship-form input.tr{width:150px}.ship-form select.car{width:130px}
+  .btn{font:.7rem var(--mono);padding:.3rem .7rem;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--ink);cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.acc{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent-ink);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .btn.acc:hover{background:color-mix(in srgb,var(--accent) 25%,transparent)}
+  .empty{padding:1rem;color:var(--faint);font-size:.8rem;font-style:italic}
+
+  /* ── Barre de filtre ── */
+  .tbl-filter{display:flex;gap:.6rem;align-items:center;padding:.5rem 1rem;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tbl-filter label{font:.62rem var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+  .tbl-filter select,.tbl-filter input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.72rem var(--mono);padding:.2rem .4rem}
+  #tbl-search{width:180px}
+  .tbl-count{margin-left:auto;font:.62rem var(--mono);color:var(--faint)}
+
+  /* ── Table commandes ── */
+  .card-scroll{overflow-x:auto}
+  table.orders{width:100%;border-collapse:collapse;font-size:.78rem}
+  table.orders thead th{
+    text-align:left;font:.6rem var(--mono);color:var(--faint);padding:.5rem .8rem;
+    border-bottom:2px solid var(--border);
+    position:sticky;top:0;background:var(--surface);z-index:2;
+    white-space:nowrap;letter-spacing:.04em;text-transform:uppercase
+  }
+  table.orders tbody tr{transition:background .1s}
+  table.orders tbody tr:hover td{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+  table.orders td{padding:.42rem .8rem;border-bottom:1px solid var(--surface2);vertical-align:middle}
+  table.orders tbody tr:last-child td{border-bottom:none}
+  table.orders tfoot td{padding:.5rem .8rem;border-top:2px solid var(--border);font-weight:600;background:var(--surface2);font-size:.78rem}
+  table.orders td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+  table.orders tfoot td.num{text-align:right}
+  .benef{color:var(--good);font-weight:600}.benef.neg{color:var(--crit)}
+  a.track{color:var(--accent);text-decoration:none;font:.68rem var(--mono)}
+  a.track:hover{text-decoration:underline}
+  td.edit{cursor:text;border-radius:4px}
+  td.edit:hover{background:var(--surface2) !important}
+  td.edit:focus{outline:1px solid var(--accent);background:var(--bg) !important}
+  td.edit.saved{background:color-mix(in srgb,var(--good) 18%,transparent) !important}
+  td.edit.err{background:color-mix(in srgb,var(--crit) 18%,transparent) !important}
+  table.orders select,table.orders input[type=date]{
+    background:var(--bg);border:1px solid var(--border);border-radius:5px;
+    color:var(--ink);font:.72rem var(--mono);padding:.18rem .3rem;max-width:100%
+  }
+  .pill{display:inline-block;font:.58rem var(--mono);padding:.1rem .45rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+  .hint{font-size:.7rem;color:var(--faint);padding:.4rem 1rem;border-bottom:1px solid var(--surface2);background:var(--surface2)}
+
+  /* ── Sticky col #1 ── */
+  table.orders th:first-child,table.orders td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;border-right:1px solid var(--border)}
+  table.orders tbody tr:hover td:first-child{background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+
+  /* ── Tri ── */
+  th.sort{cursor:pointer;user-select:none}
+  th.sort::after{content:" ↕";opacity:.25;font-size:.75em}
+  th.sort.asc::after{content:" ↑";opacity:.9}
+  th.sort.desc::after{content:" ↓";opacity:.9}
+
+  /* ── Marge coloring ── */
+  .mg-good{color:var(--good);font-weight:600}
+  .mg-warn{color:var(--warn);font-weight:600}
+  .mg-crit{color:var(--crit);font-weight:600}
+
+  /* ── Ajout rapide ── */
+  .add-form{display:flex;gap:.4rem;align-items:center;padding:.5rem 1rem;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface)}
+  .add-form input{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.22rem .45rem}
+  .add-form input.af-titre{width:260px}
+  .add-form input.af-num{width:90px}
+  .add-form select.af-plat{background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--ink);font:.74rem var(--mono);padding:.22rem .45rem;width:110px}
 {% endblock %}
 
 {% block content %}
-    <div class="kpis">
-      <div class="kpi"><b>{{ total }}</b><small>commandes</small></div>
-      <div class="kpi"><b>{{ kpis.ca|floatformat:2 }} €</b><small>ventes cumulées</small></div>
-      <div class="kpi"><b>{{ kpis.cout|floatformat:2 }} €</b><small>coût d'achat</small></div>
-      <div class="kpi good"><b>{{ kpis.benefice|floatformat:2 }} €</b><small>bénéfice net</small></div>
-      <div class="kpi"><b>{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</b><small>marge moyenne</small></div>
-      <div class="kpi"><b>{{ a_expedier|length }}</b><small>à expédier</small></div>
-    </div>
 
-    <div style="margin-bottom:1.4rem">
-      {% for plat, n in par_plateforme.items %}<span class="pill">{{ plat }} · <b>{{ n }}</b></span> {% endfor %}
+  {# ── KPIs ── #}
+  <div class="kpis">
+    <div class="kpi"><b>{{ total }}</b><small>commandes</small></div>
+    <div class="kpi"><b>{{ kpis.ca|floatformat:2 }} €</b><small>CA total</small></div>
+    <div class="kpi"><b>{{ kpis.cout|floatformat:2 }} €</b><small>coût d'achat</small></div>
+    <div class="kpi good"><b>{{ kpis.benefice|floatformat:2 }} €</b><small>bénéfice net</small></div>
+    <div class="kpi {% if kpis.marge is None %}{% elif kpis.marge < 20 %}warn{% else %}good{% endif %}">
+      <b>{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</b><small>marge moy.</small>
     </div>
+    <div class="kpi {% if a_expedier %}warn{% endif %}"><b>{{ a_expedier|length }}</b><small>à expédier</small></div>
+    <div class="kpi {% if en_retard %}crit{% endif %}"><b>{{ en_retard|length }}</b><small>en retard</small></div>
+  </div>
 
-    {% if en_retard %}
-    <div class="card alert">
-      <h2>⚠ Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
-      {% for o in en_retard %}
-      <div class="row">
-        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-          <div class="sub">{{ o.transporteur }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m" }}</div></div>
-        <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-          <button class="btn acc" type="submit">Marquer livré</button></form>
+  {# ── Répartition plateformes ── #}
+  <div style="margin-bottom:1.2rem;display:flex;gap:.4rem;flex-wrap:wrap">
+    {% for plat, n in par_plateforme.items %}<span class="pill">{{ plat }} · <b>{{ n }}</b></span>{% endfor %}
+  </div>
+
+  {# ── Alerte retard ── #}
+  {% if en_retard %}
+  <div class="card alert">
+    <h2>Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
+    {% for o in en_retard %}
+    <div class="row">
+      <div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+        <div class="sub">{{ o.transporteur }} · {{ o.tracking|default:"pas de suivi" }} · exp. {{ o.date_expedition|date:"d/m" }}</div>
       </div>
-      {% endfor %}
+      <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+        <button class="btn acc" type="submit">Marquer livré</button>
+      </form>
     </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
 
-    <div class="card">
-      <h2>À préparer / expédier <span class="n">{{ a_expedier|length }}</span></h2>
-      {% for o in a_expedier %}
-      <div class="row">
-        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-          <div class="sub">{{ o.acheteur|default:"—" }} · vendu {{ o.date_vente|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} € · {{ o.get_statut_envoi_display }}</div></div>
-        <form class="ship-form" method="post" action="{% url 'vinted:order_ship' o.pk %}">{% csrf_token %}
-          <select class="car" name="transporteur">
-            <option value="">— transporteur —</option>
-            {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-          </select>
-          <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
-          <button class="btn acc" type="submit">Expédié</button>
-        </form>
+  {# ── À préparer / expédier ── #}
+  <div class="card">
+    <h2>À préparer / expédier <span class="n">{{ a_expedier|length }}</span></h2>
+    {% for o in a_expedier %}
+    <div class="row">
+      <div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+        <div class="sub">{{ o.acheteur|default:"—" }} · vendu {{ o.date_vente|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} € · <span class="spill" data-s="{{ o.statut_envoi }}">{{ o.get_statut_envoi_display }}</span></div>
       </div>
-      {% empty %}
-      <div class="empty">Rien à expédier. Tout est parti 👍</div>
-      {% endfor %}
+      <form class="ship-form" method="post" action="{% url 'vinted:order_ship' o.pk %}">{% csrf_token %}
+        <select class="car" name="transporteur">
+          <option value="">— transporteur —</option>
+          {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+        <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+        <button class="btn acc" type="submit">Expédié ↗</button>
+      </form>
     </div>
+    {% empty %}
+    <div class="empty">Rien à expédier — tout est parti ✓</div>
+    {% endfor %}
+  </div>
 
-    {% if sans_suivi %}
-    <div class="card alert">
-      <h2>⚠ Suivi manquant (expédié sans transporteur / n° de suivi) <span class="n">{{ sans_suivi|length }}</span></h2>
-      {% for o in sans_suivi %}
-      <div class="row">
-        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-          <div class="sub">expédié {{ o.date_expedition|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} €</div></div>
+  {# ── Suivi manquant ── #}
+  {% if sans_suivi %}
+  <div class="card alert">
+    <h2>Suivi manquant <span class="n">{{ sans_suivi|length }}</span></h2>
+    {% for o in sans_suivi %}
+    <div class="row">
+      <div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+        <div class="sub">expédié {{ o.date_expedition|date:"d/m"|default:"?" }} · {{ o.prix_vente|default:0 }} €</div>
+      </div>
+      <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
+        <select class="car" name="transporteur">
+          <option value="">— transporteur —</option>
+          {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+        <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
+        <button class="btn acc" type="submit">Enregistrer</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── En transit ── #}
+  <div class="card">
+    <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
+    {% for o in en_transit %}
+    <div class="row">
+      <div>
+        <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
+        <div class="sub">
+          {{ o.transporteur_label|default:"—" }} ·
+          {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track">{{ o.tracking }} ↗</a>{% else %}{{ o.tracking|default:"pas de suivi" }}{% endif %}
+          · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}
+        </div>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center">
         <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
           <select class="car" name="transporteur">
             <option value="">— transporteur —</option>
             {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
           </select>
           <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
-          <button class="btn acc" type="submit">Enregistrer</button>
+          <button class="btn" type="submit">MAJ suivi</button>
+        </form>
+        <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
+          <button class="btn acc" type="submit">Livré ✓</button>
         </form>
       </div>
-      {% endfor %}
     </div>
-    {% endif %}
+    {% empty %}
+    <div class="empty">Aucun colis en transit.</div>
+    {% endfor %}
+  </div>
 
-    <div class="card">
-      <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
-      {% for o in en_transit %}
-      <div class="row">
-        <div><div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
-          <div class="sub">{{ o.transporteur_label|default:"—" }} ·
-            {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener">{{ o.tracking }} ↗</a>{% else %}{{ o.tracking|default:"pas de suivi" }}{% endif %}
-            · exp. {{ o.date_expedition|date:"d/m"|default:"?" }}</div></div>
-        <div style="display:flex;gap:.4rem;align-items:center">
-          <form class="ship-form" method="post" action="{% url 'vinted:order_tracking' o.pk %}">{% csrf_token %}
-            <select class="car" name="transporteur">
-              <option value="">— transporteur —</option>
-              {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
-            </select>
-            <input class="tr" name="tracking" placeholder="n° suivi" value="{{ o.tracking }}">
-            <button class="btn" type="submit">MAJ suivi</button>
-          </form>
-          <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-            <button class="btn acc" type="submit">Livré</button></form>
-        </div>
-      </div>
-      {% empty %}
-      <div class="empty">Aucun colis en transit.</div>
-      {% endfor %}
+  {# ── Table toutes commandes ── #}
+  <div class="card">
+    <h2>Toutes les commandes <span class="n">{{ recents|length }}</span></h2>
+
+    <div class="add-form">
+      <form method="post" action="{% url 'vinted:order_create' %}" style="display:contents">{% csrf_token %}
+        <input class="af-titre" name="titre" placeholder="Nouvel article…" required>
+        <input class="af-num" name="prix_vente" type="number" step="0.01" min="0" placeholder="Vente €">
+        <input class="af-num" name="prix_achat" type="number" step="0.01" min="0" placeholder="Achat €">
+        <select class="af-plat" name="plateforme">{% for val, lbl in plateformes %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}</select>
+        <button class="btn acc" type="submit">+ Ajouter</button>
+      </form>
     </div>
 
-    <div class="card">
-      <h2>Dernières commandes <span class="n">{{ recents|length }}</span></h2>
-      <table class="orders">
-      <div class="hint">✎ Clique une cellule pour l'éditer (enregistrement auto). Bénéfice & marge se recalculent.</div>
-      <table class="orders">
-        <thead><tr>
-          <th>Article</th><th>Plateforme</th><th>Fournisseur</th><th>Acheteur</th><th>Achat €</th><th>Vente €</th>
-          <th>Bénéfice</th><th>Marge</th><th>Envoi</th><th>Transporteur</th><th>Suivi n°</th><th>Vendu le</th>
-        </tr></thead>
+    <div class="hint">✎ Cliquer une cellule pour l'éditer — enregistrement auto. Bénéfice & marge se recalculent.</div>
+
+    <div class="tbl-filter">
+      <label>Statut</label>
+      <select id="filter-statut">
+        <option value="">Tous</option>
+        {% for val, lbl in statuts %}<option value="{{ val }}">{{ lbl }}</option>{% endfor %}
+      </select>
+      <label>Fournisseur</label>
+      <select id="filter-four">
+        <option value="">Tous</option>
+        {% for f in fournisseurs %}<option value="{{ f.pk }}">{{ f.nom }}</option>{% endfor %}
+      </select>
+      <input id="tbl-search" type="search" placeholder="Rechercher…">
+      <span class="tbl-count" id="tbl-count"></span>
+    </div>
+
+    <div class="card-scroll">
+      <table class="orders" id="orders-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th class="sort" data-col="1">Article</th>
+            <th class="sort" data-col="2">Plateforme</th>
+            <th class="sort" data-col="3">Fournisseur</th>
+            <th class="sort" data-col="4">Acheteur</th>
+            <th class="sort" data-col="5" data-type="num">Achat €</th>
+            <th class="sort" data-col="6" data-type="num">Vente €</th>
+            <th class="sort" data-col="7" data-type="num">Bénéfice</th>
+            <th class="sort" data-col="8" data-type="num">Marge</th>
+            <th class="sort" data-col="9">Statut envoi</th>
+            <th class="sort" data-col="10">Transporteur</th>
+            <th>Suivi</th>
+            <th class="sort" data-col="12" data-type="date">Vendu le</th>
+          </tr>
+        </thead>
         <tbody>
         {% for o in recents %}
-          <tr data-row="{{ o.pk }}">
-            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true">{{ o.titre }}</td>
+          <tr data-row="{{ o.pk }}" data-statut="{{ o.statut_envoi }}" data-four="{{ o.fournisseur_id|default:'' }}">
+            <td style="color:var(--faint);font:.6rem var(--mono)">{{ forloop.counter }}</td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="min-width:160px;max-width:220px">{{ o.titre }}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
@@ -157,9 +289,9 @@
             <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_achat" contenteditable="true">{{ o.prix_achat|default_if_none:"" }}</td>
             <td class="num edit" data-pk="{{ o.pk }}" data-field="prix_vente" contenteditable="true">{{ o.prix_vente|default_if_none:"" }}</td>
             <td class="num benef {% if o.benefice < 0 %}neg{% endif %}" data-bene="{{ o.pk }}">{{ o.benefice|floatformat:2 }} €</td>
-            <td class="num" data-marge="{{ o.pk }}">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
+            <td class="num {% if o.marge_pct is not None %}{% if o.marge_pct >= 25 %}mg-good{% elif o.marge_pct >= 10 %}mg-warn{% else %}mg-crit{% endif %}{% endif %}" data-marge="{{ o.pk }}">{% if o.marge_pct is None %}—{% else %}{{ o.marge_pct }} %{% endif %}</td>
             <td>
-              <select data-pk="{{ o.pk }}" data-field="statut_envoi">
+              <select data-pk="{{ o.pk }}" data-field="statut_envoi" data-spill="{{ o.pk }}">
                 {% for val, lbl in statuts %}<option value="{{ val }}" {% if o.statut_envoi == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
               </select>
             </td>
@@ -169,20 +301,38 @@
                 {% for val, lbl in transporteurs %}<option value="{{ val }}" {% if o.transporteur == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
               </select>
             </td>
-            <td class="edit" data-pk="{{ o.pk }}" data-field="tracking" contenteditable="true">{{ o.tracking }}</td>
+            <td style="white-space:nowrap">
+              <span class="edit" data-pk="{{ o.pk }}" data-field="tracking" contenteditable="true" style="min-width:110px;display:inline-block">{{ o.tracking }}</span>
+              {% if o.tracking_url %}<a href="{{ o.tracking_url }}" target="_blank" rel="noopener" class="track" title="Suivre le colis"> ↗</a>{% endif %}
+            </td>
             <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="12" class="empty">Aucune commande enregistrée. Ajoute-en via l'admin ou <code>manage.py vinted_order</code>.</td></tr>
+          <tr><td colspan="13" class="empty">Aucune commande. Ajoute-en via <code>manage.py vinted_order</code>.</td></tr>
         {% endfor %}
         </tbody>
+        {% if recents %}
+        <tfoot>
+          <tr>
+            <td colspan="5">Total</td>
+            <td class="num">{{ kpis.cout|floatformat:2 }} €</td>
+            <td class="num">{{ kpis.ca|floatformat:2 }} €</td>
+            <td class="num benef {% if kpis.benefice < 0 %}neg{% endif %}">{{ kpis.benefice|floatformat:2 }} €</td>
+            <td class="num">{% if kpis.marge is None %}—{% else %}{{ kpis.marge }} %{% endif %}</td>
+            <td colspan="4"></td>
+          </tr>
+        </tfoot>
+        {% endif %}
       </table>
     </div>
+  </div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function () {
+  /* ── Inline edit ── */
   function csrf() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
     return m ? m[1] : "";
@@ -206,24 +356,98 @@
         const b = row.querySelector("[data-bene]");
         const m = row.querySelector("[data-marge]");
         if (b) { b.textContent = d.benefice + " €"; b.classList.toggle("neg", parseFloat(d.benefice) < 0); }
-        if (m) m.textContent = d.marge;
+        if (m) {
+          m.textContent = d.marge;
+          m.classList.remove("mg-good", "mg-warn", "mg-crit");
+          const pct = parseFloat(d.marge);
+          if (!isNaN(pct)) m.classList.add(pct >= 25 ? "mg-good" : pct >= 10 ? "mg-warn" : "mg-crit");
+        }
+        /* update row filter attr */
+        if (field === "statut_envoi") row.dataset.statut = value;
+        if (field === "fournisseur") row.dataset.four = value;
+      }
+      if (d.tracking_url !== undefined) {
+        const trackCell = row && row.querySelector(`[data-field="tracking"]`);
+        if (trackCell) {
+          let link = trackCell.nextElementSibling;
+          if (d.tracking_url) {
+            if (!link || link.tagName !== "A") { link = document.createElement("a"); link.className = "track"; link.target = "_blank"; link.rel = "noopener"; link.title = "Suivre le colis"; link.textContent = " ↗"; trackCell.insertAdjacentElement("afterend", link); }
+            link.href = d.tracking_url;
+          } else if (link && link.tagName === "A") { link.remove(); }
+        }
       }
     }).catch(() => flash(el, false));
   }
-  // Cellules contenteditable : sauvegarde à la perte de focus.
-  document.querySelectorAll("td.edit[contenteditable]").forEach(el => {
+
+  /* Cellules contenteditable : save on blur */
+  document.querySelectorAll("td.edit[contenteditable], span.edit[contenteditable]").forEach(el => {
     let orig = el.textContent.trim();
     el.addEventListener("focus", () => { orig = el.textContent.trim(); });
     el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); el.blur(); } });
-    el.addEventListener("blur", () => {
-      const v = el.textContent.trim();
-      if (v !== orig) save(el, el.dataset.field, v);
-    });
+    el.addEventListener("blur", () => { const v = el.textContent.trim(); if (v !== orig) save(el, el.dataset.field, v); });
   });
-  // Selects + date : sauvegarde au changement.
+
+  /* Selects + dates : save on change */
   document.querySelectorAll("table.orders select[data-field], table.orders input[data-field]").forEach(el => {
     el.addEventListener("change", () => save(el, el.dataset.field, el.value));
   });
+
+  /* ── Filtre / recherche table ── */
+  const tbody = document.querySelector("#orders-table tbody");
+  const countEl = document.getElementById("tbl-count");
+  function applyFilter() {
+    const s = (document.getElementById("filter-statut").value || "").toLowerCase();
+    const f = (document.getElementById("filter-four").value || "").toLowerCase();
+    const q = (document.getElementById("tbl-search").value || "").toLowerCase();
+    let vis = 0;
+    tbody.querySelectorAll("tr[data-row]").forEach(row => {
+      const matchS = !s || row.dataset.statut === s;
+      const matchF = !f || row.dataset.four === f;
+      const matchQ = !q || row.textContent.toLowerCase().includes(q);
+      const show = matchS && matchF && matchQ;
+      row.style.display = show ? "" : "none";
+      if (show) vis++;
+    });
+    if (countEl) countEl.textContent = `${vis} ligne${vis > 1 ? "s" : ""}`;
+  }
+  ["filter-statut", "filter-four", "tbl-search"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", applyFilter);
+  });
+  applyFilter();
+
+  /* ── Tri des colonnes ── */
+  let sortState = { col: -1, dir: 1 };
+  document.querySelectorAll("th.sort").forEach(th => {
+    th.addEventListener("click", () => {
+      const col = +th.dataset.col;
+      const type = th.dataset.type || "text";
+      if (sortState.col === col) sortState.dir *= -1;
+      else { sortState.col = col; sortState.dir = 1; }
+      document.querySelectorAll("th.sort").forEach(h => h.classList.remove("asc", "desc"));
+      th.classList.add(sortState.dir === 1 ? "asc" : "desc");
+      const rows = [...tbody.querySelectorAll("tr[data-row]")];
+      rows.sort((a, b) => {
+        const av = cellVal(a, col, type), bv = cellVal(b, col, type);
+        if (av === bv) return 0;
+        return (av < bv ? -1 : 1) * sortState.dir;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+  function cellVal(row, col, type) {
+    const td = row.querySelectorAll("td")[col];
+    if (!td) return "";
+    let raw = "";
+    const sel = td.querySelector("select");
+    const inp = td.querySelector("input[type=date]");
+    if (sel) raw = sel.options[sel.selectedIndex]?.text || "";
+    else if (inp) raw = inp.value || "";
+    else raw = td.textContent.trim();
+    if (type === "num") return parseFloat(raw.replace(/[^0-9.,-]/g, "").replace(",", ".")) || -Infinity;
+    if (type === "date") return raw || "";
+    return raw.toLowerCase();
+  }
 })();
 </script>
 {% endblock %}

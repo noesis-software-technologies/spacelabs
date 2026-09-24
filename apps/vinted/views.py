@@ -78,6 +78,7 @@ def dashboard(request):
         "par_statut": par_statut,
         "par_plateforme": par_plateforme,
         "statuts": STATUTS_ENVOI,
+        "plateformes": PLATEFORMES,
         "transporteurs": TRANSPORTEURS,
         "fournisseurs": list(Fournisseur.objects.filter(actif=True)),
         "sans_suivi": [o for o in orders
@@ -177,6 +178,33 @@ def order_tracking(request, pk):
 
 
 # ── Entrepôt (stock non listé) ──
+@login_required
+@require_POST
+def order_create(request):
+    """Crée une nouvelle commande depuis le formulaire d'ajout rapide du dashboard."""
+    titre = (request.POST.get("titre") or "").strip()
+    if not titre:
+        return redirect("vinted:dashboard")
+    prix_vente_raw = (request.POST.get("prix_vente") or "").strip()
+    prix_achat_raw = (request.POST.get("prix_achat") or "").strip()
+    try:
+        prix_vente = Decimal(prix_vente_raw) if prix_vente_raw else None
+    except InvalidOperation:
+        prix_vente = None
+    try:
+        prix_achat = Decimal(prix_achat_raw) if prix_achat_raw else None
+    except InvalidOperation:
+        prix_achat = None
+    VintedOrder.objects.create(
+        titre=titre,
+        prix_vente=prix_vente,
+        prix_achat=prix_achat,
+        date_vente=timezone.localdate(),
+        plateforme=request.POST.get("plateforme") or "vinted",
+    )
+    return redirect("vinted:dashboard")
+
+
 @login_required
 def entrepot(request):
     """Vue entrepôt : articles achetés pas encore listés + leur devenir."""

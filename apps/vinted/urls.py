@@ -6,6 +6,7 @@ app_name = "vinted"
 
 urlpatterns = [
     path("", views.dashboard, name="dashboard"),
+    path("commandes/ajouter/", views.order_create, name="order_create"),
     path("commandes/<int:pk>/expedier/", views.order_ship, name="order_ship"),
     path("commandes/<int:pk>/livre/", views.order_delivered, name="order_delivered"),
     path("commandes/<int:pk>/suivi/", views.order_tracking, name="order_tracking"),
