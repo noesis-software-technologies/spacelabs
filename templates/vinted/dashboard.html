@@ -121,6 +121,9 @@
   .lines-total{display:flex;justify-content:space-between;padding:.3rem .5rem;font:.66rem var(--mono);border-top:1px solid var(--border);background:color-mix(in srgb,var(--accent) 6%,transparent)}
   .lines-total .lv{font-weight:600;color:var(--accent)}
   .line-thumb{width:26px;height:26px;border-radius:4px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+  td.line-pa-cell{cursor:text;text-align:right;outline:none;border-radius:4px;transition:background .15s}
+  td.line-pa-cell:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+  td.line-pa-cell:focus{background:var(--bg);outline:1px solid var(--accent)}
   .tri-btn{cursor:pointer;font:.56rem var(--mono);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);border-radius:4px;padding:.1rem .35rem;margin-left:4px;white-space:nowrap}
   .tri-btn::after{content:" ▸";font-size:.8em;transition:transform .15s;display:inline-block}
   tr[data-open="1"] .tri-btn::after{transform:rotate(90deg)}
@@ -322,7 +325,7 @@
           {%    endif %}
           {%  endwith %}
           {%  endwith %}
-            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles">{{ o.lignes.count }}</button>{% endif %}</td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles">{{ o.lignes.count }}</button>{% elif o.lignes.count == 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="Voir / éditer le détail">✎</button>{% endif %}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
@@ -341,23 +344,25 @@
             </td>
             <td><input type="date" data-pk="{{ o.pk }}" data-field="date_vente" value="{{ o.date_vente|date:'Y-m-d' }}"></td>
           </tr>
-          {% if o.lignes.count > 1 %}
-          <tr class="lines-row" id="lines-{{ o.pk }}">
+          {% if o.lignes.count >= 1 %}
+          <tr class="lines-row {% if o.lignes.count > 1 %}{% else %}lines-single{% endif %}" id="lines-{{ o.pk }}">
             <td colspan="8">
               <div class="lines-inner">
                 <table class="lines-tbl">
-                  <thead><tr><th>Article</th><th>Vente €</th><th>Achat €</th><th>Bénéfice</th></tr></thead>
+                  <thead><tr><th>Article</th><th>Vente €</th><th>Achat € <span style="font:.5rem var(--mono);color:var(--faint);font-weight:400">(✎ éditable)</span></th><th>Bénéfice</th></tr></thead>
                   <tbody>
                   {% for l in o.lignes.all %}
-                    <tr>
+                    {% with pa_eff=l.prix_achat_effectif %}
+                    <tr data-lpk="{{ l.pk }}">
                       <td>
                         {% if l.stock_item and l.stock_item.photo %}<img class="line-thumb" src="{{ l.stock_item.photo }}" alt="" loading="lazy">{% endif %}
                         {{ l.designation|default:"—" }}
                       </td>
                       <td>{% if l.prix_vente_unitaire %}{{ l.prix_vente_unitaire|floatformat:2 }}{% else %}—{% endif %}</td>
-                      <td style="color:var(--faint)">{% if l.prix_achat_unitaire %}{{ l.prix_achat_unitaire|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
-                      <td class="benef {% if l.benefice_ligne < 0 %}neg{% endif %}">{% if l.prix_achat_unitaire %}{% if l.benefice_ligne >= 0 %}+{% endif %}{{ l.benefice_ligne|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
+                      <td class="line-pa-cell" data-lpk="{{ l.pk }}" contenteditable="true" title="Modifie le prix d'achat unitaire — Enter pour valider">{% if pa_eff %}{{ pa_eff|floatformat:2 }}{% else %}<em style="color:var(--crit)">?</em>{% endif %}</td>
+                      <td class="benef line-bene-{{ l.pk }} {% if l.benefice_ligne < 0 %}neg{% endif %}">{% if pa_eff is not None %}{% if l.benefice_ligne >= 0 %}+{% endif %}{{ l.benefice_ligne|floatformat:2 }}{% else %}<em style="color:var(--faint)">?</em>{% endif %}</td>
                     </tr>
+                    {% endwith %}
                   {% endfor %}
                   </tbody>
                 </table>
@@ -501,5 +506,65 @@ function toggleLines(pk, btn) {
   if (tr) tr.dataset.open = open ? "1" : "0";
   if (btn) btn.blur();
 }
+
+/* ── Édition inline prix d'achat par ligne (line_update) ── */
+(function() {
+  function csrf() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : "";
+  }
+  function flashCell(el, ok) {
+    el.style.background = ok ? "color-mix(in srgb,var(--good) 18%,transparent)" : "color-mix(in srgb,var(--crit) 18%,transparent)";
+    setTimeout(() => el.style.background = "", 1200);
+  }
+
+  document.addEventListener("focusin", e => {
+    const el = e.target.closest(".line-pa-cell");
+    if (el) el.dataset.orig = el.textContent.trim();
+  });
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.closest(".line-pa-cell")) {
+      e.preventDefault();
+      e.target.closest(".line-pa-cell").blur();
+    }
+  });
+
+  document.addEventListener("focusout", e => {
+    const el = e.target.closest(".line-pa-cell");
+    if (!el) return;
+    const val = el.textContent.trim();
+    const orig = el.dataset.orig || "";
+    if (val === orig) return;
+    const lpk = el.dataset.lpk;
+    fetch(`/vinted/lignes/${lpk}/update/`, {
+      method: "POST",
+      headers: { "X-CSRFToken": csrf(), "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ value: val }),
+    }).then(r => r.json()).then(d => {
+      if (!d.ok) { flashCell(el, false); el.textContent = orig; return; }
+      flashCell(el, true);
+      el.textContent = d.prix_achat_effectif || val;
+      /* Met à jour la cellule bénéfice de la ligne */
+      const beneEl = document.querySelector(`.line-bene-${lpk}`);
+      if (beneEl && d.benefice_ligne !== undefined) {
+        const bv = parseFloat(d.benefice_ligne);
+        beneEl.textContent = (bv >= 0 ? "+" : "") + d.benefice_ligne;
+        beneEl.classList.toggle("neg", bv < 0);
+      }
+      /* Met à jour le bénéfice total de la commande dans la table principale */
+      const row = el.closest("tr.lines-row");
+      if (row && d.order_benefice !== undefined) {
+        const ordPk = row.id.replace("lines-", "");
+        const bCell = document.querySelector(`[data-bene="${ordPk}"]`);
+        if (bCell) {
+          const ov = parseFloat(d.order_benefice);
+          bCell.textContent = d.order_benefice + " €";
+          bCell.classList.toggle("neg", ov < 0);
+        }
+      }
+    }).catch(() => { flashCell(el, false); el.textContent = orig; });
+  });
+})();
 </script>
 {% endblock %}

@@ -22,7 +22,7 @@ _EDIT_CHOICE = {
 }
 
 # Entrepôt : champs éditables en ligne.
-_STK_TEXT = {"nom", "reference", "gradeur", "notes"}
+_STK_TEXT = {"nom", "reference", "gradeur", "grade_note", "notes"}
 _STK_DECIMAL = {"prix_achat"}
 _STK_INT = {"quantite"}
 _STK_DATE = {"date_achat", "date_reception"}
@@ -288,7 +288,50 @@ def stock_update(request, pk):
     except (InvalidOperation, ValueError):
         return JsonResponse({"ok": False, "error": "format invalide"}, status=400)
     item.save()
-    return JsonResponse({"ok": True, "cout_total": f"{item.cout_total:.2f}"})
+    # Recalcule les totaux des commandes liées quand le prix d'achat change.
+    updated_orders = {}
+    if field == "prix_achat":
+        ligne = getattr(item, "ligne", None)
+        if ligne and ligne.prix_achat_unitaire is None:
+            ordre = ligne.order
+            ordre.recalculer_totaux()
+            updated_orders[ordre.pk] = {
+                "benefice": f"{ordre.benefice:.2f}",
+                "marge": "—" if ordre.marge_pct is None else f"{ordre.marge_pct} %",
+            }
+    return JsonResponse({
+        "ok": True,
+        "cout_total": f"{item.cout_total:.2f}",
+        "updated_orders": updated_orders,
+    })
+
+
+@login_required
+@require_POST
+def line_update(request, pk):
+    """Override prix d'achat unitaire sur une SaleOrderLine.
+
+    Si value est vide → supprime l'override (retour au StockItem.prix_achat).
+    Renvoie le bénéfice/marge recalculés de la commande parente."""
+    ligne = get_object_or_404(SaleOrderLine, pk=pk)
+    val = (request.POST.get("value") or "").strip()
+    try:
+        if val == "":
+            ligne.prix_achat_unitaire = None
+        else:
+            ligne.prix_achat_unitaire = Decimal(val)
+    except InvalidOperation:
+        return JsonResponse({"ok": False, "error": "format invalide"}, status=400)
+    ligne.save(update_fields=["prix_achat_unitaire"])
+    ordre = ligne.order
+    ordre.recalculer_totaux()
+    return JsonResponse({
+        "ok": True,
+        "prix_achat_effectif": str(ligne.prix_achat_effectif or ""),
+        "benefice_ligne": f"{ligne.benefice_ligne:.2f}",
+        "order_benefice": f"{ordre.benefice:.2f}",
+        "order_marge": "—" if ordre.marge_pct is None else f"{ordre.marge_pct} %",
+    })
 
 
 # ── Duesenberg — Telegram Mini-App ──────────────────────────────────────────
@@ -327,16 +370,19 @@ def duesenberg_api(request):
 
     def ligne_repr(l):
         pv = float(l.prix_vente_unitaire) if l.prix_vente_unitaire else None
-        pa = float(l.prix_achat_unitaire) if l.prix_achat_unitaire else None
-        benef_l = float(l.benefice_ligne) if l.prix_achat_unitaire else None
+        pa_eff = l.prix_achat_effectif
+        pa = float(pa_eff) if pa_eff is not None else None
+        benef_l = float(l.benefice_ligne) if (pv is not None and pa is not None) else None
         photo = (l.stock_item.photo if l.stock_item and l.stock_item.photo else "")
         return {
+            "id": l.pk,
             "designation": l.designation or "—",
             "prix_vente": round(pv, 2) if pv is not None else None,
             "prix_achat": round(pa, 2) if pa is not None else None,
             "benefice": round(benef_l, 2) if benef_l is not None else None,
             "quantite": l.quantite,
             "photo": photo,
+            "stock_item_id": l.stock_item_id,
         }
 
     def order_repr(o):

@@ -14,6 +14,7 @@ urlpatterns = [
     path("entrepot/", views.entrepot, name="entrepot"),
     path("entrepot/ajouter/", views.stock_add, name="stock_add"),
     path("entrepot/<int:pk>/update/", views.stock_update, name="stock_update"),
+    path("lignes/<int:pk>/update/", views.line_update, name="line_update"),
     # Duesenberg — Telegram Mini-App
     path("duesenberg/", views.duesenberg, name="duesenberg"),
     path("duesenberg/api/", views.duesenberg_api, name="duesenberg_api"),

@@ -293,6 +293,8 @@ class StockItem(models.Model):
                               db_index=True)
     gradeur = models.CharField(max_length=120, blank=True,
                                help_text="Ex. Collect Aura (BB) / CCC (Malakoff)")
+    grade_note = models.CharField(max_length=20, blank=True,
+                                  help_text="Note attribuée par le gradeur (ex. 9, 9.5, 10)")
     # Lien vers la fiche commerciale Vinted (rempli quand l'article est listé).
     listing = models.OneToOneField(
         "VintedListing", null=True, blank=True, on_delete=models.SET_NULL,
@@ -427,6 +429,21 @@ class SaleOrderLine(models.Model):
         super().save(*args, **kwargs)
 
     @property
+    def prix_achat_effectif(self):
+        """Prix d'achat réel : override de ligne si renseigné, sinon stock_item.prix_achat.
+
+        Source de vérité = l'entrepôt. L'override permet d'ajuster par ligne
+        sans toucher au StockItem (ex. lot avec prix réparti différemment)."""
+        if self.prix_achat_unitaire is not None:
+            return self.prix_achat_unitaire
+        if self.stock_item_id:
+            try:
+                return self.stock_item.prix_achat
+            except Exception:
+                pass
+        return None
+
+    @property
     def total_vente(self):
         from decimal import Decimal
         d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
@@ -436,10 +453,10 @@ class SaleOrderLine(models.Model):
     def total_achat(self):
         from decimal import Decimal
         d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
-        return d(self.prix_achat_unitaire) * self.quantite
+        return d(self.prix_achat_effectif) * self.quantite
 
     @property
     def benefice_ligne(self):
         from decimal import Decimal
         d = lambda x: Decimal(str(x)) if x is not None else Decimal("0")  # noqa: E731
-        return (d(self.prix_vente_unitaire) - d(self.prix_achat_unitaire)) * self.quantite
+        return (d(self.prix_vente_unitaire) - d(self.prix_achat_effectif)) * self.quantite
