@@ -1,310 +1,653 @@
-{% extends "base.html" %}
-{% block title %}Intake Card Show{% endblock %}
-{% block content %}
-<style>
-  .intake-wrap {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 16px;
-  }
-  .intake-wrap h1 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-  .intake-wrap .sub {
-    font-size: .82rem;
-    color: var(--ds-muted, #888);
-    margin-bottom: 20px;
-  }
-  .succes-banner {
-    background: #16a34a22;
-    border: 1px solid #16a34a55;
-    color: #4ade80;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: .9rem;
-  }
-  .erreur-banner {
-    background: #dc262622;
-    border: 1px solid #dc262655;
-    color: #f87171;
-    padding: 10px 14px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: .9rem;
-  }
-  .field { margin-bottom: 14px; }
-  .field label {
-    display: block;
-    font-size: .82rem;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: var(--ds-muted, #aaa);
-  }
-  .field input, .field select {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    background: #1a1a2e;
-    color: #e8e8f0;
-    font-size: 1rem;
-  }
-  .field input:focus, .field select:focus {
-    outline: none;
-    border-color: #6366f1;
-  }
-  .photos-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .photo-field label {
-    display: block;
-    font-size: .82rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: var(--ds-muted, #aaa);
-  }
-  .photo-capture {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 140px;
-    border: 2px dashed #333;
-    border-radius: 10px;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    background: #111;
-    transition: border-color .2s;
-  }
-  .photo-capture:hover { border-color: #6366f1; }
-  .photo-capture input[type=file] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-  .photo-capture .icon { font-size: 2rem; pointer-events: none; }
-  .photo-capture .lbl { font-size: .75rem; color: #666; pointer-events: none; margin-top: 4px; }
-  .photo-capture img.preview {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  .prix-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-  }
-  .btn-primary {
-    flex: 1;
-    padding: 12px;
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .btn-secondary {
-    flex: 1;
-    padding: 12px;
-    background: #1a1a2e;
-    color: #a0a0c0;
-    border: 1px solid #333;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-  .btn-primary:hover { background: #4f46e5; }
-  .btn-secondary:hover { background: #252545; }
-</style>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Card Intake</title>
+  <style>
+    :root {
+      --bg: #0a0a14;
+      --surface: #12121e;
+      --surface2: #1a1a2e;
+      --border: rgba(255,255,255,.08);
+      --accent: #6366f1;
+      --accent2: #8b5cf6;
+      --green: #22c55e;
+      --muted: #6b7280;
+      --text: #f0f0fa;
+      --text2: #a1a1b5;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      overscroll-behavior: none;
+    }
 
-<div class="intake-wrap">
-  <h1>📷 Intake card show</h1>
-  <p class="sub">Photo recto + verso → article créé dans l'entrepôt → étiquette imprimée.</p>
+    /* ── Layout ── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .header {
+      padding: 16px 20px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .header-title { font-size: 1.05rem; font-weight: 700; }
+    .header-sub { font-size: .72rem; color: var(--muted); margin-top: 1px; }
 
-  {% if succes %}
-    <div class="succes-banner">✓ {{ succes }}</div>
-  {% endif %}
-  {% if erreur %}
-    <div class="erreur-banner">⚠ {{ erreur }}</div>
-  {% endif %}
+    /* ── Stepper ── */
+    .stepper {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      gap: 0;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+    .step-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700;
+      color: var(--muted);
+      transition: all .3s ease;
+      flex-shrink: 0;
+    }
+    .step-dot.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    .step-dot.done {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+    .step-label { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+    .step-label.active { color: var(--text); font-weight: 600; }
+    .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 6px; }
+    .step-line.done { background: var(--green); }
 
-  <form method="post" enctype="multipart/form-data" id="intake-form">
-    {% csrf_token %}
+    /* ── Content ── */
+    .content {
+      flex: 1;
+      padding: 16px 20px;
+      overflow-y: auto;
+    }
 
-    <div class="field">
-      <label>Nom de la carte *</label>
-      <input type="text" name="nom" placeholder="ex. Pikachu 017/101 JPN" required autocomplete="off">
+    /* ── Photo capture ── */
+    .photo-section { margin-bottom: 20px; }
+    .section-label {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-card {
+      position: relative;
+      aspect-ratio: 2.5/3.5;
+      border-radius: 14px;
+      border: 2px dashed var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .photo-card:active { transform: scale(.97); }
+    .photo-card.has-photo { border-style: solid; border-color: var(--accent); }
+    .photo-card input[type=file] {
+      position: absolute; inset: 0;
+      opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .photo-card img.preview {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .photo-card .p-icon { font-size: 2rem; pointer-events: none; }
+    .photo-card .p-lbl {
+      font-size: .72rem; color: var(--muted);
+      pointer-events: none; text-align: center; padding: 0 8px;
+    }
+    .photo-card .p-badge {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-size: .6rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    /* ── Detection panel ── */
+    .detect-panel {
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .detect-panel.visible { display: block; }
+
+    /* Progress bar */
+    .detect-progress {
+      height: 3px;
+      background: var(--surface2);
+      position: relative;
+      overflow: hidden;
+    }
+    .detect-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      width: 0%;
+      transition: width .4s ease;
+      position: relative;
+    }
+    .detect-progress-bar.indeterminate {
+      width: 30%;
+      animation: slide 1.4s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+
+    /* Skeleton */
+    .skeleton-body { padding: 16px; }
+    .skeleton-line {
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--surface2) 25%, #252540 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      margin-bottom: 10px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-line.w-3-4 { width: 75%; }
+    .skeleton-line.w-1-2 { width: 50%; }
+    .skeleton-line.w-full { width: 100%; }
+    .skeleton-label {
+      font-size: .72rem; color: var(--muted);
+      margin-bottom: 6px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Result card */
+    .result-body { padding: 16px; display: none; }
+    .result-body.visible { display: block; }
+    .result-nom { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+    .result-sub { font-size: .8rem; color: var(--text2); margin-bottom: 12px; }
+    .result-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chip {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .chip.accent { background: rgba(99,102,241,.15); color: #a5b4fc; border-color: rgba(99,102,241,.3); }
+    .chip.green { background: rgba(34,197,94,.1); color: #4ade80; border-color: rgba(34,197,94,.25); }
+
+    /* Prix block */
+    .prix-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .prix-item {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+    .prix-item .label { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+    .prix-item .val { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+    .prix-item .val.accent { color: #a5b4fc; }
+    .prix-item.full-width { grid-column: 1 / -1; }
+
+    .cm-link {
+      display: block;
+      text-align: center;
+      padding: 10px;
+      background: rgba(99,102,241,.1);
+      border: 1px solid rgba(99,102,241,.25);
+      border-radius: 10px;
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    /* Status */
+    .detect-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.2s ease infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(.7); }
+    }
+    .status-dot.done { background: var(--green); animation: none; }
+    .status-dot.error { background: #ef4444; animation: none; }
+    .status-text { font-size: .82rem; color: var(--text2); }
+
+    /* ── Form fields ── */
+    .fields-section { margin-bottom: 20px; }
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: .95rem;
+      transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .prix-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── Actions ── */
+    .actions {
+      position: sticky;
+      bottom: 0;
+      background: var(--bg);
+      padding: 14px 20px calc(14px + var(--safe-bottom));
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: .95rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(99,102,241,.3);
+    }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Success banner ── */
+    .banner {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: .85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .banner.success { background: rgba(34,197,94,.1); border: 1px solid rgba(34,197,94,.25); color: #4ade80; }
+    .banner.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #f87171; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-icon">📷</div>
+    <div>
+      <div class="header-title">Card Show Intake</div>
+      <div class="header-sub">Scan · Identify · Price · Label</div>
     </div>
-    <div class="field">
-      <label>Référence / numéro</label>
-      <input type="text" name="reference" placeholder="017/101 — 30th Cel." autocomplete="off">
-    </div>
+  </header>
 
-    <div class="photos-row">
-      <div class="photo-field">
-        <label>📷 Recto</label>
-        <div class="photo-capture" id="wrap-recto">
-          <span class="icon">📷</span>
-          <span class="lbl">Prendre une photo</span>
-          <input type="file" name="image_recto" accept="image/*" capture="environment"
-                 onchange="previewPhoto(this, 'wrap-recto')">
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step">
+      <div class="step-dot active" id="dot-1">1</div>
+      <span class="step-label active" id="lbl-1">Photo</span>
+    </div>
+    <div class="step-line" id="line-1"></div>
+    <div class="step">
+      <div class="step-dot" id="dot-2">2</div>
+      <span class="step-label" id="lbl-2">Analyse</span>
+    </div>
+    <div class="step-line" id="line-2"></div>
+    <div class="step">
+      <div class="step-dot" id="dot-3">3</div>
+      <span class="step-label" id="lbl-3">Confirmer</span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    {% if succes %}
+    <div class="banner success">✓ {{ succes }}</div>
+    {% endif %}
+    {% if erreur %}
+    <div class="banner error">⚠ {{ erreur }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" id="intake-form">
+      {% csrf_token %}
+
+      <!-- Step 1: Photos -->
+      <div class="photo-section" id="section-photos">
+        <div class="section-label">Photos de la carte</div>
+        <div class="photo-grid">
+          <div class="photo-card" id="wrap-recto">
+            <span class="p-icon">📷</span>
+            <span class="p-lbl">Recto</span>
+            <div class="p-badge">Requis</div>
+            <input type="file" name="image_recto" accept="image/*" capture="environment"
+                   id="input-recto" onchange="onPhotoChange(this, 'recto')">
+          </div>
+          <div class="photo-card" id="wrap-verso">
+            <span class="p-icon">🔄</span>
+            <span class="p-lbl">Verso</span>
+            <input type="file" name="image_verso" accept="image/*" capture="environment"
+                   id="input-verso" onchange="onPhotoChange(this, 'verso')">
+          </div>
         </div>
       </div>
-      <div class="photo-field">
-        <label>🔄 Verso</label>
-        <div class="photo-capture" id="wrap-verso">
-          <span class="icon">🔄</span>
-          <span class="lbl">Prendre une photo</span>
-          <input type="file" name="image_verso" accept="image/*" capture="environment"
-                 onchange="previewPhoto(this, 'wrap-verso')">
+
+      <!-- Step 2: Detection panel -->
+      <div class="detect-panel" id="detect-panel">
+        <div class="detect-progress">
+          <div class="detect-progress-bar indeterminate" id="progress-bar"></div>
+        </div>
+        <div class="detect-status">
+          <div class="status-dot" id="status-dot"></div>
+          <span class="status-text" id="status-text">Identification de la carte…</span>
+        </div>
+
+        <!-- Skeleton (while loading) -->
+        <div class="skeleton-body" id="skeleton">
+          <div class="skeleton-label">Carte identifiée</div>
+          <div class="skeleton-line w-3-4"></div>
+          <div class="skeleton-line w-1-2"></div>
+          <div class="skeleton-label" style="margin-top:10px">Rareté · Langue · Numéro</div>
+          <div class="skeleton-line w-full"></div>
+          <div class="skeleton-label" style="margin-top:10px">Prix de marché</div>
+          <div class="skeleton-line w-3-4"></div>
+          <div class="skeleton-line w-1-2"></div>
+        </div>
+
+        <!-- Result (after detection) -->
+        <div class="result-body" id="result-body">
+          <div class="result-nom" id="r-nom">—</div>
+          <div class="result-sub" id="r-sub">—</div>
+          <div class="result-chips" id="r-chips"></div>
+          <div class="prix-block" id="r-prix"></div>
+          <a class="cm-link" id="r-cm-link" href="#" target="_blank" style="display:none">
+            Voir sur CardMarket →
+          </a>
         </div>
       </div>
-    </div>
 
-    <div class="prix-grid">
-      <div class="field">
-        <label>Prix affiché €</label>
-        <input type="number" name="prix_affiche" step="0.01" min="0" placeholder="25.00">
+      <!-- Step 3: Form fields -->
+      <div class="fields-section" id="section-fields">
+        <div class="section-label">Informations article</div>
+
+        <div class="field">
+          <label>Nom *</label>
+          <input type="text" name="nom" id="f-nom" placeholder="ex. Pikachu 017/101 JPN" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Référence / Numéro</label>
+          <input type="text" name="reference" id="f-ref" placeholder="017/101 — 30th Celebration" autocomplete="off">
+        </div>
+        <div class="prix-fields">
+          <div class="field">
+            <label>Prix affiché €</label>
+            <input type="number" name="prix_affiche" id="f-affiche" step="0.01" min="0" placeholder="25.00" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Prix achat €</label>
+            <input type="number" name="prix_achat" id="f-achat" step="0.01" min="0" placeholder="10.00" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Repli 1 €</label>
+            <input type="number" name="prix_repli_1" id="f-r1" step="0.01" min="0" placeholder="20.00" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label>Repli 2 €</label>
+            <input type="number" name="prix_repli_2" id="f-r2" step="0.01" min="0" placeholder="15.00" inputmode="decimal">
+          </div>
+        </div>
+        <div class="field">
+          <label>Devenir</label>
+          <select name="destin">
+            {% for v, l in destins %}<option value="{{ v }}" {% if v == "vente_directe" %}selected{% endif %}>{{ l }}</option>{% endfor %}
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label>Prix achat €</label>
-        <input type="number" name="prix_achat" step="0.01" min="0" placeholder="10.00">
-      </div>
-      <div class="field">
-        <label>Repli 1 €</label>
-        <input type="number" name="prix_repli_1" step="0.01" min="0" placeholder="20.00">
-      </div>
-      <div class="field">
-        <label>Repli 2 €</label>
-        <input type="number" name="prix_repli_2" step="0.01" min="0" placeholder="15.00">
-      </div>
-    </div>
 
-    <div class="field">
-      <label>Devenir</label>
-      <select name="destin">
-        {% for v, l in destins %}<option value="{{ v }}" {% if v == "vente_directe" %}selected{% endif %}>{{ l }}</option>{% endfor %}
-      </select>
-    </div>
+    </form>
+  </div>
 
-    <div class="actions">
-      <button type="submit" name="action" value="etiquette" class="btn-primary">
-        🏷️ Créer + étiquette
-      </button>
-      <button type="submit" name="action" value="continuer" class="btn-secondary">
-        ➕ Suivant
-      </button>
-    </div>
-  </form>
+  <!-- Actions -->
+  <div class="actions">
+    <button type="submit" form="intake-form" name="action" value="etiquette" class="btn btn-primary">
+      🏷️ Créer + étiquette
+    </button>
+    <button type="submit" form="intake-form" name="action" value="continuer" class="btn btn-ghost">
+      ➕ Suivant
+    </button>
+  </div>
 
-  {% if dernier_pk %}
-    <div style="margin-top:14px;text-align:center">
-      <a href="/vinted/entrepot/{{ dernier_pk }}/etiquette/" target="_blank"
-         style="color:#a78bfa;font-size:.85rem">
-        🏷️ Réimprimer l'étiquette du dernier article
-      </a>
-    </div>
-  {% endif %}
-</div>
-
-<div id="detect-status" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;font-size:.87rem;background:#1e1e3a;border:1px solid #333;color:#a0a0c0">
-  <span id="detect-msg">🔍 Analyse en cours…</span>
 </div>
 
 <script>
-function previewPhoto(input, wrapId) {
+const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('dot-' + i);
+    const lbl = document.getElementById('lbl-' + i);
+    if (i < n) { dot.className = 'step-dot done'; dot.textContent = '✓'; }
+    else if (i === n) { dot.className = 'step-dot active'; dot.textContent = i; }
+    else { dot.className = 'step-dot'; dot.textContent = i; }
+    lbl.className = 'step-label' + (i === n ? ' active' : '');
+  });
+  [1,2].forEach(i => {
+    document.getElementById('line-' + i).className = 'step-line' + (i < n ? ' done' : '');
+  });
+}
+
+function onPhotoChange(input, side) {
   if (!input.files || !input.files[0]) return;
-  const wrap = document.getElementById(wrapId);
-  const old = wrap.querySelector('img.preview');
-  if (old) old.remove();
-  const url = URL.createObjectURL(input.files[0]);
+  const wrap = document.getElementById('wrap-' + side);
+  wrap.querySelector('img.preview')?.remove();
   const img = document.createElement('img');
   img.className = 'preview';
-  img.src = url;
+  img.src = URL.createObjectURL(input.files[0]);
   wrap.appendChild(img);
-  wrap.querySelectorAll('.icon, .lbl').forEach(el => el.style.display = 'none');
-  // Auto-detect uniquement sur le recto
-  if (wrapId === 'wrap-recto') {
-    detectCard(input.files[0]);
-  }
+  wrap.classList.add('has-photo');
+  wrap.querySelectorAll('.p-icon, .p-lbl').forEach(el => el.style.opacity = '0');
+  if (side === 'recto') detectCard(input.files[0]);
 }
 
 function detectCard(file) {
-  const status = document.getElementById('detect-status');
-  const msg = document.getElementById('detect-msg');
-  status.style.display = 'block';
-  msg.textContent = '🔍 Identification de la carte… (15-30 s)';
+  const panel = document.getElementById('detect-panel');
+  const skeleton = document.getElementById('skeleton');
+  const resultBody = document.getElementById('result-body');
+  const progressBar = document.getElementById('progress-bar');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+
+  // Show panel, reset state
+  panel.classList.add('visible');
+  skeleton.style.display = 'block';
+  resultBody.classList.remove('visible');
+  progressBar.className = 'detect-progress-bar indeterminate';
+  statusDot.className = 'status-dot';
+  statusText.textContent = 'Identification de la carte… (15–30 s)';
+  setStep(2);
+
+  // Scroll to panel
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const fd = new FormData();
   fd.append('image', file);
-  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  fd.append('csrfmiddlewaretoken', CSRF);
 
+  const start = Date.now();
   fetch('/cardshow/detect/', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
+      skeleton.style.display = 'none';
+      progressBar.className = 'detect-progress-bar';
+
       if (d.erreur) {
-        msg.textContent = '⚠️ ' + d.erreur;
+        progressBar.style.width = '100%';
+        progressBar.style.background = '#ef4444';
+        statusDot.className = 'status-dot error';
+        statusText.textContent = '⚠️ ' + d.erreur;
+        setStep(1);
         return;
       }
-      // Pré-remplir les champs
-      const set = v => v !== null && v !== undefined ? String(v) : '';
-      if (d.nom || d.nom_fr) {
-        const nom = document.querySelector('[name=nom]');
-        if (!nom.value) nom.value = d.nom_fr || d.nom || '';
-      }
-      if (d.numero) {
-        const ref = document.querySelector('[name=reference]');
-        if (!ref.value) ref.value = [d.numero, d.serie].filter(Boolean).join(' — ');
-      }
+
+      progressBar.style.width = '100%';
+      statusDot.className = 'status-dot done';
+      const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+      statusText.textContent = `✓ Identifiée en ${elapsed}s`;
+
+      // Fill result card
+      const nom = d.nom_fr || d.nom || '?';
+      document.getElementById('r-nom').textContent = nom;
+      document.getElementById('r-sub').textContent =
+        [d.serie, d.numero].filter(Boolean).join(' · ') || '—';
+
+      // Chips
+      const chips = document.getElementById('r-chips');
+      chips.innerHTML = '';
+      if (d.langue) chips.innerHTML += `<span class="chip">${d.langue}</span>`;
+      if (d.rarete) chips.innerHTML += `<span class="chip accent">${d.rarete}</span>`;
+      if (d.etat_estime) chips.innerHTML += `<span class="chip green">${d.etat_estime}</span>`;
+      if (d.confiance) chips.innerHTML += `<span class="chip">Confiance : ${d.confiance}</span>`;
+
+      // Prix block
+      const prixBlock = document.getElementById('r-prix');
+      prixBlock.innerHTML = '';
       if (d.prix_estime_eur) {
-        const pa = document.querySelector('[name=prix_affiche]');
-        if (!pa.value) pa.value = d.prix_estime_eur;
+        prixBlock.innerHTML += `<div class="prix-item"><div class="label">Estimé Claude</div><div class="val accent">${d.prix_estime_eur} €</div></div>`;
+      }
+      const cm = d.cardmarket || {};
+      if (!cm.erreur) {
+        if (cm.tendance) {
+          prixBlock.innerHTML += `<div class="prix-item"><div class="label">Tendance CM</div><div class="val">${cm.tendance} €</div></div>`;
+        }
+        if (cm.bas && cm.haut) {
+          prixBlock.innerHTML += `<div class="prix-item full-width"><div class="label">Fourchette CM</div><div class="val">${cm.bas} – ${cm.haut} €</div></div>`;
+        }
       }
 
-      // Afficher résumé + CardMarket
-      let html = `✅ <strong>${d.nom_fr || d.nom || '?'}</strong>`;
-      if (d.numero) html += ` · ${d.numero}`;
-      if (d.serie) html += ` · ${d.serie}`;
-      if (d.langue) html += ` · ${d.langue}`;
-      if (d.rarete) html += `<br>Rareté : ${d.rarete}`;
-      if (d.prix_estime_eur) html += ` · Estimé : <strong>${d.prix_estime_eur} €</strong>`;
-      if (d.confiance) html += ` (confiance : ${d.confiance})`;
-      if (d.cardmarket && !d.cardmarket.erreur) {
-        const cm = d.cardmarket;
-        html += '<br>CardMarket : ';
-        if (cm.tendance) html += `tendance <strong>${cm.tendance} €</strong>`;
-        if (cm.bas) html += ` · fourchette ${cm.bas}–${cm.haut} €`;
-        if (cm.url) html += ` · <a href="${cm.url}" target="_blank" style="color:#a78bfa">voir →</a>`;
-      } else if (d.cardmarket && d.cardmarket.erreur) {
-        html += `<br><span style="color:#666">CardMarket : ${d.cardmarket.erreur}</span>`;
+      const cmLink = document.getElementById('r-cm-link');
+      if (cm.url) { cmLink.href = cm.url; cmLink.style.display = 'block'; }
+
+      resultBody.classList.add('visible');
+
+      // Auto-fill form
+      const nomField = document.getElementById('f-nom');
+      if (!nomField.value) nomField.value = nom;
+      const refField = document.getElementById('f-ref');
+      if (!refField.value && (d.numero || d.serie)) {
+        refField.value = [d.numero, d.serie].filter(Boolean).join(' — ');
       }
-      msg.innerHTML = html;
-      status.style.background = '#0f2a1a';
-      status.style.borderColor = '#16a34a55';
+      const afficheField = document.getElementById('f-affiche');
+      const refPrice = cm.tendance || d.prix_estime_eur;
+      if (!afficheField.value && refPrice) afficheField.value = refPrice;
+
+      setStep(3);
+      // Scroll to form after short delay
+      setTimeout(() => {
+        document.getElementById('section-fields').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 600);
     })
     .catch(e => {
-      msg.textContent = '⚠️ Erreur réseau : ' + e.message;
+      skeleton.style.display = 'none';
+      statusDot.className = 'status-dot error';
+      statusText.textContent = '⚠️ Erreur réseau : ' + e.message;
+      progressBar.style.background = '#ef4444';
+      setStep(1);
     });
 }
 </script>
-{% endblock %}
+</body>
+</html>
