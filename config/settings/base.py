@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "apps.vinted",
     "apps.marketplaces",
     "apps.carreaux",
+    "apps.cardshow",
 ]
 
 MIDDLEWARE = [

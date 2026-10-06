@@ -39,6 +39,7 @@ urlpatterns = [
     path("comms/", include("apps.comms.urls")),
     path("prospection/", include("apps.prospection.urls")),
     path("carreaux/", include("apps.carreaux.urls")),
+    path("cardshow/", include("apps.cardshow.urls")),
     path("dashboard/", spacelabs_dashboard, name="dashboard"),
     path("dashboard/workspaces/", spacelabs_workspaces, name="dashboard_workspaces"),
     path("dashboard/usage/", spacelabs_usage, name="dashboard_usage"),

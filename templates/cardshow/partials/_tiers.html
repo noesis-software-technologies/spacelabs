@@ -1,0 +1,43 @@
+<div id="tiers-result">
+{% if erreur_saisie %}
+  <p class="err-msg">{{ erreur_saisie }}</p>
+{% elif tiers %}
+  <div class="kpis" style="margin-bottom:1.2rem">
+    <div class="kpi">
+      <b>{{ cout }} EUR</b>
+      <small>Coût unitaire (PA + frais)</small>
+    </div>
+  </div>
+  <table class="tier-table">
+    <thead>
+      <tr>
+        <th>Palier</th>
+        <th>Taux marque (PV)</th>
+        <th>Prix de vente</th>
+        <th>Marge brute</th>
+        <th>Taux marge (coût)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tiers %}
+      <tr class="tier-row tier-row--{{ t.taux_marque_pct }}">
+        <td class="tier-label">{{ t.label }}</td>
+        <td>{{ t.taux_marque_pct }} %</td>
+        <td class="tier-pv">
+          {% if t.erreur %}
+            <span class="err-inline">{{ t.erreur }}</span>
+          {% else %}
+            <strong>{{ t.pv }} EUR</strong>
+          {% endif %}
+        </td>
+        <td>{% if t.marge is not None %}{{ t.marge }} EUR{% endif %}</td>
+        <td>{% if t.taux_marge_cout_pct is not None %}{{ t.taux_marge_cout_pct }} %{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="tier-note">Formule : PV = Coût / (1 - taux marque) — arrondi au centime</p>
+{% else %}
+  <p class="tier-placeholder">Saisissez un PA pour voir les paliers de prix.</p>
+{% endif %}
+</div>

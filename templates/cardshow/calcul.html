@@ -1,0 +1,72 @@
+{% extends "dashboard/shell.html" %}
+{% load static %}
+{% block page_title %}Calcul prix{% endblock %}
+{% block h1 %}Card Show — Calcul de prix{% endblock %}
+{% block crumb %}$ cardshow --calcul{% endblock %}
+
+{% block extra_css %}
+  .calcul-wrap{display:grid;grid-template-columns:320px 1fr;gap:1.6rem;align-items:start}
+  .calcul-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem}
+  .form-row{margin-bottom:1rem}
+  .form-row label{display:block;font:.66rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:.4rem}
+  .form-row input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+    color:var(--ink);font:.9rem var(--font);padding:.45rem .7rem;transition:border-color .15s}
+  .form-row input:focus{outline:none;border-color:var(--ring)}
+  .form-hint{font:.62rem var(--mono);color:var(--faint);margin-top:.25rem}
+  .tier-table{width:100%;border-collapse:collapse;font:.84rem var(--font)}
+  .tier-table th{font:.6rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    text-align:left;padding:.4rem .8rem;border-bottom:1px solid var(--border)}
+  .tier-table td{padding:.55rem .8rem;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent)}
+  .tier-row:hover{background:var(--surface2)}
+  .tier-label{font:.75rem var(--mono);color:var(--muted)}
+  .tier-pv strong{font-size:1.05rem;letter-spacing:-.01em}
+  .tier-row--30 .tier-pv strong{color:var(--good)}
+  .tier-row--40 .tier-pv strong{color:var(--warn)}
+  .tier-row--50 .tier-pv strong{color:#60a5fa}
+  .tier-placeholder{color:var(--faint);font:.82rem var(--mono);padding:1.2rem 0}
+  .tier-note{font:.62rem var(--mono);color:var(--faint);margin-top:.8rem}
+  .err-msg{color:var(--crit);font:.82rem var(--mono);padding:.6rem 0}
+  .err-inline{color:var(--crit);font:.75rem var(--mono)}
+  .kpis{display:flex;gap:.6rem;flex-wrap:wrap}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem}
+  .kpi b{display:block;font-size:1.1rem;letter-spacing:-.02em;line-height:1.2;margin-bottom:.1rem}
+  .kpi small{font:.6rem var(--mono);color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+  @media(max-width:780px){.calcul-wrap{grid-template-columns:1fr}}
+{% endblock %}
+
+{% block content %}
+<div class="calcul-wrap">
+  <aside class="calcul-form">
+    <form
+      hx-post="{% url 'cardshow:apercu' %}"
+      hx-target="#tiers-result"
+      hx-swap="outerHTML"
+      hx-trigger="input delay:300ms, change"
+    >
+      {% csrf_token %}
+      <div class="form-row">
+        <label for="pa">Prix d'achat (PA)</label>
+        <input
+          id="pa" name="pa" type="text" inputmode="decimal"
+          placeholder="ex. 12.50" autocomplete="off" autofocus
+        >
+        <p class="form-hint">HT ou TTC — conserver la même base que le PV</p>
+      </div>
+      <div class="form-row">
+        <label for="frais">Frais unitaires</label>
+        <input
+          id="frais" name="frais" type="text" inputmode="decimal"
+          placeholder="ex. 1.80" autocomplete="off"
+        >
+        <p class="form-hint">Port, emballage, commission marketplace</p>
+      </div>
+    </form>
+  </aside>
+
+  <section>
+    <div id="tiers-result">
+      <p class="tier-placeholder">Saisissez un PA pour voir les paliers de prix.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
