@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from apps.common.ingress_auth import require_ingress_secret
 from apps.workspaces.models import Workspace
 
 from .models import GlobalBudget, MissionTokenBudget, OpenclawExchangeLog, RunLog
@@ -127,19 +128,32 @@ def openclaw_stats_stream(request):
 
 @csrf_exempt
 @require_POST
+@require_ingress_secret("COCKPIT_OPENCLAW_LOG_TOKEN", "X-Spacelabs-Runtime-Token")
 def openclaw_log_exchange(request):
     """Endpoint interne — enregistre un échange OpenClaw (appelé par le runtime)."""
     try:
         payload = json.loads(request.body)
-    except json.JSONDecodeError:
+    except (ValueError, UnicodeDecodeError):
         return JsonResponse({"error": "invalid json"}, status=400)
 
-    OpenclawExchangeLog.objects.create(
-        channel=payload.get("channel", "telegram"),
-        session_id=payload.get("session_id", ""),
-        message_id=payload.get("message_id", ""),
-        model_id=payload.get("model_id", "claude-sonnet-4-6"),
-        prompt_tokens=int(payload.get("prompt_tokens", 0)),
-        completion_tokens=int(payload.get("completion_tokens", 0)),
-    )
+    if not isinstance(payload, dict):
+        return JsonResponse({"error": "invalid payload"}, status=400)
+    values = {}
+    for field, default, limit in (
+        ("channel", "telegram", 32), ("session_id", "", 120),
+        ("message_id", "", 40), ("model_id", "claude-sonnet-4-6", 100),
+    ):
+        value = payload.get(field, default)
+        if not isinstance(value, str) or len(value) > limit:
+            return JsonResponse({"error": "invalid payload"}, status=400)
+        values[field] = value
+    for field in ("prompt_tokens", "completion_tokens"):
+        value = payload.get(field, 0)
+        # Preserve legacy decimal strings; reject floats, booleans and SQL overflow.
+        if isinstance(value, str) and value.isascii() and value.isdecimal() and len(value) <= 10:
+            value = int(value)
+        if type(value) is not int or not 0 <= value <= 2_147_483_647:
+            return JsonResponse({"error": "invalid token count"}, status=400)
+        values[field] = value
+    OpenclawExchangeLog.objects.create(**values)
     return JsonResponse({"status": "ok"})

@@ -11,13 +11,16 @@ from .savoir_faire_data import DOMAINES, METRIQUES, STACK
 
 _PRIVATE_PATH = Path(__file__).parents[2] / "SAVOIR_FAIRE_PRIVATE.json"
 
-_PRODUITS_JSON = json.dumps([
-    {"slug": p["slug"], "nom": p["nom"], "tagline": p["tagline"],
-     "categorie": p["categorie"], "couleur": p["couleur"], "url": p.get("url", ""),
-     "shot": static(f"vitrine/desktop/{p['slug']}.jpg"),
-     "shot_mobile": static(f"vitrine/screenshots/{p['slug']}.jpg")}
-    for p in PRODUITS
-])
+def _produits_json():
+    # Le manifeste n'existe pas encore pendant check/migrate avant collectstatic.
+    # Résoudre les URL au rendu ; cache_page conserve la réponse pendant 60 s.
+    return json.dumps([
+        {"slug": p["slug"], "nom": p["nom"], "tagline": p["tagline"],
+         "categorie": p["categorie"], "couleur": p["couleur"], "url": p.get("url", ""),
+         "shot": static(f"vitrine/desktop/{p['slug']}.jpg"),
+         "shot_mobile": static(f"vitrine/screenshots/{p['slug']}.jpg")}
+        for p in PRODUITS
+    ])
 
 
 @cache_page(60)
@@ -28,7 +31,7 @@ def landing(request):
     choice = request.GET.get("template") or getattr(settings, "LANDING_DEFAULT", "clean")
     template = "landing_showroom.html" if choice == "showroom" else "landing.html"
     return render(request, template, {
-        "produits_json": _PRODUITS_JSON,
+        "produits_json": _produits_json(),
         "produits_count": len(PRODUITS),
     })
 
