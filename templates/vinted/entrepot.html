@@ -61,7 +61,7 @@
         <thead><tr>
           <th class="th-img"></th>
           <th>Nom</th><th>Réf</th><th>Fournisseur</th><th>Source</th><th>Achat €</th><th>Qté</th><th>Coût</th>
-          <th>Devenir</th><th>Statut</th><th>Gradeur</th><th>Reçu le</th>
+          <th>Devenir</th><th>Statut</th><th>Gradeur</th><th>Note</th><th>Reçu le</th>
         </tr></thead>
         <tbody>
         {% for i in items %}
@@ -87,10 +87,11 @@
               <select data-pk="{{ i.pk }}" data-field="statut">{% for v,l in statuts_stock %}<option value="{{ v }}" {% if i.statut == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
             </td>
             <td class="edit" data-pk="{{ i.pk }}" data-field="gradeur" contenteditable="true">{{ i.gradeur }}</td>
+            <td class="edit" data-pk="{{ i.pk }}" data-field="grade_note" contenteditable="true">{{ i.grade_note }}</td>
             <td><input type="date" data-pk="{{ i.pk }}" data-field="date_reception" value="{{ i.date_reception|date:'Y-m-d' }}"></td>
           </tr>
         {% empty %}
-          <tr><td colspan="12" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
+          <tr><td colspan="13" class="empty">Stock vide. Ajoute un article ci-dessus.</td></tr>
         {% endfor %}
         </tbody>
       </table>

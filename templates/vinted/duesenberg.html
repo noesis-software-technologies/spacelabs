@@ -259,12 +259,48 @@
         <div class="hdr-sub" id="hdr-update">Chargement…</div>
       </div>
     </div>
-    <button class="refresh-btn" id="refreshBtn" title="Actualiser">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-    </button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button id="projBtn" title="Projection" onclick="toggleView('proj')"
+        style="padding:6px 12px;border-radius:8px;border:1.5px solid var(--accent-border);background:var(--accent-soft);font:700 .78rem var(--font);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;">
+        📊 Simulation
+      </button>
+      <button class="refresh-btn" id="refreshBtn" title="Actualiser">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      </button>
+    </div>
   </header>
 
+  <!-- Tab: Dashboard ventes -->
   <div id="content"><div class="loading"><span class="spinner"></span>Chargement…</div></div>
+
+  <!-- Tab: Projection commerciale (inline, no iframe) -->
+  <div id="proj-content" style="display:none;overflow-y:auto;height:calc(100vh - 56px);padding-bottom:40px;">
+    <!-- KPI bar -->
+    <div id="proj-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 14px;background:#1a1a2e;position:sticky;top:0;z-index:5;">
+      <div style="text-align:center;"><div id="pk-nb" style="font-size:1.05rem;font-weight:900;color:#fff;">—</div><div style="font-size:.6rem;color:#9ca3af;text-transform:uppercase;margin-top:2px;">Articles</div></div>
+      <div style="text-align:center;"><div id="pk-pa" style="font-size:1.05rem;font-weight:900;color:#fff;">—</div><div style="font-size:.6rem;color:#9ca3af;text-transform:uppercase;margin-top:2px;">Coût PA</div></div>
+      <div style="text-align:center;"><div id="pk-pv" style="font-size:1.05rem;font-weight:900;color:#4ade80;">—</div><div style="font-size:.6rem;color:#9ca3af;text-transform:uppercase;margin-top:2px;">CA projeté</div></div>
+      <div style="text-align:center;"><div id="pk-benef" style="font-size:1.05rem;font-weight:900;color:#4ade80;">—</div><div style="font-size:.6rem;color:#9ca3af;text-transform:uppercase;margin-top:2px;">Bénéfice</div></div>
+    </div>
+    <!-- Controls -->
+    <div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e9ecef;background:#fff;position:sticky;top:60px;z-index:4;">
+      <span style="font-size:.78rem;font-weight:600;color:#6c757d;">Marge</span>
+      <div style="display:flex;align-items:center;gap:4px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:7px;padding:5px 8px;">
+        <input type="number" id="proj-marge" value="40" min="0" max="999" step="1"
+          style="width:44px;border:none;background:transparent;font-size:.95rem;font-weight:800;color:#4f46e5;text-align:center;outline:none;"
+          oninput="projRefresh()">
+        <span style="font-size:.8rem;font-weight:700;color:#4f46e5;">%</span>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:5px;">
+        <button onclick="projSelectAll()" style="padding:4px 9px;border-radius:6px;border:none;background:#4f46e5;color:#fff;font-size:.72rem;font-weight:600;cursor:pointer;">Tout</button>
+        <button onclick="projSelectNone()" style="padding:4px 9px;border-radius:6px;border:none;background:#e9ecef;color:#1a1a2e;font-size:.72rem;font-weight:600;cursor:pointer;">Aucun</button>
+      </div>
+    </div>
+    <!-- Items list -->
+    <div id="proj-items" style="padding:8px 14px;display:flex;flex-direction:column;gap:5px;">
+      <div style="text-align:center;padding:30px;color:#adb5bd;font-size:.85rem;">Chargement…</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -400,8 +436,89 @@
       });
   }
 
+  let currentView = 'dashboard';
+  window.toggleView = function(view) {
+    if (view === 'proj' && currentView === 'proj') { view = 'dashboard'; }
+    currentView = view;
+    document.getElementById('content').style.display = view === 'dashboard' ? '' : 'none';
+    document.getElementById('proj-content').style.display = view === 'proj' ? '' : 'none';
+    const btn = document.getElementById('projBtn');
+    btn.style.background = view === 'proj' ? 'var(--accent-soft)' : 'var(--surface)';
+    btn.style.borderColor = view === 'proj' ? 'var(--accent-border)' : 'var(--border)';
+    document.getElementById('hdr-update').textContent = view === 'proj' ? 'Projection commerciale' : '';
+    if (view === 'dashboard') load();
+    if (view === 'proj') { if (!projItems.length) projLoad(); else projRefresh(); }
+  };
+
   document.getElementById('refreshBtn').addEventListener('click', load);
   load();
+
+  // ── Projection simulator (inline, no iframe) ──
+  let projItems = [], projSelected = new Set();
+  const STATUT_LBL = {en_transit:'En transit',recu:'Reçu',a_grader:'À grader',en_gradation:'En gradation',grade:'Gradé',a_lister:'À lister',liste:'Listé'};
+  const STATUT_ORDER = ['en_transit','recu','a_grader','en_gradation','grade','a_lister','liste'];
+
+  function projLoad() {
+    fetch('/vinted/projection/api/?marge=0')
+      .then(r => r.json())
+      .then(data => {
+        projItems = data.items || [];
+        projSelected = new Set(projItems.map(i => i.id));
+        projRefresh();
+      })
+      .catch(() => {
+        document.getElementById('proj-items').innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;">Erreur de chargement.</div>';
+      });
+  }
+
+  function projRefresh() {
+    const marge = parseFloat(document.getElementById('proj-marge').value) || 0;
+    let pa_tot = 0, pv_tot = 0, nb = 0;
+
+    // Group by statut
+    const groups = {};
+    projItems.forEach(item => {
+      if (!groups[item.statut]) groups[item.statut] = [];
+      groups[item.statut].push(item);
+    });
+
+    let html = '';
+    STATUT_ORDER.forEach(st => {
+      if (!groups[st]) return;
+      html += `<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#adb5bd;padding:8px 0 3px;">${STATUT_LBL[st]||st} (${groups[st].length})</div>`;
+      groups[st].forEach(item => {
+        const sel = projSelected.has(item.id);
+        const pv = Math.round(item.pa * (1 + marge/100) * 100) / 100;
+        const benef = Math.round((pv - item.pa) * 100) / 100;
+        if (sel) { pa_tot += item.pa; pv_tot += pv; nb++; }
+        html += `<div onclick="projToggle(${item.id})" style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;border:1px solid ${sel?'#818cf8':'#e9ecef'};background:${sel?'#eef2ff':'#fff'};cursor:pointer;-webkit-tap-highlight-color:transparent;">
+          <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();projToggle(${item.id})" style="width:15px;height:15px;accent-color:#4f46e5;flex-shrink:0;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.8rem;font-weight:600;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.nom}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:.68rem;color:#6c757d;">PA ${item.pa.toFixed(2)}€</div>
+            <div style="font-size:.88rem;font-weight:800;color:#4f46e5;">${pv.toFixed(2)}€</div>
+            <div style="font-size:.68rem;font-weight:600;color:#15803d;">+${benef.toFixed(2)}€</div>
+          </div>
+        </div>`;
+      });
+    });
+    document.getElementById('proj-items').innerHTML = html || '<div style="text-align:center;padding:30px;color:#adb5bd;">Entrepôt vide.</div>';
+
+    const benef_tot = pv_tot - pa_tot;
+    document.getElementById('pk-nb').textContent = nb;
+    document.getElementById('pk-pa').textContent = pa_tot.toFixed(0) + '€';
+    document.getElementById('pk-pv').textContent = pv_tot.toFixed(0) + '€';
+    document.getElementById('pk-benef').textContent = '+' + benef_tot.toFixed(0) + '€';
+  }
+
+  window.projToggle = function(id) {
+    if (projSelected.has(id)) projSelected.delete(id); else projSelected.add(id);
+    projRefresh();
+  };
+  window.projSelectAll = function() { projSelected = new Set(projItems.map(i => i.id)); projRefresh(); };
+  window.projSelectNone = function() { projSelected = new Set(); projRefresh(); };
 })();
 </script>
 </body>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>{% block title %}Carreaux — Boutique Pokémon{% endblock %}</title>
+  <link rel="manifest" href="/static/carreaux/manifest.json">
+  <link rel="icon" href="/static/carreaux/icon-192.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { DEFAULT: '#6366f1', dark: '#4f46e5' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    .card-hover { transition: transform .15s ease, box-shadow .15s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,.25); }
+    .btn-primary { background: #6366f1; color: #fff; font-weight: 700; border-radius: 0.75rem; padding: .75rem 1.5rem; transition: background .15s; display: inline-block; text-align: center; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-secondary { background: #1e293b; color: #f8fafc; font-weight: 600; border-radius: 0.75rem; padding: .75rem 1.5rem; transition: background .15s; display: inline-block; text-align: center; }
+    .btn-secondary:hover { background: #334155; }
+    .price { color: #34d399; font-weight: 800; }
+    .flash-messages { position: fixed; top: 4rem; right: 1rem; z-index: 100; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-700/50 px-4 py-3">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="{% url 'carreaux:catalogue' %}" class="flex items-center gap-2 text-white font-black text-xl tracking-tight">
+        <span class="text-2xl">🃏</span>
+        <span>Carreaux</span>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'carreaux:panier' %}" class="relative flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl px-3 py-2 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+          <span id="cart-count" class="text-sm font-bold text-white">{{ cart_count }}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash messages -->
+  <div class="flash-messages" id="flash-zone">
+    {% for message in messages %}
+    <div class="mb-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm shadow-lg">{{ message }}</div>
+    {% endfor %}
+  </div>
+
+  <!-- Content -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-700/50 text-center text-slate-500 text-xs py-4 px-4">
+    Carreaux by SpaceLabs &nbsp;·&nbsp; Envoi sous 48h ouvrées &nbsp;·&nbsp; Paiement sécurisé Stripe
+  </footer>
+
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/carreaux/sw.js').catch(() => {});
+    }
+  </script>
+
+  <!-- Helpers panier AJAX -->
+  <script>
+    const CSRF = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='))?.split('=')[1] || '';
+
+    async function addToCart(productId, btn) {
+      if (btn) { btn.disabled = true; btn.textContent = '…'; }
+      try {
+        const r = await fetch(`/carreaux/panier/add/${productId}/`, {
+          method: 'POST', headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/json'}
+        });
+        const d = await r.json();
+        if (d.ok) {
+          document.getElementById('cart-count').textContent = d.cart_count;
+          showFlash(`${d.titre} ajouté au panier`);
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Ajouter'; }
+      }
+    }
+
+    async function removeFromCart(productId) {
+      const r = await fetch(`/carreaux/panier/remove/${productId}/`, {
+        method: 'POST', headers: {'X-CSRFToken': CSRF}
+      });
+      const d = await r.json();
+      if (d.ok) { document.getElementById('cart-count').textContent = d.cart_count; location.reload(); }
+    }
+
+    function showFlash(msg) {
+      const zone = document.getElementById('flash-zone');
+      const el = document.createElement('div');
+      el.className = 'mb-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm shadow-lg';
+      el.textContent = msg;
+      zone.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+  </script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

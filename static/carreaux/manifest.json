@@ -1,0 +1,26 @@
+{
+  "name": "Carreaux — Boutique Pokémon",
+  "short_name": "Carreaux",
+  "description": "Cartes Pokémon collector — achat sécurisé",
+  "start_url": "/carreaux/",
+  "scope": "/carreaux/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/static/carreaux/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/carreaux/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

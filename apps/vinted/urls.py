@@ -18,4 +18,7 @@ urlpatterns = [
     # Duesenberg — Telegram Mini-App
     path("duesenberg/", views.duesenberg, name="duesenberg"),
     path("duesenberg/api/", views.duesenberg_api, name="duesenberg_api"),
+    # Simulateur de projection commerciale
+    path("projection/", views.projection, name="projection"),
+    path("projection/api/", views.projection_api, name="projection_api"),
 ]

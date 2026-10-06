@@ -168,3 +168,39 @@ class Activity(models.Model):
 
     def __str__(self):
         return self.texte[:50]
+
+
+TYPES_DRAFT = [
+    ("offre", "Offre initiale"),
+    ("relance_j2", "Relance J+2"),
+    ("relance_j5", "Relance J+5 (dossier)"),
+    ("relance_j10", "Relance J+10 (RDV)"),
+    ("relance_j20", "Clôture J+20"),
+]
+
+STATUTS_DRAFT = [
+    ("brouillon", "Brouillon"),
+    ("approuve", "Approuvé"),
+    ("envoye", "Envoyé"),
+    ("rejete", "Rejeté"),
+]
+
+
+class MessageDraft(models.Model):
+    """Proposition rédactionnelle liée à une opportunité — générée par l'IA ou
+    écrite manuellement, validée par Guillaume, puis marquée envoyée."""
+    opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE,
+                                    related_name="drafts")
+    type = models.CharField(max_length=16, choices=TYPES_DRAFT, default="offre")
+    contenu = models.TextField()
+    statut = models.CharField(max_length=12, choices=STATUTS_DRAFT, default="brouillon")
+    envoye_le = models.DateTimeField(null=True, blank=True)
+    note_interne = models.CharField(max_length=300, blank=True)
+    cree_le = models.DateTimeField(auto_now_add=True)
+    maj_le = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-cree_le"]
+
+    def __str__(self):
+        return f"{self.get_type_display()} — {self.opportunity.titre[:40]} ({self.statut})"

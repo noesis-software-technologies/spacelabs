@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Projection commerciale — SpaceLabs</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#f8f9fa;--surface:#ffffff;--card:#ffffff;--border:#e9ecef;
+      --ink:#1a1a2e;--muted:#6c757d;--faint:#adb5bd;
+      --accent:#4f46e5;--accent-soft:#eef2ff;
+      --good:#15803d;--good-soft:#f0fdf4;
+      --warn:#b45309;--warn-soft:#fffbeb;
+      --radius:12px;--font:Inter,-apple-system,system-ui,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;padding:0 0 80px;}
+    .header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:100;}
+    .header h1{font-size:1.1rem;font-weight:800;color:var(--ink);}
+    .header p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+    .controls{padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .controls label{font-size:.8rem;font-weight:600;color:var(--muted);}
+    .marge-input{display:flex;align-items:center;gap:6px;background:var(--accent-soft);border:1px solid #c7d2fe;border-radius:8px;padding:6px 10px;}
+    .marge-input input{width:50px;border:none;background:transparent;font-size:1rem;font-weight:800;color:var(--accent);text-align:center;outline:none;}
+    .marge-input span{font-size:.85rem;font-weight:700;color:var(--accent);}
+    .select-btns{display:flex;gap:6px;margin-left:auto;}
+    .btn-sm{padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-size:.75rem;font-weight:600;}
+    .btn-all{background:var(--accent);color:#fff;}
+    .btn-none{background:var(--border);color:var(--ink);}
+    /* KPI bar */
+    .kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px;background:var(--ink);}
+    .kpi{text-align:center;}
+    .kpi-val{font-size:1.1rem;font-weight:900;color:#fff;}
+    .kpi-val.good{color:#4ade80;}
+    .kpi-label{font-size:.65rem;color:#9ca3af;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+    /* Items list */
+    .items-list{padding:10px 16px;display:flex;flex-direction:column;gap:6px;}
+    .item-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s,background .15s;-webkit-tap-highlight-color:transparent;}
+    .item-card.selected{border-color:var(--accent);background:var(--accent-soft);}
+    .item-card input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+    .item-info{flex:1;min-width:0;}
+    .item-nom{font-size:.82rem;font-weight:600;color:var(--ink);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .item-statut{font-size:.68rem;color:var(--muted);margin-top:2px;}
+    .item-prices{text-align:right;flex-shrink:0;}
+    .item-pa{font-size:.7rem;color:var(--muted);}
+    .item-pv{font-size:.9rem;font-weight:800;color:var(--accent);}
+    .item-benef{font-size:.7rem;font-weight:600;color:var(--good);}
+    /* Statut badges */
+    .badge{display:inline-block;font-size:.6rem;font-weight:700;padding:.1rem .4rem;border-radius:999px;text-transform:uppercase;letter-spacing:.04em;}
+    .badge-transit{background:#fef3c7;color:#92400e;}
+    .badge-recu{background:#d1fae5;color:#065f46;}
+    .badge-grade{background:#ede9fe;color:#5b21b6;}
+    .badge-liste{background:#dbeafe;color:#1e40af;}
+    /* Section group */
+    .section-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);padding:10px 16px 4px;margin-top:4px;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 Simulateur de projection</h1>
+  <p id="subtitle">Chargement de l'entrepôt…</p>
+</div>
+
+<div class="controls">
+  <label>Marge cible</label>
+  <div class="marge-input">
+    <input type="number" id="marge" value="40" min="0" max="999" step="1" oninput="refresh()">
+    <span>%</span>
+  </div>
+  <div class="select-btns">
+    <button class="btn-sm btn-all" onclick="selectAll()">Tout</button>
+    <button class="btn-sm btn-none" onclick="selectNone()">Aucun</button>
+  </div>
+</div>
+
+<!-- KPI bar -->
+<div class="kpi-bar" id="kpi-bar">
+  <div class="kpi"><div class="kpi-val" id="kpi-nb">—</div><div class="kpi-label">Articles</div></div>
+  <div class="kpi"><div class="kpi-val" id="kpi-pa">—</div><div class="kpi-label">Coût PA</div></div>
+  <div class="kpi"><div class="kpi-val good" id="kpi-pv">—</div><div class="kpi-label">CA projeté</div></div>
+  <div class="kpi"><div class="kpi-val good" id="kpi-benef">—</div><div class="kpi-label">Bénéfice</div></div>
+</div>
+
+<div id="items-container"></div>
+
+<script>
+const ITEMS_DATA = [];
+{% for item in items %}
+ITEMS_DATA.push({ id: {{ item.pk }}, nom: `{{ item.nom|escapejs }}`, statut: "{{ item.statut }}", pa: {{ item.prix_achat|default:0|stringformat:".2f" }} });
+{% endfor %}
+
+const STATUT_LABELS = {
+  en_transit: "En transit", recu: "Reçu", a_grader: "À grader",
+  en_gradation: "En gradation", grade: "Gradé", a_lister: "À lister", liste: "Listé"
+};
+const STATUT_CLASSES = {
+  en_transit: "badge-transit", recu: "badge-recu", a_grader: "badge-transit",
+  en_gradation: "badge-grade", grade: "badge-grade", a_lister: "badge-liste", liste: "badge-liste"
+};
+
+let selected = new Set(ITEMS_DATA.map(i => i.id)); // Tout sélectionné par défaut
+
+function renderItems() {
+  const container = document.getElementById('items-container');
+  if (!ITEMS_DATA.length) {
+    container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px;">Entrepôt vide.</p>';
+    return;
+  }
+
+  // Grouper par statut
+  const groups = {};
+  ITEMS_DATA.forEach(item => {
+    if (!groups[item.statut]) groups[item.statut] = [];
+    groups[item.statut].push(item);
+  });
+
+  const order = ['en_transit','recu','a_grader','en_gradation','grade','a_lister','liste'];
+  let html = '';
+  const marge = parseFloat(document.getElementById('marge').value) || 0;
+
+  order.forEach(statut => {
+    if (!groups[statut]) return;
+    html += `<div class="section-label">${STATUT_LABELS[statut] || statut} (${groups[statut].length})</div>`;
+    groups[statut].forEach(item => {
+      const isSel = selected.has(item.id);
+      const pv = Math.round(item.pa * (1 + marge/100) * 100) / 100;
+      const benef = Math.round((pv - item.pa) * 100) / 100;
+      html += `
+      <div class="items-list" style="padding-top:0;padding-bottom:0;">
+        <div class="item-card ${isSel ? 'selected' : ''}" onclick="toggle(${item.id})">
+          <input type="checkbox" ${isSel ? 'checked' : ''} onclick="event.stopPropagation();toggle(${item.id})">
+          <div class="item-info">
+            <div class="item-nom">${item.nom}</div>
+            <div class="item-statut"><span class="badge ${STATUT_CLASSES[item.statut]}">${STATUT_LABELS[item.statut]}</span></div>
+          </div>
+          <div class="item-prices">
+            <div class="item-pa">PA ${item.pa.toFixed(2)}€</div>
+            <div class="item-pv">${pv.toFixed(2)}€</div>
+            <div class="item-benef">+${benef.toFixed(2)}€</div>
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+function updateKPIs() {
+  const marge = parseFloat(document.getElementById('marge').value) || 0;
+  let pa_total = 0, pv_total = 0, nb = 0;
+  ITEMS_DATA.forEach(item => {
+    if (!selected.has(item.id)) return;
+    const pv = item.pa * (1 + marge/100);
+    pa_total += item.pa;
+    pv_total += pv;
+    nb++;
+  });
+  const benef = pv_total - pa_total;
+
+  document.getElementById('kpi-nb').textContent = nb;
+  document.getElementById('kpi-pa').textContent = pa_total.toFixed(0) + '€';
+  document.getElementById('kpi-pv').textContent = pv_total.toFixed(0) + '€';
+  document.getElementById('kpi-benef').textContent = '+' + benef.toFixed(0) + '€';
+  document.getElementById('subtitle').textContent = `${nb}/${ITEMS_DATA.length} articles • ${marge}% marge • +${benef.toFixed(2)}€ projeté`;
+}
+
+function refresh() {
+  renderItems();
+  updateKPIs();
+}
+
+function toggle(id) {
+  if (selected.has(id)) selected.delete(id);
+  else selected.add(id);
+  refresh();
+}
+
+function selectAll() { selected = new Set(ITEMS_DATA.map(i => i.id)); refresh(); }
+function selectNone() { selected = new Set(); refresh(); }
+
+// Init
+refresh();
+</script>
+</body>
+</html>

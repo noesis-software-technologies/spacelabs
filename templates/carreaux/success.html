@@ -1,0 +1,32 @@
+{% extends "carreaux/base.html" %}
+{% block title %}Paiement confirmé — Carreaux{% endblock %}
+
+{% block content %}
+<div class="text-center py-12">
+  <div class="text-6xl mb-4">✅</div>
+  <h1 class="text-2xl font-black text-white mb-2">Paiement confirmé !</h1>
+  {% if order %}
+    <p class="text-slate-400 text-sm mb-1">Référence commande : <strong class="text-white font-mono">{{ order.ref }}</strong></p>
+    <p class="price text-xl mb-4">{{ order.total }} €</p>
+  {% endif %}
+  <div class="bg-slate-800 rounded-2xl p-5 text-left max-w-sm mx-auto space-y-3 mb-6">
+    <div class="flex items-start gap-3">
+      <span class="text-xl">📦</span>
+      <div>
+        <p class="text-white font-semibold text-sm">Expédition sous 48h ouvrées</p>
+        <p class="text-slate-400 text-xs">Tu recevras un email avec le numéro de suivi.</p>
+      </div>
+    </div>
+    <div class="flex items-start gap-3">
+      <span class="text-xl">🔒</span>
+      <div>
+        <p class="text-white font-semibold text-sm">Paiement sécurisé</p>
+        <p class="text-slate-400 text-xs">Traité via Stripe — aucune donnée bancaire stockée ici.</p>
+      </div>
+    </div>
+  </div>
+  <a href="{% url 'carreaux:catalogue' %}" class="btn-primary inline-block">
+    Continuer mes achats
+  </a>
+</div>
+{% endblock %}

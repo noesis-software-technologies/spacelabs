@@ -161,14 +161,21 @@ class VintedOrder(models.Model):
         return f"{self.numero or self.titre or self.pk} — {self.get_statut_envoi_display()}"
 
     def recalculer_totaux(self):
-        """Recompute prix_vente / prix_achat depuis les SaleOrderLines."""
+        """Recompute prix_vente / prix_achat depuis les SaleOrderLines.
+
+        Utilise prix_achat_effectif (override ligne OU fallback stock_item)
+        pour que le total soit toujours cohérent même sans override explicite."""
         from decimal import Decimal
-        lignes = list(self.lignes.all())
+        lignes = list(self.lignes.select_related("stock_item").all())
         if not lignes:
             return
         self.prix_vente = sum((l.total_vente for l in lignes), Decimal("0"))
-        if all(l.prix_achat_unitaire is not None for l in lignes):
-            self.prix_achat = sum((l.total_achat for l in lignes), Decimal("0"))
+        pa_effectifs = [l.prix_achat_effectif for l in lignes]
+        if all(pa is not None for pa in pa_effectifs):
+            self.prix_achat = sum(
+                (Decimal(str(pa)) * l.quantite for pa, l in zip(pa_effectifs, lignes)),
+                Decimal("0"),
+            )
         self.save(update_fields=["prix_vente", "prix_achat", "maj_le"])
 
     @property

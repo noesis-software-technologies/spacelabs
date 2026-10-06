@@ -5,3 +5,6 @@ class VintedConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.vinted"
     verbose_name = "Vinted (annonces assistées)"
+
+    def ready(self):
+        import apps.vinted.signals  # noqa: F401

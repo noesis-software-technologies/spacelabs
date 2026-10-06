@@ -352,10 +352,12 @@ def duesenberg_api(request):
     ca = Decimal("0")
     cout = Decimal("0")
     benef = Decimal("0")
+    remise_total = Decimal("0")
     for o in orders:
         ca += o.prix_vente or Decimal("0")
         cout += o.prix_achat or Decimal("0")
         benef += o.benefice
+        remise_total += o.remise or Decimal("0")
 
     marge = round(float(benef) / float(cout) * 100, 1) if cout else None
     a_preparer = [o for o in orders if o.statut_envoi in STATUTS_ENVOI_A_FAIRE]
@@ -406,6 +408,7 @@ def duesenberg_api(request):
             "ca": str(ca),
             "benefice": str(benef),
             "cout": str(cout),
+            "remise_total": str(remise_total),
             "marge": marge,
             "nb_commandes": len(orders),
             "stock_entrepot": stock_entrepot,
@@ -414,4 +417,64 @@ def duesenberg_api(request):
         },
         "a_preparer": [order_repr(o) for o in a_preparer[:5]],
         "recentes": [order_repr(o) for o in orders[:10]],
+    })
+
+# ── Simulateur de projection commerciale ────────────────────────────────────
+
+STATUTS_ACTIFS = ["en_transit", "recu", "a_grader", "en_gradation", "grade", "a_lister", "liste"]
+
+
+def projection(request):
+    """Page simulateur de projection : sélection d'items + marge cible."""
+    items = StockItem.objects.filter(statut__in=STATUTS_ACTIFS).order_by("statut", "nom")
+    return render(request, "vinted/projection.html", {"items": items})
+
+
+def projection_api(request):
+    """API JSON : retourne la projection pour les ids sélectionnés + marge %."""
+    ids_raw = request.GET.get("ids", "")
+    marge_pct = float(request.GET.get("marge", 40))
+
+    try:
+        ids = [int(x) for x in ids_raw.split(",") if x.strip()]
+    except ValueError:
+        ids = []
+
+    if ids:
+        qs = StockItem.objects.filter(pk__in=ids, statut__in=STATUTS_ACTIFS)
+    else:
+        qs = StockItem.objects.filter(statut__in=STATUTS_ACTIFS)
+
+    results = []
+    pa_total = Decimal("0")
+    pv_total = Decimal("0")
+
+    for item in qs:
+        pa = item.prix_achat or Decimal("0")
+        pv_cible = round(pa * Decimal(str(1 + marge_pct / 100)), 2)
+        benef = pv_cible - pa
+        pa_total += pa
+        pv_total += pv_cible
+        results.append({
+            "id": item.pk,
+            "nom": item.nom,
+            "statut": item.statut,
+            "pa": float(pa),
+            "pv_cible": float(pv_cible),
+            "benef": float(benef),
+        })
+
+    benef_total = pv_total - pa_total
+    marge_eff = round(float(benef_total) / float(pa_total) * 100, 1) if pa_total else 0
+
+    return JsonResponse({
+        "items": results,
+        "totaux": {
+            "pa": float(pa_total),
+            "pv": float(pv_total),
+            "benef": float(benef_total),
+            "marge_pct": marge_eff,
+            "nb_items": len(results),
+        },
+        "marge_cible": marge_pct,
     })

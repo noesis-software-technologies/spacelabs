@@ -9,7 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
 from .models import (ETATS, MOTIFS_PERTE, MOTIFS_REJET, STATUTS, STATUTS_ACTIFS,
-                     Activity, Opportunity)
+                     Activity, MessageDraft, Opportunity, TYPES_DRAFT)
 from .scoring import compute_score
 
 # Vues métier prédéfinies (cahier des charges § Vues à créer).
@@ -159,12 +159,15 @@ def opportunity_detail(request, pk):
     from .models import TYPES_ETAPE
     from .scoring import suggest_rejet
     users = get_user_model().objects.filter(is_active=True).order_by("username")[:50]
+    drafts = it.drafts.all()[:10]
+    draft_actif = it.drafts.filter(statut__in=["brouillon", "approuve"]).first()
     return render(request, "prospection/detail.html", {
         "it": it, "stages": STATUTS, "etats": ETATS,
         "motifs_rejet": MOTIFS_REJET, "motifs_perte": MOTIFS_PERTE,
         "rejet_suggere": suggest_rejet(it), "types_etape": TYPES_ETAPE,
         "etapes": it.etapes.all(), "users": users,
         "activites": it.activites.all()[:50], "active_nav": "prospection",
+        "drafts": drafts, "draft_actif": draft_actif, "types_draft": TYPES_DRAFT,
     })
 
 
@@ -329,6 +332,53 @@ def export_csv(request):
                     it.get_motif_rejet_display() if it.motif_rejet else "",
                     it.get_motif_perte_display() if it.motif_perte else ""])
     return resp
+
+
+@login_required
+@require_POST
+def save_draft(request, pk):
+    """Sauvegarde ou met à jour le brouillon actif d'une opportunité."""
+    it = get_object_or_404(Opportunity, pk=pk)
+    contenu = (request.POST.get("contenu") or "").strip()
+    type_draft = request.POST.get("type", "offre")
+    note = (request.POST.get("note_interne") or "").strip()
+    if not contenu:
+        return JsonResponse({"ok": False, "error": "contenu vide"}, status=400)
+    draft_id = request.POST.get("draft_id")
+    if draft_id:
+        draft = get_object_or_404(MessageDraft, pk=draft_id, opportunity=it)
+        draft.contenu = contenu
+        draft.type = type_draft
+        draft.note_interne = note
+        draft.save(update_fields=["contenu", "type", "note_interne", "maj_le"])
+    else:
+        draft = MessageDraft.objects.create(
+            opportunity=it, contenu=contenu, type=type_draft,
+            note_interne=note, statut="brouillon",
+        )
+        Activity.objects.create(opportunity=it, auteur=request.user,
+                                texte=f"Brouillon {dict(TYPES_DRAFT).get(type_draft, type_draft)} sauvegardé")
+    return JsonResponse({"ok": True, "draft_id": draft.pk})
+
+
+@login_required
+@require_POST
+def send_draft(request, draft_pk):
+    """Marque un brouillon comme envoyé + logue l'activité."""
+    draft = get_object_or_404(MessageDraft, pk=draft_pk)
+    it = draft.opportunity
+    draft.statut = "envoye"
+    draft.envoye_le = timezone.now()
+    draft.save(update_fields=["statut", "envoye_le", "maj_le"])
+    # Mise à jour automatique du statut pipeline si besoin
+    if it.stage == "detecte" and draft.type == "offre":
+        it.stage = "offre_envoyee"
+        it.date_offre = timezone.localdate()
+        it.save(update_fields=["stage", "date_offre", "maj_le"])
+    label = dict(TYPES_DRAFT).get(draft.type, draft.type)
+    Activity.objects.create(opportunity=it, auteur=request.user,
+                            texte=f"Message envoyé : {label} (brouillon #{draft.pk})")
+    return JsonResponse({"ok": True, "stage": it.stage})
 
 
 @login_required

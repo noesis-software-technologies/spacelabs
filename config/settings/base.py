@@ -68,6 +68,11 @@ env = environ.Env(
     MKM_ACCESS_SECRET=(str, ""),
     MKM_GAME_ID=(int, 6),                      # 6 = Pokémon
     MKM_LANGUAGE_ID=(int, 7),                  # 7 = japonais
+    # Boutique Carreaux — Stripe + API
+    STRIPE_SECRET_KEY=(str, "sk_test_placeholder"),
+    STRIPE_PUBLIC_KEY=(str, "pk_test_placeholder"),
+    STRIPE_WEBHOOK_SECRET=(str, "whsec_placeholder"),
+    CARREAUX_API_TOKEN=(str, ""),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 # Secrets locaux (IMAP veille/comms, tokens…) : gitignoré, chargé s'il existe.
@@ -108,6 +113,7 @@ INSTALLED_APPS = [
     "apps.prospection",
     "apps.vinted",
     "apps.marketplaces",
+    "apps.carreaux",
 ]
 
 MIDDLEWARE = [
@@ -195,6 +201,16 @@ MKM_ACCESS_TOKEN = env("MKM_ACCESS_TOKEN")
 MKM_ACCESS_SECRET = env("MKM_ACCESS_SECRET")
 MKM_GAME_ID = env("MKM_GAME_ID")
 MKM_LANGUAGE_ID = env("MKM_LANGUAGE_ID")
+
+# Boutique Carreaux
+from decimal import Decimal as _D  # noqa: E402
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+CARREAUX_API_TOKEN = env("CARREAUX_API_TOKEN")
+BOUTIQUE_LIVRAISON = _D("6.70")
+BOUTIQUE_REMISE_SEUIL = _D("150.00")
+BOUTIQUE_REMISE_PCT = _D("0.10")
 
 # Correspondance catégories veille → slugs blog (surcharge : clé=val,clé=val).
 VEILLE_CATEGORY_MAP = env.dict("VEILLE_CATEGORY_MAP", default={})

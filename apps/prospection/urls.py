@@ -18,5 +18,7 @@ urlpatterns = [
     path("<int:pk>/ai/offer/", views.ai_offer, name="ai_offer"),
     path("<int:pk>/ai/relance/", views.ai_relance, name="ai_relance"),
     path("<int:pk>/ai/next/", views.ai_next, name="ai_next"),
+    path("<int:pk>/draft/save/", views.save_draft, name="save_draft"),
+    path("draft/<int:draft_pk>/send/", views.send_draft, name="send_draft"),
     path("step/<int:pk>/toggle/", views.toggle_step, name="toggle_step"),
 ]

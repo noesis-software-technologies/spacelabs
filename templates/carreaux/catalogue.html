@@ -1,0 +1,123 @@
+{% extends "carreaux/base.html" %}
+{% block title %}Carreaux — Catalogue{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Carousel reviews — drag/swipe + auto-advance
+  (function(){
+    const track = document.getElementById('reviews-track');
+    if (!track) return;
+    let isDragging = false, startX = 0, scrollLeft = 0;
+
+    track.addEventListener('mousedown', e => { isDragging = true; startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft; });
+    track.addEventListener('mouseleave', () => isDragging = false);
+    track.addEventListener('mouseup', () => isDragging = false);
+    track.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      e.preventDefault();
+      track.scrollLeft = scrollLeft - (e.pageX - track.offsetLeft - startX);
+    });
+
+    // Touch
+    track.addEventListener('touchstart', e => { startX = e.touches[0].pageX; scrollLeft = track.scrollLeft; }, {passive:true});
+    track.addEventListener('touchmove', e => { track.scrollLeft = scrollLeft - (e.touches[0].pageX - startX); }, {passive:true});
+
+    // Auto-advance toutes les 4s
+    setInterval(() => {
+      const max = track.scrollWidth - track.clientWidth;
+      track.scrollLeft = track.scrollLeft >= max - 10 ? 0 : track.scrollLeft + 220;
+    }, 4000);
+  })();
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-black text-white">Catalogue</h1>
+  <p class="text-slate-400 text-sm mt-1">{{ products|length }} article{% if products|length != 1 %}s{% endif %} disponible{% if products|length != 1 %}s{% endif %}</p>
+</div>
+
+{% if reviews %}
+<!-- Section avis Vinted -->
+<div class="mb-8">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-lg font-black text-white flex items-center gap-2">
+      <span class="text-yellow-400">★★★★★</span>
+      Avis clients Vinted
+    </h2>
+    <a href="{{ vinted_profile_url }}" target="_blank" rel="noopener"
+       class="text-indigo-400 hover:text-indigo-300 text-xs font-semibold transition-colors">
+      Voir tous les avis →
+    </a>
+  </div>
+
+  <!-- Carousel horizontal drag/swipe -->
+  <div id="reviews-track"
+       class="flex gap-3 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none"
+       style="scrollbar-width:none; -ms-overflow-style:none;">
+    {% for r in reviews %}
+    <a href="{{ vinted_profile_url }}" target="_blank" rel="noopener"
+       class="flex-shrink-0 w-56 bg-slate-800 rounded-2xl p-4 flex flex-col gap-2 no-underline hover:bg-slate-700 transition-colors">
+      <div class="text-yellow-400 text-sm font-bold tracking-wider">★★★★★</div>
+      <p class="text-slate-300 text-xs leading-relaxed line-clamp-4">{{ r.commentaire }}</p>
+      <div class="mt-auto flex items-center gap-2 pt-1 border-t border-slate-700">
+        <div class="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          {{ r.auteur|slice:":1"|upper }}
+        </div>
+        <span class="text-slate-400 text-xs truncate">{{ r.auteur }}</span>
+        {% if r.date %}
+        <span class="text-slate-600 text-xs ml-auto flex-shrink-0">{{ r.date|date:"d/m/y" }}</span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if products %}
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+  {% for p in products %}
+  <div class="card-hover bg-slate-800 rounded-2xl overflow-hidden shadow-lg flex flex-col">
+    <!-- Image -->
+    <a href="{% url 'carreaux:produit' p.slug %}">
+      {% if p.image_url %}
+        <img src="{{ p.image_url }}" alt="{{ p.titre }}" class="w-full aspect-[3/4] object-cover bg-slate-700">
+      {% else %}
+        <div class="w-full aspect-[3/4] bg-slate-700 flex items-center justify-center">
+          <span class="text-5xl">🃏</span>
+        </div>
+      {% endif %}
+    </a>
+
+    <div class="p-3 flex flex-col flex-1 gap-2">
+      <a href="{% url 'carreaux:produit' p.slug %}" class="text-white font-semibold text-sm leading-tight line-clamp-2 hover:text-indigo-300">
+        {{ p.titre }}
+      </a>
+      <div class="price text-lg mt-auto">{{ p.prix_vente }} €</div>
+
+      <div class="flex flex-col gap-1.5">
+        <button onclick="addToCart({{ p.id }}, this)"
+          class="w-full btn-secondary text-sm py-2 px-3 rounded-lg">
+          Ajouter
+        </button>
+        <form method="post" action="{% url 'carreaux:checkout_instant' p.id %}">
+          {% csrf_token %}
+          <button type="submit" class="w-full btn-primary text-sm py-2 px-3 rounded-lg">
+            Acheter
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-20 text-slate-400">
+  <div class="text-6xl mb-4">🃏</div>
+  <p class="text-xl font-semibold text-white">Boutique en cours de préparation</p>
+  <p class="text-sm mt-2">De nouveaux articles arrivent très bientôt.</p>
+</div>
+{% endif %}
+{% endblock %}
