@@ -21,4 +21,7 @@ urlpatterns = [
     # Simulateur de projection commerciale
     path("projection/", views.projection, name="projection"),
     path("projection/api/", views.projection_api, name="projection_api"),
+    # Étiquettes prix — live show
+    path("entrepot/<int:pk>/etiquette/", views.etiquette, name="etiquette"),
+    path("entrepot/etiquettes/", views.etiquettes_lot, name="etiquettes_lot"),
 ]

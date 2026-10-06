@@ -311,6 +311,13 @@ class StockItem(models.Model):
     date_achat = models.DateField(null=True, blank=True)
     date_reception = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)
+    # Prix live show — repli 1 : plancher acceptable ; repli 2 : plancher absolu.
+    prix_repli_1 = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                       help_text="Prix de repli 1 — live show (plancher acceptable)")
+    prix_repli_2 = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                       help_text="Prix de repli 2 — live show (plancher absolu)")
+    prix_affiche = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
+                                       help_text="Prix de vente affiché (live / stand)")
     cree_le = models.DateTimeField(auto_now_add=True)
     maj_le = models.DateTimeField(auto_now=True)
 

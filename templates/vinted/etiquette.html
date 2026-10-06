@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Étiquette — {{ item.nom }}</title>
+  <style>
+    @page { size: 62mm 90mm; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Arial', sans-serif;
+      width: 62mm;
+      height: 90mm;
+      padding: 4mm;
+      background: #fff;
+      color: #111;
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+    }
+    .nom {
+      font-size: 9pt;
+      font-weight: bold;
+      line-height: 1.2;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .ref {
+      font-size: 7.5pt;
+      color: #555;
+    }
+    .sep { border-top: 0.5px solid #ccc; }
+    .prix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .prix-table td { padding: 0.8mm 1mm; }
+    .prix-table td:last-child { text-align: right; font-weight: bold; }
+    .prix-affiche {
+      font-size: 16pt;
+      font-weight: 900;
+      text-align: center;
+      padding: 2mm 0;
+      color: #1a1a2e;
+      letter-spacing: -0.5px;
+    }
+    .qr-zone {
+      display: flex;
+      justify-content: center;
+      margin-top: auto;
+    }
+    .no-print { display: block; text-align: center; margin: 10px; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="nom">{{ item.nom }}</div>
+  {% if item.reference %}<div class="ref">Réf. {{ item.reference }}</div>{% endif %}
+
+  <div class="sep"></div>
+
+  {% if item.prix_affiche %}
+  <div class="prix-affiche">{{ item.prix_affiche }} €</div>
+  {% endif %}
+
+  <table class="prix-table">
+    <tr>
+      <td>PA</td>
+      <td>{% if item.prix_achat %}{{ item.prix_achat }} €{% else %}—{% endif %}</td>
+    </tr>
+    {% if item.prix_repli_1 %}
+    <tr>
+      <td>Repli 1</td>
+      <td>{{ item.prix_repli_1 }} €</td>
+    </tr>
+    {% endif %}
+    {% if item.prix_repli_2 %}
+    <tr>
+      <td>Repli 2</td>
+      <td>{{ item.prix_repli_2 }} €</td>
+    </tr>
+    {% endif %}
+    {% if item.listing and item.listing.prix %}
+    <tr>
+      <td>Vinted</td>
+      <td>{{ item.listing.prix }} €</td>
+    </tr>
+    {% endif %}
+  </table>
+
+  <div class="sep"></div>
+
+  <div class="qr-zone">
+    <canvas id="qr" width="100" height="100"></canvas>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    new QRCode(document.getElementById("qr"), {
+      text: "{{ qr_url|escapejs }}",
+      width: 100,
+      height: 100,
+      colorDark: "#000",
+      colorLight: "#fff",
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  </script>
+
+</body>
+</html>
+
+<div class="no-print" style="font-family:sans-serif;padding:10px">
+  <button onclick="window.print()" style="padding:8px 20px;font-size:14px;cursor:pointer">
+    🖨️ Imprimer / Sauvegarder PDF
+  </button>
+  &nbsp;
+  <a href="/vinted/entrepot/">← Entrepôt</a>
+</div>

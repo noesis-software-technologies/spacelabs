@@ -23,7 +23,7 @@ _EDIT_CHOICE = {
 
 # Entrepôt : champs éditables en ligne.
 _STK_TEXT = {"nom", "reference", "gradeur", "grade_note", "notes"}
-_STK_DECIMAL = {"prix_achat"}
+_STK_DECIMAL = {"prix_achat", "prix_repli_1", "prix_repli_2", "prix_affiche"}
 _STK_INT = {"quantite"}
 _STK_DATE = {"date_achat", "date_reception"}
 _STK_CHOICE = {
@@ -478,3 +478,27 @@ def projection_api(request):
         },
         "marge_cible": marge_pct,
     })
+
+
+@login_required
+def etiquette(request, pk):
+    """Étiquette prix imprimable pour un article (live show / stand)."""
+    item = get_object_or_404(StockItem, pk=pk)
+    # URL à encoder dans le QR code : annonce Vinted si dispo, sinon page entrepôt.
+    qr_url = item.vinted_url or request.build_absolute_uri(f"/vinted/entrepot/")
+    return render(request, "vinted/etiquette.html", {
+        "item": item,
+        "qr_url": qr_url,
+    })
+
+
+@login_required
+def etiquettes_lot(request):
+    """Génère les étiquettes de plusieurs articles (IDs passés en GET ?ids=1,2,3)."""
+    ids_raw = request.GET.get("ids", "")
+    pks = [int(x) for x in ids_raw.split(",") if x.strip().isdigit()]
+    items = []
+    for item in StockItem.objects.filter(pk__in=pks):
+        qr_url = item.vinted_url or request.build_absolute_uri("/vinted/entrepot/")
+        items.append({"item": item, "qr_url": qr_url})
+    return render(request, "vinted/etiquettes_lot.html", {"items": items})

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Étiquettes lot ({{ items|length }})</title>
+  <style>
+    @page { size: A4; margin: 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #fff; }
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 62mm);
+      gap: 4mm;
+    }
+    .etiquette {
+      width: 62mm;
+      min-height: 90mm;
+      border: 0.5px solid #ccc;
+      padding: 4mm;
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      page-break-inside: avoid;
+    }
+    .nom { font-size: 9pt; font-weight: bold; line-height: 1.2; }
+    .ref { font-size: 7.5pt; color: #555; }
+    .sep { border-top: 0.5px solid #ccc; }
+    .prix-table { width: 100%; font-size: 8.5pt; border-collapse: collapse; }
+    .prix-table td { padding: 0.6mm 1mm; }
+    .prix-table td:last-child { text-align: right; font-weight: bold; }
+    .prix-affiche { font-size: 16pt; font-weight: 900; text-align: center; padding: 1.5mm 0; color: #1a1a2e; }
+    .qr-zone { display: flex; justify-content: center; margin-top: auto; }
+    .no-print { display: block; text-align: center; margin: 15px; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button onclick="window.print()" style="padding:8px 20px;font-size:14px;cursor:pointer">🖨️ Imprimer</button>
+  &nbsp;
+  <a href="/vinted/entrepot/">← Entrepôt</a>
+</div>
+
+<div class="page-grid">
+{% for e in items %}
+  <div class="etiquette">
+    <div class="nom">{{ e.item.nom }}</div>
+    {% if e.item.reference %}<div class="ref">Réf. {{ e.item.reference }}</div>{% endif %}
+    <div class="sep"></div>
+    {% if e.item.prix_affiche %}
+    <div class="prix-affiche">{{ e.item.prix_affiche }} €</div>
+    {% endif %}
+    <table class="prix-table">
+      <tr><td>PA</td><td>{% if e.item.prix_achat %}{{ e.item.prix_achat }} €{% else %}—{% endif %}</td></tr>
+      {% if e.item.prix_repli_1 %}<tr><td>Repli 1</td><td>{{ e.item.prix_repli_1 }} €</td></tr>{% endif %}
+      {% if e.item.prix_repli_2 %}<tr><td>Repli 2</td><td>{{ e.item.prix_repli_2 }} €</td></tr>{% endif %}
+      {% if e.item.listing and e.item.listing.prix %}<tr><td>Vinted</td><td>{{ e.item.listing.prix }} €</td></tr>{% endif %}
+    </table>
+    <div class="sep"></div>
+    <div class="qr-zone">
+      <canvas id="qr-{{ e.item.pk }}" width="80" height="80"></canvas>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  var qrData = [
+    {% for e in items %}
+    { id: "{{ e.item.pk }}", url: "{{ e.qr_url|escapejs }}" }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+  qrData.forEach(function(d) {
+    new QRCode(document.getElementById("qr-" + d.id), {
+      text: d.url, width: 80, height: 80,
+      colorDark: "#000", colorLight: "#fff",
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  });
+</script>
+</body>
+</html>
