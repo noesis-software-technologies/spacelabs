@@ -227,6 +227,10 @@
   {% endif %}
 </div>
 
+<div id="detect-status" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;font-size:.87rem;background:#1e1e3a;border:1px solid #333;color:#a0a0c0">
+  <span id="detect-msg">🔍 Analyse en cours…</span>
+</div>
+
 <script>
 function previewPhoto(input, wrapId) {
   if (!input.files || !input.files[0]) return;
@@ -239,6 +243,68 @@ function previewPhoto(input, wrapId) {
   img.src = url;
   wrap.appendChild(img);
   wrap.querySelectorAll('.icon, .lbl').forEach(el => el.style.display = 'none');
+  // Auto-detect uniquement sur le recto
+  if (wrapId === 'wrap-recto') {
+    detectCard(input.files[0]);
+  }
+}
+
+function detectCard(file) {
+  const status = document.getElementById('detect-status');
+  const msg = document.getElementById('detect-msg');
+  status.style.display = 'block';
+  msg.textContent = '🔍 Identification de la carte… (15-30 s)';
+
+  const fd = new FormData();
+  fd.append('image', file);
+  fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+  fetch('/cardshow/detect/', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      if (d.erreur) {
+        msg.textContent = '⚠️ ' + d.erreur;
+        return;
+      }
+      // Pré-remplir les champs
+      const set = v => v !== null && v !== undefined ? String(v) : '';
+      if (d.nom || d.nom_fr) {
+        const nom = document.querySelector('[name=nom]');
+        if (!nom.value) nom.value = d.nom_fr || d.nom || '';
+      }
+      if (d.numero) {
+        const ref = document.querySelector('[name=reference]');
+        if (!ref.value) ref.value = [d.numero, d.serie].filter(Boolean).join(' — ');
+      }
+      if (d.prix_estime_eur) {
+        const pa = document.querySelector('[name=prix_affiche]');
+        if (!pa.value) pa.value = d.prix_estime_eur;
+      }
+
+      // Afficher résumé + CardMarket
+      let html = `✅ <strong>${d.nom_fr || d.nom || '?'}</strong>`;
+      if (d.numero) html += ` · ${d.numero}`;
+      if (d.serie) html += ` · ${d.serie}`;
+      if (d.langue) html += ` · ${d.langue}`;
+      if (d.rarete) html += `<br>Rareté : ${d.rarete}`;
+      if (d.prix_estime_eur) html += ` · Estimé : <strong>${d.prix_estime_eur} €</strong>`;
+      if (d.confiance) html += ` (confiance : ${d.confiance})`;
+      if (d.cardmarket && !d.cardmarket.erreur) {
+        const cm = d.cardmarket;
+        html += '<br>CardMarket : ';
+        if (cm.tendance) html += `tendance <strong>${cm.tendance} €</strong>`;
+        if (cm.bas) html += ` · fourchette ${cm.bas}–${cm.haut} €`;
+        if (cm.url) html += ` · <a href="${cm.url}" target="_blank" style="color:#a78bfa">voir →</a>`;
+      } else if (d.cardmarket && d.cardmarket.erreur) {
+        html += `<br><span style="color:#666">CardMarket : ${d.cardmarket.erreur}</span>`;
+      }
+      msg.innerHTML = html;
+      status.style.background = '#0f2a1a';
+      status.style.borderColor = '#16a34a55';
+    })
+    .catch(e => {
+      msg.textContent = '⚠️ Erreur réseau : ' + e.message;
+    });
 }
 </script>
 {% endblock %}
