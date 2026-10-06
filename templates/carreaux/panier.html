@@ -41,7 +41,7 @@
   </div>
   {% if remise %}
   <div class="flex justify-between text-emerald-400 text-sm font-semibold">
-    <span>🎁 Remise fidélité −10%</span>
+    <span> Remise fidélité −10%</span>
     <span>−{{ remise }} €</span>
   </div>
   {% elif sous_total < remise_seuil %}
@@ -74,7 +74,7 @@
 
 {% else %}
 <div class="text-center py-20 text-slate-400">
-  <div class="text-5xl mb-4">🛒</div>
+  <div class="text-5xl mb-4"></div>
   <p class="text-lg font-semibold text-white">Votre panier est vide</p>
   <a href="{% url 'carreaux:catalogue' %}" class="btn-primary mt-4 inline-block">
     Voir le catalogue

@@ -2,6 +2,7 @@
 from .base import *  # noqa: F401,F403
 
 DEBUG = True
+SETTINGS_MODULE = "config.settings.dev"
 ALLOWED_HOSTS += [".loca.lt", ".trycloudflare.com"]  # noqa: F405
 CSRF_TRUSTED_ORIGINS = ["https://*.loca.lt", "https://*.trycloudflare.com"]
 INSTALLED_APPS += ["debug_toolbar"]  # noqa: F405

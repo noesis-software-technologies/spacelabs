@@ -5,6 +5,7 @@ CHANNELS = [
     ("telegram", "Telegram"),
     ("whatsapp", "WhatsApp"),
     ("instagram", "Instagram DM"),
+    ("messenger", "Messenger"),
     ("sms", "SMS"),
     ("autre", "Autre"),
 ]
@@ -26,6 +27,9 @@ class Message(models.Model):
     needs_reply = models.BooleanField(default=False)
     statut = models.CharField(max_length=12, choices=STATUTS, default="nouveau")
     cree_le = models.DateTimeField(auto_now_add=True)
+    draft_reply = models.TextField(blank=True, help_text="Réponse suggérée (IA), à valider avant envoi")
+    reply_at = models.DateTimeField(blank=True, null=True)
+    sender_id = models.CharField(max_length=120, blank=True, help_text="Id plateforme de l'expéditeur")
 
     class Meta:
         ordering = ["-recu_le", "-id"]

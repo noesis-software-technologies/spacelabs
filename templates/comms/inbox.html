@@ -96,7 +96,7 @@
               headers:{'X-CSRFToken':cookie('csrftoken'),'Content-Type':'application/x-www-form-urlencoded'},
               body:'text='+encodeURIComponent(txt.value)})
             .then(r=>r.json()).then(d=>{ btn.textContent=old;
-              if(d.ok){ if(rmsg)rmsg.textContent='✅ envoyé'; box.style.opacity=.6; }
+              if(d.ok){ if(rmsg)rmsg.textContent='OK envoyé'; box.style.opacity=.6; }
               else{ if(rmsg)rmsg.textContent='échec : '+JSON.stringify(d.error).slice(0,120); }
             }).catch(()=>{btn.textContent=old; if(rmsg)rmsg.textContent='erreur réseau';});
         }

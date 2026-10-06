@@ -40,7 +40,7 @@
   {% if rejet_suggere %}<div class="warn">⚠️ Porte non franchie — motif suggéré : <b>{{ rejet_suggere }}</b></div>{% endif %}
   <div class="wrap">
 
-    {# ── COL 1 : RÉCAP PROJET ── #}
+    
     <div>
       <div class="panel">
         <h3>Projet <span class="sc {% if it.score >= 70 %}hi{% elif it.score >= 45 %}mid{% else %}lo{% endif %}">{{ it.score }}/100</span></h3>
@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    {# ── COL 2 : PROPOSITION RÉDACTIONNELLE ── #}
+    
     <div>
       <div class="panel">
         <h3>Proposition rédactionnelle</h3>
@@ -81,10 +81,10 @@
         <input type="hidden" id="draftId" value="{% if draft_actif %}{{ draft_actif.pk }}{% endif %}">
         <div id="sysmsg"></div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.3rem">
-          <button class="btn sm" id="aiOffer" type="button">🤖 Générer offre (IA)</button>
-          <button class="btn sm" id="aiRelance" type="button">🤖 Relance J+2 (IA)</button>
-          <button class="btn sm" id="saveDraft" type="button">💾 Sauvegarder</button>
-          <button class="btn sm send" id="sendDraft" type="button">✉️ Envoyer cette version</button>
+          <button class="btn sm" id="aiOffer" type="button">IA Générer offre (IA)</button>
+          <button class="btn sm" id="aiRelance" type="button">IA Relance J+2 (IA)</button>
+          <button class="btn sm" id="saveDraft" type="button"> Sauvegarder</button>
+          <button class="btn sm send" id="sendDraft" type="button">msg️ Envoyer cette version</button>
         </div>
       </div>
 
@@ -105,7 +105,7 @@
       </div>
     </div>
 
-    {# ── COL 3 : FIL DE DISCUSSION + CRM ── #}
+    
     <div>
       <div class="panel">
         <h3>Pilotage CRM</h3>
@@ -132,7 +132,7 @@
           {% for s in etapes %}
           <label class="act" style="display:flex;gap:.5rem;align-items:center;cursor:pointer">
             <input type="checkbox" data-step="{{ s.pk }}" {% if s.fait %}checked{% endif %} style="width:auto;margin:0">
-            <span style="{% if s.fait %}text-decoration:line-through;color:var(--faint){% endif %}">{{ s.libelle }}{% if s.echeance %} <span class="t">· {{ s.echeance }}</span>{% endif %}{% if s.auto %} 🤖{% endif %}</span>
+            <span style="{% if s.fait %}text-decoration:line-through;color:var(--faint){% endif %}">{{ s.libelle }}{% if s.echeance %} <span class="t">· {{ s.echeance }}</span>{% endif %}{% if s.auto %} IA{% endif %}</span>
           </label>
           {% empty %}<div class="act" id="noStep">Aucune étape.</div>{% endfor %}
         </div>
@@ -226,7 +226,7 @@
       if(!did){sysmsg('Sauvegarde le brouillon d\'abord.');return;}
       if(!confirm('Marquer ce message comme envoyé ?'))return;
       post('/prospection/draft/'+did+'/send/','',function(d){
-        if(d.ok){sysmsg('Marqué envoyé ✓',true);window.open('{{ it.ext_url|escapejs }}','_blank');setTimeout(function(){location.reload();},600);}
+        if(d.ok){sysmsg('Marqué envoyé ok',true);window.open('{{ it.ext_url|escapejs }}','_blank');setTimeout(function(){location.reload();},600);}
         else{sysmsg('Erreur : '+(d.error||''));}
       });
     });

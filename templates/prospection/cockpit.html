@@ -1,6 +1,6 @@
 {% extends "dashboard/shell.html" %}
-{% block page_title %}Cockpit commercial{% endblock %}
-{% block h1 %}Cockpit — priorités du jour{% endblock %}
+{% block page_title %}SpaceLabs prospection{% endblock %}
+{% block h1 %}SpaceLabs — priorités du jour{% endblock %}
 {% block crumb %}$ crm --today{% endblock %}
 
 {% block extra_css %}
@@ -39,14 +39,14 @@
       <div class="kpi"><b>{{ kpis.pipeline_eur }} €</b> pipeline actif</div>
     </div>
     <div class="links">
-      <a href="{% url 'prospection:board' %}">📊 Pipeline complet</a>
-      <a href="{% url 'prospection:modeles' %}">✉️ Modèles &amp; checklist</a>
+      <a href="{% url 'prospection:board' %}"> Pipeline complet</a>
+      <a href="{% url 'prospection:modeles' %}">msg️ Modèles &amp; checklist</a>
       <a href="{% url 'prospection:export_csv' %}">⬇️ Export CSV (direction)</a>
-      <a href="/veille/">🖼️ Constellation éditoriale</a>
+      <a href="/veille/">️ Constellation éditoriale</a>
     </div>
 
     <div class="sec">
-      <h2>🔥 Prospects les plus chauds — offre sous 2 h <span class="c">score ≥ 70</span></h2>
+      <h2> Prospects les plus chauds — offre sous 2 h <span class="c">score ≥ 70</span></h2>
       <table><thead><tr><th>Score</th><th>Titre</th><th>Budget</th><th>Catégorie</th><th></th></tr></thead><tbody>
       {% for it in chauds %}
       <tr>
@@ -54,7 +54,7 @@
         <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td>
         <td class="bud">{{ it.budget_eur }} €{% if it.tjm %}/j{% endif %}</td>
         <td style="color:var(--faint)">{{ it.categorie|truncatechars:24 }}</td>
-        <td><a class="cta" href="{% url 'prospection:detail' it.pk %}">🤖 Rédiger l'offre</a></td>
+        <td><a class="cta" href="{% url 'prospection:detail' it.pk %}">IA Rédiger l'offre</a></td>
       </tr>
       {% empty %}<tr><td colspan="5" class="empty">Aucun prospect chaud en attente — beau travail.</td></tr>{% endfor %}
       </tbody></table>
@@ -86,7 +86,7 @@
 
     {% if a_cloturer %}
     <div class="sec">
-      <h2>🚫 À passer en « Sans réponse » (&gt; J+10) <span class="c">{{ a_cloturer|length }}</span></h2>
+      <h2>Non À passer en « Sans réponse » (&gt; J+10) <span class="c">{{ a_cloturer|length }}</span></h2>
       <table><tbody>
       {% for it in a_cloturer %}<tr><td class="late">offre {{ it.date_offre }}</td>
         <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td></tr>{% endfor %}
@@ -96,7 +96,7 @@
 
     {% if vivier %}
     <div class="sec">
-      <h2>🌱 Vivier à relancer <span class="c">{{ vivier|length }}</span></h2>
+      <h2> Vivier à relancer <span class="c">{{ vivier|length }}</span></h2>
       <table><tbody>
       {% for it in vivier %}<tr><td class="late">{{ it.date_relance }}</td>
         <td><a class="tt" href="{% url 'prospection:detail' it.pk %}">{{ it.titre|truncatechars:60 }}</a></td></tr>{% endfor %}
@@ -105,11 +105,11 @@
     {% endif %}
 
     <div class="sec">
-      <h2>🖼️ Blogs — à ne pas oublier <span class="c">{{ non_assignes }} sujets non assignés</span></h2>
+      <h2>️ Blogs — à ne pas oublier <span class="c">{{ non_assignes }} sujets non assignés</span></h2>
       {% for b in blogs %}
       <div class="blog">
         <a class="tt" href="/veille/articles/?blog={{ b.id }}">{{ b.nom }}</a>
-        <span><b style="color:var(--accent)">{{ b.prets }}</b> brouillon(s) à pousser · {% if b.mcp_ok %}<span class="badge on">MCP ✓</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}</span>
+        <span><b style="color:var(--accent)">{{ b.prets }}</b> brouillon(s) à pousser · {% if b.mcp_ok %}<span class="badge on">MCP ok</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}</span>
       </div>
       {% empty %}<div class="empty">Rien à pousser côté blogs.</div>{% endfor %}
     </div>

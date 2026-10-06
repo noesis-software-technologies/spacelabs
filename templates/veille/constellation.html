@@ -49,7 +49,7 @@
               <div class="nm">{{ b.obj.nom }}</div>
               <div class="dom">{{ b.obj.domaine|default:b.obj.categorie|default:"—" }}</div>
             </div>
-            {% if b.mcp_ok %}<span class="badge on">MCP ✓</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}
+            {% if b.mcp_ok %}<span class="badge on">MCP ok</span>{% else %}<span class="badge off">MCP à brancher</span>{% endif %}
           </div>
           <div class="kpis">
             <div class="k"><b>{{ b.veille_n }}</b><span>veille</span></div>
@@ -57,8 +57,8 @@
             <div class="k"><b>{{ b.pousses_n }}</b><span>poussés</span></div>
           </div>
           <div class="links">
-            <a href="{% url 'veille:dashboard' %}?blog={{ b.obj.id }}">📡 Veille</a>
-            <a class="primary" href="{% url 'veille:articles' %}?blog={{ b.obj.id }}">🖼️ Articles</a>
+            <a href="{% url 'veille:dashboard' %}?blog={{ b.obj.id }}"> Veille</a>
+            <a class="primary" href="{% url 'veille:articles' %}?blog={{ b.obj.id }}">️ Articles</a>
           </div>
         </div>
         {% endfor %}
@@ -67,7 +67,7 @@
     {% endfor %}
 
     {% if non_assignes %}
-    <div class="na">📥 <b>{{ non_assignes }}</b> sujet(s) non assigné(s) à un blog — <a href="{% url 'veille:dashboard' %}">à trier</a>.</div>
+    <div class="na"> <b>{{ non_assignes }}</b> sujet(s) non assigné(s) à un blog — <a href="{% url 'veille:dashboard' %}">à trier</a>.</div>
     {% endif %}
 
     <script>

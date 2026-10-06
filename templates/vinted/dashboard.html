@@ -139,7 +139,7 @@
 
 {% block content %}
 
-  {# ── KPIs ── #}
+  
   <div class="kpis">
     <div class="kpi"><b>{{ total }}</b><small>commandes</small></div>
     <div class="kpi"><b>{{ kpis.ca|floatformat:2 }} €</b><small>CA total</small></div>
@@ -152,26 +152,26 @@
     <div class="kpi {% if en_retard %}crit{% endif %}"><b>{{ en_retard|length }}</b><small>en retard</small></div>
   </div>
 
-  {# ── Alerte retard ── #}
+  
   {% if en_retard %}
   <div class="card alert">
     <h2>Expédiés depuis +7 j sans livraison <span class="n">{{ en_retard|length }}</span></h2>
     {% for o in en_retard %}
     <div class="row">
-      <div class="thumb-sq">{% if o.lignes.count == 1 and o.lignes.all.0.stock_item and o.lignes.all.0.stock_item.photo %}<img src="{{ o.lignes.all.0.stock_item.photo }}" alt="">{% else %}<span class="ph">📦</span>{% endif %}</div>
+      <div class="thumb-sq">{% if o.lignes.count == 1 and o.lignes.all.0.stock_item and o.lignes.all.0.stock_item.photo %}<img src="{{ o.lignes.all.0.stock_item.photo }}" alt="">{% else %}<span class="ph"></span>{% endif %}</div>
       <div>
         <div class="tt">{{ o.titre|default:o.numero|default:o.pk }}</div>
         <div class="sub">{{ o.transporteur_label|default:"—" }} · exp. {{ o.date_expedition|date:"d/m" }}</div>
       </div>
       <form class="ship-form" method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-        <button class="btn acc" type="submit">Livré ✓</button>
+        <button class="btn acc" type="submit">Livré ok</button>
       </form>
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  {# ── À préparer / expédier ── #}
+  
   <div class="card">
     <h2>À préparer / expédier <span class="n">{{ a_expedier|length }}</span></h2>
     {% for o in a_expedier %}
@@ -199,11 +199,11 @@
       </form>
     </div>
     {% empty %}
-    <div class="empty">Rien à expédier — tout est parti ✓</div>
+    <div class="empty">Rien à expédier — tout est parti ok</div>
     {% endfor %}
   </div>
 
-  {# ── En transit ── #}
+  
   {% if en_transit %}
   <div class="card">
     <h2>En transit <span class="n">{{ en_transit|length }}</span></h2>
@@ -213,7 +213,7 @@
         {% with l0=o.lignes.all.0 %}
           {% if l0 and l0.stock_item and l0.stock_item.photo %}
             <img src="{{ l0.stock_item.photo }}" alt="">
-          {% else %}<span class="ph">📦</span>{% endif %}
+          {% else %}<span class="ph"></span>{% endif %}
         {% endwith %}
       </div>
       <div>
@@ -230,7 +230,7 @@
           <button class="btn" type="submit">MAJ</button>
         </form>
         <form method="post" action="{% url 'vinted:order_delivered' o.pk %}">{% csrf_token %}
-          <button class="btn acc" type="submit">Livré ✓</button>
+          <button class="btn acc" type="submit">Livré ok</button>
         </form>
       </div>
     </div>
@@ -238,7 +238,7 @@
   </div>
   {% endif %}
 
-  {# ── Suivi manquant (alerte discrète) ── #}
+  
   {% if sans_suivi %}
   <div class="card alert">
     <h2>Suivi manquant <span class="n">{{ sans_suivi|length }}</span></h2>
@@ -262,7 +262,7 @@
   </div>
   {% endif %}
 
-  {# ── Table toutes commandes ── #}
+  
   <div class="card">
     <h2>Toutes les commandes <span class="n">{{ recents|length }}</span></h2>
 
@@ -276,7 +276,7 @@
       </form>
     </div>
 
-    <div class="hint">✎ Cliquer une cellule pour l'éditer (enregistrement auto). Bénéf. & marge se recalculent.
+    <div class="hint">Modifier Cliquer une cellule pour l'éditer (enregistrement auto). Bénéf. & marge se recalculent.
     Bouton <strong>▸</strong> = détail par article.</div>
 
     <div class="tbl-filter">
@@ -325,7 +325,7 @@
           {%    endif %}
           {%  endwith %}
           {%  endwith %}
-            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles">{{ o.lignes.count }}</button>{% elif o.lignes.count == 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="Voir / éditer le détail">✎</button>{% endif %}</td>
+            <td class="edit" data-pk="{{ o.pk }}" data-field="titre" contenteditable="true" style="max-width:220px">{{ o.titre }}{% if o.lignes.count > 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="{{ o.lignes.count }} articles">{{ o.lignes.count }}</button>{% elif o.lignes.count == 1 %}<button class="tri-btn" onclick="toggleLines({{ o.pk }},this)" title="Voir / éditer le détail">Modifier</button>{% endif %}</td>
             <td>
               <select data-pk="{{ o.pk }}" data-field="plateforme">
                 {% for val, lbl in plateformes %}<option value="{{ val }}" {% if o.plateforme == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
@@ -349,7 +349,7 @@
             <td colspan="8">
               <div class="lines-inner">
                 <table class="lines-tbl">
-                  <thead><tr><th>Article</th><th>Vente €</th><th>Achat € <span style="font:.5rem var(--mono);color:var(--faint);font-weight:400">(✎ éditable)</span></th><th>Bénéfice</th></tr></thead>
+                  <thead><tr><th>Article</th><th>Vente €</th><th>Achat € <span style="font:.5rem var(--mono);color:var(--faint);font-weight:400">(Modifier éditable)</span></th><th>Bénéfice</th></tr></thead>
                   <tbody>
                   {% for l in o.lignes.all %}
                     {% with pa_eff=l.prix_achat_effectif %}

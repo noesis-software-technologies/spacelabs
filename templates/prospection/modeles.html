@@ -73,7 +73,7 @@ Avec ça je vous envoie un devis découpé en lots, ce qui vous permet de démar
   document.addEventListener('click',function(e){
     var b=e.target.closest('button[data-t]'); if(!b)return;
     var txt=document.getElementById(b.dataset.t).textContent;
-    navigator.clipboard.writeText(txt); b.textContent='Copié ✓'; setTimeout(function(){b.textContent='Copier';},1500);
+    navigator.clipboard.writeText(txt); b.textContent='Copié ok'; setTimeout(function(){b.textContent='Copier';},1500);
   });
   </script>
 {% endblock %}
