@@ -480,12 +480,18 @@ def projection_api(request):
     })
 
 
+def carte_publique(request, pk):
+    """Page publique d'une carte — cible du QR code client au card show."""
+    item = get_object_or_404(StockItem, pk=pk)
+    return render(request, "vinted/carte_publique.html", {"item": item})
+
+
 @login_required
 def etiquette(request, pk):
     """Étiquette prix imprimable pour un article (live show / stand)."""
     item = get_object_or_404(StockItem, pk=pk)
-    # URL à encoder dans le QR code : annonce Vinted si dispo, sinon page entrepôt.
-    qr_url = item.vinted_url or request.build_absolute_uri(f"/vinted/entrepot/")
+    # QR code → page publique de la carte (ce que le client voit au stand).
+    qr_url = request.build_absolute_uri(f"/vinted/carte/{pk}/")
     return render(request, "vinted/etiquette.html", {
         "item": item,
         "qr_url": qr_url,
@@ -499,6 +505,6 @@ def etiquettes_lot(request):
     pks = [int(x) for x in ids_raw.split(",") if x.strip().isdigit()]
     items = []
     for item in StockItem.objects.filter(pk__in=pks):
-        qr_url = item.vinted_url or request.build_absolute_uri("/vinted/entrepot/")
+        qr_url = request.build_absolute_uri(f"/vinted/carte/{item.pk}/")
         items.append({"item": item, "qr_url": qr_url})
     return render(request, "vinted/etiquettes_lot.html", {"items": items})

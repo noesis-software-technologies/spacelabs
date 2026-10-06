@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ item.nom }} — SpaceLabs Cards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+    .brand {
+      font-size: .75rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #6b6b9e;
+      margin-bottom: 24px;
+    }
+    .card-wrapper {
+      width: 100%;
+      max-width: 400px;
+      background: #1a1a2e;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,.6);
+    }
+    .photos {
+      display: flex;
+      gap: 2px;
+      background: #000;
+    }
+    .photos img {
+      width: 50%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+    }
+    .photos img:only-child { width: 100%; }
+    .photo-placeholder {
+      width: 100%;
+      aspect-ratio: 3/4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      background: #111;
+    }
+    .info {
+      padding: 20px;
+    }
+    .nom {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    .ref {
+      font-size: .8rem;
+      color: #6b6b9e;
+      margin-bottom: 16px;
+    }
+    .prix-tag {
+      display: inline-block;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: #fff;
+      font-size: 1.8rem;
+      font-weight: 900;
+      padding: 8px 20px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      letter-spacing: -.5px;
+    }
+    .etat {
+      font-size: .85rem;
+      color: #a0a0c0;
+      margin-bottom: 8px;
+    }
+    .vinted-link {
+      display: block;
+      margin-top: 16px;
+      text-align: center;
+      padding: 12px;
+      background: #2e2e4a;
+      border-radius: 10px;
+      color: #a78bfa;
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+    .vinted-link:hover { background: #3a3a60; }
+    .footer {
+      margin-top: 32px;
+      font-size: .7rem;
+      color: #444460;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand">SpaceLabs Cards</div>
+
+  <div class="card-wrapper">
+    <div class="photos">
+      {% if item.image_recto or item.image_verso %}
+        {% if item.image_recto %}<img src="{{ item.image_recto.url }}" alt="Recto">{% endif %}
+        {% if item.image_verso %}<img src="{{ item.image_verso.url }}" alt="Verso">{% endif %}
+      {% else %}
+        <div class="photo-placeholder">🃏</div>
+      {% endif %}
+    </div>
+
+    <div class="info">
+      <div class="nom">{{ item.nom }}</div>
+      {% if item.reference %}<div class="ref">{{ item.reference }}</div>{% endif %}
+
+      {% if item.prix_affiche %}
+        <div class="prix-tag">{{ item.prix_affiche }} €</div>
+      {% elif item.listing and item.listing.prix %}
+        <div class="prix-tag">{{ item.listing.prix }} €</div>
+      {% endif %}
+
+      {% if item.listing %}
+        <div class="etat">État : {{ item.listing.get_etat_display }}</div>
+      {% endif %}
+
+      {% if item.vinted_url %}
+        <a class="vinted-link" href="{{ item.vinted_url }}" target="_blank">
+          Voir sur Vinted →
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="footer">Card show — SpaceLabs © 2026</div>
+</body>
+</html>

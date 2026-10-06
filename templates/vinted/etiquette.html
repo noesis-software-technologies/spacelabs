@@ -57,6 +57,11 @@
 </head>
 <body>
 
+  {% if item.image_recto %}
+  <img src="{{ item.image_recto.url }}" alt="Recto"
+       style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:4px;margin-bottom:2mm">
+  {% endif %}
+
   <div class="nom">{{ item.nom }}</div>
   {% if item.reference %}<div class="ref">Réf. {{ item.reference }}</div>{% endif %}
 

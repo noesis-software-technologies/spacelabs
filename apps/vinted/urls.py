@@ -24,4 +24,6 @@ urlpatterns = [
     # Étiquettes prix — live show
     path("entrepot/<int:pk>/etiquette/", views.etiquette, name="etiquette"),
     path("entrepot/etiquettes/", views.etiquettes_lot, name="etiquettes_lot"),
+    # Fiche publique carte — cible QR code client au card show
+    path("carte/<int:pk>/", views.carte_publique, name="carte_publique"),
 ]

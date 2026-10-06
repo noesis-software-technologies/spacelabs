@@ -1,8 +1,10 @@
 from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
+
+from apps.vinted.models import STOCK_DESTINS, Fournisseur, StockItem
 
 from .services import calculer_tiers, parse_decimal
 
@@ -38,3 +40,43 @@ def apercu(request):
         "frais": frais,
         "cout": (pa + (frais or Decimal("0"))) if pa is not None else None,
     })
+
+
+@login_required
+def intake(request):
+    """Intake rapide card show — formulaire mobile avec caméra recto/verso."""
+    if request.method == "POST":
+        nom = (request.POST.get("nom") or "").strip()
+        if not nom:
+            return render(request, "cardshow/intake.html", {
+                "erreur": "Le nom de la carte est obligatoire.",
+                "destins": STOCK_DESTINS,
+            })
+        from .services import parse_decimal as _pd
+        item = StockItem(
+            nom=nom,
+            reference=(request.POST.get("reference") or "").strip(),
+            prix_achat=_pd(request.POST.get("prix_achat", "")) ,
+            prix_affiche=_pd(request.POST.get("prix_affiche", "")),
+            prix_repli_1=_pd(request.POST.get("prix_repli_1", "")),
+            prix_repli_2=_pd(request.POST.get("prix_repli_2", "")),
+            destin=request.POST.get("destin") or "vente_directe",
+            statut="recu",
+        )
+        item.save()
+        if "image_recto" in request.FILES:
+            item.image_recto = request.FILES["image_recto"]
+        if "image_verso" in request.FILES:
+            item.image_verso = request.FILES["image_verso"]
+        item.save()
+        if request.POST.get("action") == "etiquette":
+            return redirect(f"/vinted/entrepot/{item.pk}/etiquette/")
+        if request.POST.get("action") == "continuer":
+            return render(request, "cardshow/intake.html", {
+                "succes": f"« {item.nom } » ajouté (#{item.pk}). Carte suivante :",
+                "dernier_pk": item.pk,
+                "destins": STOCK_DESTINS,
+            })
+        return redirect(f"/vinted/entrepot/{item.pk}/etiquette/")
+
+    return render(request, "cardshow/intake.html", {"destins": STOCK_DESTINS})

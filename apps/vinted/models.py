@@ -318,6 +318,11 @@ class StockItem(models.Model):
                                        help_text="Prix de repli 2 — live show (plancher absolu)")
     prix_affiche = models.DecimalField(max_digits=9, decimal_places=2, null=True, blank=True,
                                        help_text="Prix de vente affiché (live / stand)")
+    # Photos physiques de la carte (intake card show — recto/verso).
+    image_recto = models.ImageField(upload_to="stock/recto/", null=True, blank=True,
+                                    help_text="Photo recto de la carte (intake card show)")
+    image_verso = models.ImageField(upload_to="stock/verso/", null=True, blank=True,
+                                    help_text="Photo verso de la carte (intake card show)")
     cree_le = models.DateTimeField(auto_now_add=True)
     maj_le = models.DateTimeField(auto_now=True)
 
